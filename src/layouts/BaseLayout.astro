@@ -4,13 +4,24 @@ import Navigation from "@/components/global/Navigation.astro";
 import Footer from "@/components/global/Footer.astro";
 ---
 
-<html lang="en">
+<html lang="en"> 
   <head>
     <BaseHead />
   </head>
   <body class="flex flex-col max-w-3xl min-h-screen px-8 mx-auto bg-white">
-    <Navigation />
-    <main class="flex-grow"><slot /></main>
+    <Navigation /> 
+    <main class="flex-grow">
+      <slot />
+    </main>
     <Footer />
   </body>
+
+  <script is:inline>
+    if ("paintWorklet" in CSS) {
+      CSS.paintWorklet.addModule(
+        "https://www.unpkg.com/css-houdini-squircle/squircle.min.js"
+      );
+    }
+  </script>
 </html>
+  

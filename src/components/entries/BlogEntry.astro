@@ -3,8 +3,8 @@ import { Image } from "astro:assets";
 const { title, url, description, pubDate, author, image, tags } = Astro.props;
 ---
 
-<article class="flex flex-col flex-1 h-full">
-  <a href={url} title={title} class="group block">
+<article class="flex flex-col flex-1 h-full group">
+  <a href={url} title={title} class="block">
     <div class="block w-full lg:col-span-2">
       <Image
         width={1200}
@@ -16,15 +16,17 @@ const { title, url, description, pubDate, author, image, tags } = Astro.props;
     </div>
   </a>
 
-  <div class="mt-1">
-    <div class="flex items-center space-x-1 text-xs text-base-500">
+  <div class="mt-5">
+    <div class="flex items-center space-x-1 gap-2 text-xs text-base-500">
+      <img src="https://mockmind-api.uifaces.co/content/human/112.jpg" alt="User" 
+      class="squircle !size-12" />
       <span class="font-medium">{author}</span>
       <span aria-hidden="true">&middot;</span>
-      <time datetime={pubDate}>{pubDate}</time>
+      <time datetime={pubDate} class="text-yellow-700">{pubDate}</time>
     </div>
 
     <h3 class="mt-4 text-base text-base-900 text-balance">
-      <a href={url} class="hover:underline">{title}</a>
+      <a href={url} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">{title}</a>
     </h3>
 
     <p class="mt-1 text-sm text-base-500 line-clamp-2">{description}</p>

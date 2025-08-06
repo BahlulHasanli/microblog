@@ -1,8 +1,10 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
-import Cta from "@/components/global/Cta.astro";
 import { getCollection } from "astro:content";
+import Slider from "@/components/entries/HomeSlider.astro";
+
+
 const allPosts = await getCollection("posts");
 const tags = [...new Set(allPosts.map((post) => post.data.tags).flat())];
 // Sort posts by date in descending order (newest first)
@@ -13,11 +15,12 @@ const sortedPosts = allPosts.sort(
 
 <BaseLayout>
   <section>
-    <div class="py-24">
+    <Slider />
+    <div class="py-18">
       <h1
-        class="text-4xl text-balance font-medium font-display text-base-900 max-w-xl"
+        class="text-4xl text-balance font-light font-display text-base-900 max-w-60"
       >
-        A simple blog built with Astro and Tailwind CSS
+        <span class="font-big-shoulders">99'un</span> <span class="font-semibold">həftəbecəri</span>
       </h1>
       <div class="flex flex-wrap gap-3 mt-8">
         {
@@ -29,7 +32,7 @@ const sortedPosts = allPosts.sort(
               {tag}
             </a>
           ))
-        }
+        } 
       </div>
       <div class="grid grid-cols-1 mt-4 gap-8 gap-y-24 sm:grid-cols-2">
         {
@@ -49,5 +52,4 @@ const sortedPosts = allPosts.sort(
       </div>
     </div>
   </section>
-  <Cta />
 </BaseLayout>

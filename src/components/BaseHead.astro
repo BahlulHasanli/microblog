@@ -1,45 +1,49 @@
 ---
 import "../styles/global.css";
-import { AstroSeo } from "@astrolib/seo";
+import { SEO } from "astro-seo";
+import { ClientRouter } from "astro:transitions";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  image?: string;
+}
+
+const { 
+  title = "Your Website Title",
+  description = "A brief description of your website content.",
+  canonical = "https://yoursite.com",
+  image = "https://yoursite.com/og-image.jpg"
+} = Astro.props;
 ---
 
-<AstroSeo
-  title="Your Page Title"
-  description="A detailed description of your page content."
-  canonical="https://yoursite.com/current-page"
+<SEO
+  title={title}
+  description={description}
+  canonical={canonical}
   openGraph={{
-    url: "https://yoursite.com/current-page",
-    title: "Your Page Title",
-    description: "A detailed description of your page content.",
-    images: [
-      {
-        url: "https://yoursite.com/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Open Graph Image Alt",
-        type: "image/jpeg",
-      },
-    ],
-    site_name: "Your Site Name",
-    type: "website",
-    locale: "en_US",
+    basic: {
+      title: title,
+      type: "website",
+      image: image,
+      url: canonical,
+    },
+    optional: {
+      description: description,
+      siteName: "Your Site Name",
+      locale: "en_US",
+    }
   }}
   twitter={{
-    handle: "@yourhandle",
+    card: "summary_large_image",
     site: "@yoursite",
-    cardType: "summary_large_image",
+    creator: "@yourhandle",
   }}
 />
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<!-- Basic Meta Tags -->
-<title>Your Website Title</title>
-<meta
-  name="description"
-  content="A brief description of your website content."
-/>
 <meta name="keywords" content="keyword1, keyword2, keyword3" />
 <meta name="author" content="Your Name or Company Name" />
 
@@ -101,9 +105,31 @@ import { AstroSeo } from "@astrolib/seo";
 <!-- HTML in your document's head -->
 <link rel="preconnect" href="https://rsms.me/" />
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-<link
-  href="https://api.fontshare.com/v2/css?f[]=jet-brains-mono@1,2&display=swap"
-  rel="stylesheet"
-/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,100..900&family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=panchang@200,300,400,500,600,700&f[]=bebas-neue@400&display=swap&f[]=jet-brains-mono@1,2&display=swap" rel="stylesheet">
 
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script is:inline type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script is:inline nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+<script is:inline src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<ClientRouter />
+
+<style is:global>
+  @keyframes bump {
+    0% {
+      opacity: 0;
+      transform: scale(1) translateX(200px);
+    }
+    50% {
+      opacity: 0.5;
+      transform: scale(1.1);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateX(0);
+    }
+  }
+</style>
+ 

@@ -5,6 +5,9 @@
   --font-sans: Inter, sans-serif;
   --font-display: InterDisplay, monospace;
   --font-mono: JetBrains Mono, monospace;
+  --font-big-shoulders: Big Shoulders, sans-serif;
+  --font-panchang: Panchang, sans-serif;
+  --font-bebas-neue: Bebas Neue, sans-serif;
   --color-base-50: oklch(96.74% 0.001 286.38);
   --color-base-100: oklch(93.73% 0.001 286.37);
   --color-base-200: oklch(87.31% 0.004 271.36);
@@ -39,4 +42,13 @@
   --astro-code-token-string-expression: #2522fc;
   --astro-code-token-punctuation: #ffffff;
   --astro-code-token-link: #ffffff;
+}
+
+.squircle {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(45deg, yellow, blue);
+  --squircle-smooth: 0.3;
+  --squircle-radius: 200px;
+  mask-image: paint(squircle);
 }
