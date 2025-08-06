@@ -18,19 +18,32 @@ const { frontmatter } = Astro.props;
             <em>{frontmatter.description}</em>
           </p>
         </div>
-        <Image
+
+        <div class="flex justify-center items-center flex-col gap-2 my-10">
+          <Image
+            width={1280}
+            height={720}
+            src={frontmatter.author.avatar}
+            alt={frontmatter.author.name}
+            class="squircle !w-[85px] !h-[83px]"
+          />
+          <span class="text-md font-medium text-base-700">{frontmatter.author.name}</span>
+          <p class="text-xs text-zinc-400">
+            {frontmatter.pubDate.toString().slice(0, 10)}
+          </p>
+        </div>
+
+        <div class="max-w-6xl mx-auto">
+          <Image
           width={1280}
           height={720}
           src={frontmatter.image.url}
           alt={frontmatter.image.alt}
-          class="object-cover object-center w-full aspect-12/7 rounded-xl mt-4"
+          class="object-cover object-center aspect-12/7 rounded-xl mt-4"
         />
+
         <div class="flex flex-col justify-between mt-4 md:flex-row">
-          <p class="text-xs text-zinc-500">
-            {frontmatter.pubDate.toString().slice(0, 10)} - Written by: {
-              frontmatter.author
-            }
-          </p>
+       
           <div class="flex gap-3">
             {
               frontmatter.tags.map((tag) => (
@@ -40,6 +53,7 @@ const { frontmatter } = Astro.props;
               ))
             }
           </div>
+        </div>
         </div>
       </div>
 

@@ -27,7 +27,20 @@
           "type": "string"
         },
         "author": {
-          "type": "string"
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "avatar": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "avatar"
+          ],
+          "additionalProperties": false
         },
         "image": {
           "type": "object",

@@ -18,9 +18,9 @@ const { title, url, description, pubDate, author, image, tags } = Astro.props;
 
   <div class="mt-5">
     <div class="flex items-center space-x-1 gap-2 text-xs text-base-500">
-      <img src="https://mockmind-api.uifaces.co/content/human/112.jpg" alt="User" 
-      class="squircle !size-12" />
-      <span class="font-medium">{author}</span>
+      <img src={author.avatar} alt="User" 
+      class="squircle !w-[50px] !h-[48px]" />
+      <span class="font-medium">{author.name}</span>
       <span aria-hidden="true">&middot;</span>
       <time datetime={pubDate} class="text-yellow-700">{pubDate}</time>
     </div>
