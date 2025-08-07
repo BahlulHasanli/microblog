@@ -1,0 +1,145 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { isAuthenticated } from "@/utils/auth";
+
+// Check if user is already authenticated
+if (isAuthenticated(Astro.cookies)) {
+  return Astro.redirect('/');
+}
+---
+
+<BaseLayout>
+    <section class="max-w-md mx-auto py-12">
+        <!-- Başlık -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-big-shoulders font-bold text-base-900 mb-2">
+                Qeydiyyat
+            </h1>
+            <p class="text-base-600 text-sm">
+                Yeni hesab yaradın və bizə qoşulun
+            </p>
+        </div>
+
+        <!-- Form -->
+        <form id="signupForm" class="space-y-6">
+            <!-- Ad Soyad -->
+            <div>
+                <label for="fullName" class="block text-sm font-medium text-base-900 mb-2">
+                    Ad Soyad
+                </label>
+                <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    placeholder="Ad və soyadınızı daxil edin"
+                    required
+                    class="w-full px-4 py-3 border border-base-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200 text-base-900 placeholder-base-400"
+                />
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-base-900 mb-2">
+                    Email
+                </label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="email@example.com"
+                    required
+                    class="w-full px-4 py-3 border border-base-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200 text-base-900 placeholder-base-400"
+                />
+            </div>
+
+            <!-- Şifre -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-base-900 mb-2">
+                    Şifre
+                </label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Güclü bir şifre seçin"
+                    required
+                    class="w-full px-4 py-3 border border-base-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200 text-base-900 placeholder-base-400"
+                />
+                <p class="text-xs text-base-500 mt-1">
+                    Minimum 8 karakter, böyük və kiçik hərf, rəqəm və xüsusi simvol
+                </p>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+                type="submit"
+                class="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-3 px-6 rounded-xl transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+            >
+                Qeydiyyat
+            </button>
+
+            <!-- Error/Success Messages -->
+            <div id="message" class="hidden p-3 rounded-xl text-sm font-medium"></div>
+        </form>
+
+        <!-- Login Link -->
+        <div class="text-center mt-6">
+            <p class="text-base-600 text-sm">
+                Artıq hesabınız var?
+                <a href="/signin" class="text-rose-500 hover:text-rose-600 font-medium transition-colors duration-200">
+                    Daxil olun
+                </a>
+            </p>
+        </div>
+    </section>
+
+    <script>
+        document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+      
+            
+            const form = e.target as HTMLFormElement;
+            const formData = new FormData(form);
+            const messageDiv = document.getElementById('message');
+            
+            if (!messageDiv) return;
+            
+            // Hide previous messages
+            messageDiv.classList.add('hidden');
+            
+            // Get form data
+            const data = {
+                fullName: formData.get('fullName') as string,
+                email: formData.get('email') as string,
+                password: formData.get('password') as string
+            };
+             
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    messageDiv.textContent = result.message || 'Qeydiyyat uğurla tamamlandı!';
+                    messageDiv.className = 'block p-3 rounded-xl text-sm font-medium bg-green-100 text-green-800 border border-green-200';
+                    // form.reset();
+                } else {
+                    // Error
+                    messageDiv.textContent = result.message || 'Bir xəta baş verdi';
+                    messageDiv.className = 'block p-3 rounded-xl text-sm font-medium bg-red-100 text-red-800 border border-red-200';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Şəbəkə xətası baş verdi';
+                messageDiv.className = 'block p-3 rounded-xl text-sm font-medium bg-red-100 text-red-800 border border-red-200';
+            }
+        });
+    </script>
+</BaseLayout>
