@@ -4,17 +4,15 @@ import BlogEntries from "@/components/entries/BlogEntry.astro";
 import { getCollection } from "astro:content";
 import Slider from "@/components/entries/HomeSlider.astro";
 
-
 const allPosts = await getCollection("posts");
-const tags = [...new Set(allPosts.map((post) => post.data.tags).flat())];
 // Sort posts by date in descending order (newest first)
 const sortedPosts = allPosts.sort(
-  (a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate)
+  (a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
 );
 ---
 
 <BaseLayout>
-  <section>
+  <section> 
     <Slider />
     <div class="py-18 max-w-3xl mx-auto">
       <h1
@@ -23,16 +21,16 @@ const sortedPosts = allPosts.sort(
         <span class="font-big-shoulders">99'un</span> <span class="font-semibold">həftəbecəri</span>
       </h1>
       <div class="flex flex-wrap gap-3 mt-8">
-        {
+        <!-- {
           tags.map((tag) => (
             <a
-              class=" hover:text-blue-500 text-xs font-medium text-base-600"
+              class="hover:text-rose-500 text-sm font-medium text-base-600"
               href={`/tags/${tag}`}
             >
               {tag}
             </a>
           ))
-        } 
+        }  -->
       </div>
       <div class="grid grid-cols-1 mt-4 gap-8 gap-y-24 sm:grid-cols-2">
         {

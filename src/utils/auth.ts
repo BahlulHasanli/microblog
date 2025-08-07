@@ -3,26 +3,24 @@ import type { APIContext } from "astro";
 import type { AstroCookies } from "astro";
 
 // JWT secrets
-const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key";
+const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key-change-this";
 
 /**
  * Check if user is authenticated using Astro cookies
  */
 export function isAuthenticated(cookies: AstroCookies): boolean {
-  const accessToken = cookies.get('access-token');
-  console.log('isAuthenticated - accessToken:', accessToken);
-  return accessToken !== undefined && accessToken.value !== '';
+  const accessToken = cookies.get("access-token");
+
+  return accessToken !== undefined && accessToken.value !== "";
 }
 
 /**
  * Get user info from access token cookie
  */
 export async function getUserFromCookies(cookies: AstroCookies): Promise<any> {
-  const accessToken = cookies.get('access-token');
-  console.log('getUserFromCookies - accessToken:', accessToken);
-  
+  const accessToken = cookies.get("access-token");
+
   if (!accessToken || !accessToken.value) {
-    console.log('getUserFromCookies - no token found');
     return null;
   }
 
@@ -32,20 +30,20 @@ export async function getUserFromCookies(cookies: AstroCookies): Promise<any> {
       new TextEncoder().encode(JWT_SECRET)
     );
 
-    console.log('getUserFromCookies - payload:', payload);
+    console.log("getUserFromCookies - payload:", payload);
 
     if (payload.type !== "access") {
-      console.log('getUserFromCookies - invalid token type');
+      console.log("getUserFromCookies - invalid token type");
       return null;
     }
 
     return {
       userId: payload.userId,
       email: payload.email,
-      fullName: payload.fullName
+      fullName: payload.fullName,
     };
   } catch (error) {
-    console.log('getUserFromCookies - error:', error);
+    console.log("getUserFromCookies - error:", error);
     return null;
   }
 }

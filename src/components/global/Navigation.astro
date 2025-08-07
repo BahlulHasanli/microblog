@@ -2,6 +2,7 @@
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
+
 const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
 ---
 <div
@@ -51,7 +52,6 @@ const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
     <div
       class="items-center justify-center list-none space-y-2 md:space-y-0 md:ml-auto md:inline-flex md:text-left gap-3"
     >
-    {isLoggedIn}
       {!isLoggedIn ? (
         <>
           <a
@@ -74,7 +74,7 @@ const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
       ) : (
         <>
           <span class="text-base-700 text-sm px-2">
-            Xoş gəlmisiniz, {user?.fullName || user?.email}
+            Xoş gəlmisiniz, {user.fullName}
           </span>
           <button
             id="logoutBtn"

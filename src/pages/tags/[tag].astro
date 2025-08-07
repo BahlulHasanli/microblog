@@ -9,21 +9,21 @@ export async function getStaticPaths() {
     ...new Set(allPosts.map((post) => post.data.tags).flat()),
   ];
 
-  return uniqueTags.map((tag) => {
-    // Filter posts by tag
-    const filteredPosts = allPosts.filter((post) =>
-      post.data.tags.includes(tag)
-    );
-    // Sort filtered posts by date in descending order
-    const sortedPosts = filteredPosts.sort(
-      (a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate)
-    );
+  // return uniqueTags.map((tag) => {
+  //   // Filter posts by tag
+  //   const filteredPosts = allPosts.filter((post) =>
+  //     post.data.tags.includes(tag)
+  //   );
+  //   // Sort filtered posts by date in descending order
+  //   const sortedPosts = filteredPosts.sort(
+  //     (a, b) => new Date(b.data.pubDate) - new Date(a.data.pubDate)
+  //   );
 
-    return {
-      params: { tag },
-      props: { posts: sortedPosts },
-    };
-  });
+  //   return {
+  //     params: { tag },
+  //     props: { posts: sortedPosts },
+  //   };
+  // });
 }
 
 const { tag } = Astro.params;
@@ -37,9 +37,9 @@ const { posts } = Astro.props;
         class="text-4xl text-balance font-medium font-display text-base-900 max-w-xl"
       >
         All tags
-      </h1>
+      </h1> 
       <div class="grid grid-cols-1 mt-4 gap-8 gap-y-24 sm:grid-cols-2">
-        {
+        <!-- {
           posts.map((post) => (
             <BlogEntries
               url={"/posts/" + post.slug}
@@ -52,7 +52,7 @@ const { posts } = Astro.props;
               tags={post.data.tags}
             />
           ))
-        }
+        } -->
       </div>
     </div>
   </section>
