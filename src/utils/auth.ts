@@ -20,9 +20,7 @@ export function isAuthenticated(cookies: AstroCookies): boolean {
 export async function getUserFromCookies(cookies: AstroCookies): Promise<any> {
   const accessToken = cookies.get("access-token");
 
-  if (!accessToken || !accessToken.value) {
-    return null;
-  }
+  if (!accessToken || !accessToken.value) return null;
 
   try {
     const { payload } = await jwtVerify(
@@ -32,10 +30,7 @@ export async function getUserFromCookies(cookies: AstroCookies): Promise<any> {
 
     console.log("getUserFromCookies - payload:", payload);
 
-    if (payload.type !== "access") {
-      console.log("getUserFromCookies - invalid token type");
-      return null;
-    }
+    if (payload.type !== "access") return null;
 
     return {
       userId: payload.userId,

@@ -2,6 +2,10 @@
 import BaseHead from "@/components/BaseHead.astro";
 import Navigation from "@/components/global/Navigation.astro";
 import Footer from "@/components/global/Footer.astro";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
 ---
 
 <html lang="en">  
@@ -9,7 +13,7 @@ import Footer from "@/components/global/Footer.astro";
     <BaseHead />
   </head>
   <body class=`flex flex-col  min-h-screen px-8 mx-auto bg-white`>
-    <Navigation /> 
+    <Navigation isLoggedIn={isLoggedIn} user={user} /> 
     <main class="flex-grow">
       <slot />
     </main>
