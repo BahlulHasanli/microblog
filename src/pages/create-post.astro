@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { isAuthenticated, getUserFromCookies } from "../utils/auth";
+import { categories } from "../data/categories";
 
 export const prerender = false;
 
@@ -122,16 +123,20 @@ if (Astro.request.method === "POST") {
       </div>
       
       <div>
-        <label for="tags" class="block text-sm font-medium text-base-700 mb-1.5">Etiketler</label>
+        <label for="categories" class="block text-sm font-medium text-base-700 mb-1.5">Kategoriler</label>
         <div class="relative">
-          <input
-            type="text"
-            id="tags"
-            name="tags"
-            placeholder="Oyun, Film, Teknoloji"
+          <select
+            id="categories"
+            name="categories"
+            multiple
             class="w-full px-3 py-2 text-sm border border-base-200 rounded-md focus:ring-1 focus:ring-base-500 focus:border-base-500 text-base-900"
-          />
-          <div class="mt-1 text-xs text-base-500">Etiketleri virgülle ayırın</div>
+            size="5"
+          >
+            {categories.map((category) => (
+              <option value={category}>{category}</option>
+            ))}
+          </select>
+          <div class="mt-1 text-xs text-base-500">Birden fazla kategori seçmek için CTRL tuşuna basılı tutun</div>
         </div>
       </div>
       

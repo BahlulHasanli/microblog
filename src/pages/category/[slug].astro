@@ -1,0 +1,69 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import BlogEntries from "@/components/entries/BlogEntry.astro";
+import { getCollection } from "astro:content";
+import { categories, slugifyCategory } from "@/data/categories";
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+ 
+const category = categories.find(cat => slugifyCategory(cat) === slug);
+
+if (!category) {
+  return new Response(null, {
+    status: 404,
+  });
+
+}
+
+const allPosts = await getCollection("posts");
+
+const categoryPosts = allPosts.filter((post) => 
+  post.data.categories && post.data.categories.includes(category)
+);
+
+const sortedPosts = categoryPosts.sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+---
+
+<BaseLayout title={`${category} Kategorisi - Mikroblog`}>
+  <section>
+    <div class="py-18 max-w-3xl mx-auto px-4">
+      <div class="flex items-center gap-2 mb-6">
+        <a href="/" class="text-sm text-base-500 hover:text-base-900">Ana Səhifə</a>
+        <span class="text-base-400">/</span>
+        <span class="text-sm font-medium text-base-900">{category}</span>
+      </div>
+      
+      <h1 class="text-4xl text-balance font-light font-display text-base-900 mb-6">
+        <span class="font-semibold">{category}</span> bölməsi
+      </h1>
+
+      {sortedPosts.length === 0 ? (
+        <div class="text-center py-12">
+          <p class="text-base-600">Bölmədə heçnə mövcud deyil.</p>
+          <a href="/" class="text-base-900 font-medium underline underline-offset-4 underline-2 decoration-wavy hover:no-underline mt-2 inline-block">
+            Ana səhifəyə qayıt
+          </a>
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 mt-8 gap-8 gap-y-24 sm:grid-cols-2">
+          {sortedPosts.map((post) => (
+            <BlogEntries
+              url={"/posts/" + post.slug}
+              alt={post.data.title}
+              categories={post.data.categories}
+              title={post.data.title}
+              author={post.data.author}
+              image={post.data.image.url}
+              description={post.data.description}
+              pubDate={post.data.pubDate.toString().slice(0, 10)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

@@ -8,7 +8,7 @@ description: "Grand Theft Auto VI is an upcoming action-adventure game developed
 image:
   url: "https://images5.alphacoders.com/134/thumb-1920-1343612.png"
   alt: "asdasd"
-tags: ["oyun"]
+categories: ["Oyun"]
 ---
 
 Grand Theft Auto 6's publisher dodged on providing hard numbers when asked about the pricing of Rockstar Games' highly anticipated open-world crime epic, but said that Take-Two Interactive's goal with game costs is "to deliver more value than what we charge," according to a new interview with Variety.

@@ -58,7 +58,7 @@
           ],
           "additionalProperties": false
         },
-        "tags": {
+        "categories": {
           "type": "array",
           "items": {
             "type": "string"
@@ -74,7 +74,7 @@
         "description",
         "author",
         "image",
-        "tags"
+        "categories"
       ],
       "additionalProperties": false
     }

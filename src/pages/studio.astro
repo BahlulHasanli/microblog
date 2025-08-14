@@ -1,0 +1,13 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Editor from '../components/Editor';
+---
+
+<BaseLayout title="Studio">
+  <Editor client:only="react" />
+</BaseLayout>
+
+<style>
+  @import "../styles/_variables.scss";
+  @import "../styles/_keyframe-animations.scss";
+</style>

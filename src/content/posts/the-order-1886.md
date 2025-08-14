@@ -8,7 +8,7 @@ description: "The Order: 1886 is a 2015 action-adventure video game developed by
 image:
   url: "https://images2.alphacoders.com/519/thumb-1920-519647.jpg"
   alt: "Ready at Dawn, The Order 1886"
-tags: [""]
+categories: ["Oyun"]
 ---
 
 Set in an alternate 19th century timeline where, thousands of years ago, a genetically distinct strain of humanity evolved from the rest of mankind to become 'Half-Breeds' - humans with bestial traits - the emergence of which swiftly led to an inter-species conflict which has been fought for centuries.  

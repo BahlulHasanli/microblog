@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
-const { title, url, description, pubDate, author, image, tags } = Astro.props;
+const { title, url, description, pubDate, author, image, categories } = Astro.props;
+import { slugifyCategory } from "../../data/categories";
 ---
 
 <article class="flex flex-col flex-1 h-full group">
@@ -22,8 +23,21 @@ const { title, url, description, pubDate, author, image, tags } = Astro.props;
       class="squircle !w-[50px] !h-[48px]" />
       <span class="font-medium">{author.name}</span>
       <span aria-hidden="true">&middot;</span>
-      <time datetime={pubDate} class="text-yellow-700">{pubDate}</time>
+      {categories && categories.length > 0 && (
+        <span class="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <a 
+              href={`/category/${slugifyCategory(category)}`}
+              class="text-yellow-700"
+            >
+              {category}
+            </a>
+          ))}
+        </span>
+      )}
     </div>
+    
+
 
     <h3 class="mt-4 text-base text-base-900 text-balance">
       <a href={url} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">{title}</a>

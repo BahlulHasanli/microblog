@@ -1,6 +1,8 @@
 ---
 import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { slugifyCategory } from "../data/categories";
+
 const { frontmatter } = Astro.props;
 ---
 
@@ -37,22 +39,24 @@ const { frontmatter } = Astro.props;
           <div class="flex flex-col justify-between mt-4 md:flex-row">
             <div class="flex gap-3">
               {
-                frontmatter.tags.map((tag) => (
+                frontmatter.categories.map((category: string) => (
                   <span class="hover:text-blue-500 text-sm font-medium text-base-600">
-                    <a href={`/tags/${tag}`}>{tag}</a>
+                    <a href={`/category/${slugifyCategory(category)}`}>{category}</a>
                   </span>
                 ))
               }
             </div>
           </div>
-          <Image
-          width={1280}
-          height={720}
-          src={frontmatter.image.url}
-          alt={frontmatter.image.alt}
-          class="object-cover object-center aspect-12/7 rounded-xl mt-4"
-        />
-
+          
+          {frontmatter.image && frontmatter.image.url && (
+            <Image
+              width={1280}
+              height={720}
+              src={frontmatter.image.url}
+              alt={frontmatter.image.alt || frontmatter.title}
+              class="object-cover object-center aspect-12/7 rounded-xl mt-4"
+            />
+          )}
 
         </div>
       </div>

@@ -3,11 +3,12 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
 import { getCollection } from "astro:content";
 import Slider from "@/components/entries/HomeSlider.astro";
+import { categories, slugifyCategory } from "@/data/categories";
 
-const allPosts = await getCollection("posts");
+const allPosts = (await getCollection("posts"));
 // Sort posts by date in descending order (newest first)
 const sortedPosts = allPosts.sort(
-  (a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 ---
 
@@ -21,16 +22,16 @@ const sortedPosts = allPosts.sort(
         <span class="font-big-shoulders">99'un</span> <span class="font-semibold">həftəbecəri</span>
       </h1>
       <div class="flex flex-wrap gap-3 mt-8">
-        <!-- {
-          tags.map((tag) => (
+        {
+          categories.map((category) => (
             <a
               class="hover:text-rose-500 text-sm font-medium text-base-600"
-              href={`/tags/${tag}`}
+              href={`/category/${slugifyCategory(category)}`}
             >
-              {tag}
+              {category}
             </a>
           ))
-        }  -->
+        }
       </div>
       <div class="grid grid-cols-1 mt-4 gap-8 gap-y-24 sm:grid-cols-2">
         {
@@ -38,7 +39,7 @@ const sortedPosts = allPosts.sort(
             <BlogEntries
               url={"/posts/" + post.slug}
               alt={post.data.title}
-              tags={post.data.tags}
+              categories={post.data.categories}
               title={post.data.title}
               author={post.data.author}
               image={post.data.image.url}

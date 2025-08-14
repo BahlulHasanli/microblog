@@ -8,7 +8,7 @@ description: "Mafia: The Old Country is a 2025 action-adventure game developed b
 image:
   url: "https://4kwallpapers.com/images/wallpapers/mafia-the-old-3840x2160-22472.jpg"
   alt: "Mafia: The Old Country"
-tags: ["oyun"]
+categories: ["Oyun"]
 ---
 
 rowing up, my father and I never saw eye to eye. We were always engaged in an ideological war, as my passion for creativity clashed with his cold focus on making money and putting food on the table above all else. There was a cultural divide between us that took me nearly two decades to understand. While I was born and raised in Massachusetts, he grew up on the outskirts of Capestrano, a small town nestled into the Italian countryside.

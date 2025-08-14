@@ -33,3 +33,7 @@ pnpm-debug.log*
 *.swp
 *.tmp
 Thumbs.db
+
+# Authentication tokens
+.npmrc
+/public/images
