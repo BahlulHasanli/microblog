@@ -1,4 +1,4 @@
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent, useEffect } from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
 
@@ -14,44 +14,24 @@ export default function Editor() {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
-  
+
   // Kategori seçme/kaldırma işleyicisi
   const handleCategoryToggle = (categoryId: string) => {
-    setCategories(prev => {
+    setCategories((prev) => {
       if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
+        return prev.filter((id) => id !== categoryId);
       } else {
         return [...prev, categoryId];
       }
     });
   };
 
-  // Kapak resmi yükleme işleyicisi
-  const handleCoverImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverImage(file);
-
-      // Resim önizlemesi oluştur
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCoverImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Kapak resmi seçme dialogunu açma
-  const handleSelectCoverImage = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Kapak resmini kaldırma
-  const handleRemoveCoverImage = () => {
-    setCoverImage(null);
-    setCoverImagePreview("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+  // Kapak resmi değişikliğini izleme
+  const handleCoverImageChange = (file: File | null) => {
+    setCoverImage(file);
+    // Önizleme artık SimpleEditor içinde yapılıyor
+    if (!file) {
+      setCoverImagePreview("");
     }
   };
 
@@ -70,28 +50,32 @@ export default function Editor() {
     try {
       // JSON içeriğini Markdown'a dönüştür
       const markdownContent = convertJsonToMarkdown(editorContent);
-      
+
       // Editör içeriğinden description değerini kontrol et
       // Eğer description değeri boşsa ve editorContent içinde description düğümü varsa
       // description değerini editorContent'ten al
       let descriptionValue = description;
-      if (editorContent && editorContent.content && editorContent.content.length >= 2) {
+      if (
+        editorContent &&
+        editorContent.content &&
+        editorContent.content.length >= 2
+      ) {
         const descNode = editorContent.content[1];
-        if (descNode && descNode.type === 'description' && descNode.content) {
+        if (descNode && descNode.type === "description" && descNode.content) {
           // Description düğümünden metin içeriğini al
           const descText = descNode.content
-            .filter(item => item.type === 'text')
-            .map(item => item.text)
-            .join('');
-          
-          if (descText && descText.trim() !== '') {
+            .filter((item) => item.type === "text")
+            .map((item) => item.text)
+            .join("");
+
+          if (descText && descText.trim() !== "") {
             descriptionValue = descText;
             // State'i de güncelle
             setDescription(descText);
           }
         }
       }
-      
+
       console.log("Kaydedilen açıklama:", descriptionValue);
 
       // FormData oluştur
@@ -99,7 +83,7 @@ export default function Editor() {
       formData.append("title", title);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
-      formData.append("categories", categories.join(','));
+      formData.append("categories", categories.join(","));
 
       // Kapak resmi varsa ekle
       if (coverImage) {
@@ -186,10 +170,17 @@ export default function Editor() {
     switch (node.type) {
       case "title":
         // Title düğümünü başlık olarak işle
-        return "# " + (node.content ? node.content.map(processTextNode).join("") : "") + "\n\n";
+        return (
+          "# " +
+          (node.content ? node.content.map(processTextNode).join("") : "") +
+          "\n\n"
+        );
       case "description":
         // Description düğümünü normal paragraf olarak işle
-        return (node.content ? node.content.map(processTextNode).join("") : "") + "\n\n";
+        return (
+          (node.content ? node.content.map(processTextNode).join("") : "") +
+          "\n\n"
+        );
       case "paragraph":
         return processParagraph(node) + "\n\n";
       case "heading":
@@ -331,6 +322,10 @@ export default function Editor() {
     return "";
   }
 
+  useEffect(() => {
+    console.log(editorContent);
+  }, [editorContent]);
+
   return (
     <div className="editor-container">
       <div className="editor-header">
@@ -343,51 +338,18 @@ export default function Editor() {
                 <button
                   key={slugifyCategory(category)}
                   type="button"
-                  className={`category-button ${categories.includes(slugifyCategory(category)) ? 'selected' : ''}`}
-                  onClick={() => handleCategoryToggle(slugifyCategory(category))}
+                  className={`category-button ${
+                    categories.includes(slugifyCategory(category))
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    handleCategoryToggle(slugifyCategory(category))
+                  }
                 >
                   {category}
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Kapak Resmi Yükleme Bölümü */}
-          <div className="editor-field-group">
-            <label className="field-label">Örtük şəkli:</label>
-            <div className="cover-image-section">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleCoverImageChange}
-                accept="image/*"
-                style={{ display: "none" }}
-              />
-
-              {!coverImagePreview ? (
-                <button
-                  type="button"
-                  onClick={handleSelectCoverImage}
-                  className="cover-image-button"
-                >
-                  Şəkil əlavə et
-                </button>
-              ) : (
-                <div className="cover-image-preview-container">
-                  <img
-                    src={coverImagePreview}
-                    alt="Örtük şəkli önizləmə"
-                    className="cover-image-preview"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleRemoveCoverImage}
-                    className="remove-cover-image"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -405,12 +367,14 @@ export default function Editor() {
             : "Yadda saxla"}
         </button>
       </div>
-      <SimpleEditor 
-        onUpdate={setEditorContent} 
+      <SimpleEditor
+        onUpdate={setEditorContent}
         title={title}
         description={description}
         onTitleChange={setTitle}
         onDescriptionChange={setDescription}
+        coverImage={coverImage}
+        onCoverImageChange={handleCoverImageChange}
       />
 
       <style>{`

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { EditorContent, EditorContext, useEditor, Node } from "@tiptap/react";
+import { ChangeEvent, useRef } from "react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
@@ -10,7 +11,8 @@ import { Typography } from "@tiptap/extension-typography";
 import { Highlight } from "@tiptap/extension-highlight";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
-import { Selection, Placeholder } from "@tiptap/extensions";
+import { Selection, Placeholder, Focus } from "@tiptap/extensions";
+
 import { Document } from "@tiptap/extension-document";
 
 // --- UI Primitives ---
@@ -88,42 +90,7 @@ const MainToolbarContent = ({
     // Editor null ise işlem yapma
     if (!editor) return;
 
-    const handleBeforeCreate = () => {
-      // Resim eklenirken cursor pozisyonunu kontrol et
-      const { state } = editor;
-      const { selection } = state;
-
-      const resolvedPos = state.doc.resolve(selection.from);
-      let currentNode = resolvedPos.parent;
-      let depth = resolvedPos.depth;
-
-      // Title veya description içinde mi kontrol et
-      while (depth >= 0) {
-        if (
-          currentNode.type.name === "title" ||
-          currentNode.type.name === "description"
-        ) {
-          // Content alanının başlangıç pozisyonunu hesapla
-          let contentPos = 1; // doc başlangıcı
-          try {
-            contentPos += state.doc.child(0).nodeSize; // title node size
-            contentPos += state.doc.child(1).nodeSize; // description node size
-
-            // Yeni pozisyona taşı
-            const newSelection = state.selection.constructor.near(
-              state.doc.resolve(contentPos)
-            );
-            editor.view.dispatch(state.tr.setSelection(newSelection));
-          } catch (error) {
-            console.warn("Position calculation error:", error);
-          }
-          break;
-        }
-        depth--;
-        currentNode = depth >= 0 ? resolvedPos.node(depth) : null;
-        if (!currentNode) break;
-      }
-    };
+    const handleBeforeCreate = () => {};
 
     // Image upload button click handler
     const imageButton = document.querySelector(
@@ -245,6 +212,8 @@ interface SimpleEditorProps {
   description?: string;
   onTitleChange?: (title: string) => void;
   onDescriptionChange?: (description: string) => void;
+  coverImage?: File | null;
+  onCoverImageChange?: (file: File | null) => void;
 }
 
 export function SimpleEditor({
@@ -253,6 +222,8 @@ export function SimpleEditor({
   description = "",
   onTitleChange,
   onDescriptionChange,
+  coverImage = null,
+  onCoverImageChange,
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const { height } = useWindowSize();
@@ -260,121 +231,12 @@ export function SimpleEditor({
     "main" | "highlighter" | "link"
   >("main");
   const toolbarRef = React.useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [coverImagePreview, setCoverImagePreview] = React.useState<string>("");
 
-  // Özel belge yapısı oluşturma - title ve description sadece bir kez olacak şekilde düzenleme
-  const CustomDocument = Document.extend({
-    content: "title description block+",
-
-    // Document'in content kontrolü için özel parsing
-    addGlobalAttributes() {
-      return [
-        {
-          types: ["title", "description"],
-          attributes: {
-            unique: {
-              default: true,
-            },
-          },
-        },
-      ];
-    },
+  const FixedDocument = Document.extend({
+    content: "heading paragraph block*",
   });
-
-  // Özel düğüm tanımlamaları
-  const Title = Node.create({
-    name: "title",
-    group: "block",
-    content: "text*",
-    isolating: true, // Bu node'un başka node'lardan etkilenmesini önler
-    defining: true, // Bu node'un belge yapısında özel rol oynadığını belirtir
-    parseHTML() {
-      return [{ tag: "h1.document-title" }];
-    },
-    renderHTML({ HTMLAttributes }) {
-      return ["h1", { class: "document-title", ...HTMLAttributes }, 0];
-    },
-    addKeyboardShortcuts() {
-      return {
-        Tab: () => {
-          // Title'dan Tab ile description'a geç
-          const { state, dispatch } = this.editor;
-          const descriptionPos = state.doc.child(1).isText
-            ? 3
-            : state.doc.child(1).nodeSize + 1;
-          const selection = state.selection.constructor.create(
-            state.doc,
-            descriptionPos
-          );
-          dispatch(state.tr.setSelection(selection));
-          return true;
-        },
-        Enter: () => {
-          // Title'dan Enter ile description'a geç
-          const { state, dispatch } = this.editor;
-          const descriptionPos = state.doc.child(1).isText
-            ? 3
-            : state.doc.child(1).nodeSize + 1;
-          const selection = state.selection.constructor.create(
-            state.doc,
-            descriptionPos
-          );
-          dispatch(state.tr.setSelection(selection));
-          return true;
-        },
-      };
-    },
-  });
-
-  const Description = Node.create({
-    name: "description",
-    group: "block",
-    content: "text*",
-    isolating: true, // Bu node'un başka node'lardan etkilenmesini önler
-    defining: true, // Bu node'un belge yapısında özel rol oynadığını belirtir
-    parseHTML() {
-      return [{ tag: "p.document-description" }];
-    },
-    renderHTML({ HTMLAttributes }) {
-      return ["p", { class: "document-description", ...HTMLAttributes }, 0];
-    },
-    addKeyboardShortcuts() {
-      return {
-        Enter: () => {
-          // Description'dan Enter ile ilk content paragraph'a geç
-          const { state, dispatch } = this.editor;
-          let contentPos = 1; // doc başlangıcı
-          contentPos += state.doc.child(0).nodeSize; // title node size
-          contentPos += state.doc.child(1).nodeSize; // description node size
-
-          const selection = state.selection.constructor.create(
-            state.doc,
-            contentPos
-          );
-          dispatch(state.tr.setSelection(selection));
-          return true;
-        },
-      };
-    },
-  });
-
-  // Başlık ve açıklama değişikliklerini izleme
-  const handleTitleUpdate = React.useCallback(
-    (titleContent: string) => {
-      if (onTitleChange) {
-        onTitleChange(titleContent);
-      }
-    },
-    [onTitleChange]
-  );
-
-  const handleDescriptionUpdate = React.useCallback(
-    (descContent: string) => {
-      if (onDescriptionChange) {
-        onDescriptionChange(descContent);
-      }
-    },
-    [onDescriptionChange]
-  );
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -389,25 +251,37 @@ export function SimpleEditor({
       },
     },
     extensions: [
-      CustomDocument,
-      Title,
-      Description,
+      FixedDocument,
       StarterKit.configure({
-        document: false, // Özel belge kullandığımız için devre dışı bırakıyoruz
+        document: false,
         horizontalRule: false,
         link: {
           openOnClick: false,
           enableClickSelection: true,
         },
       }),
+      Focus.configure({
+        className: "has-focus",
+        mode: "all",
+      }),
       Placeholder.configure({
         showOnlyCurrent: false,
-        placeholder: ({ node }) => {
-          if (node.type.name === "title") {
+        placeholder: ({ node, pos, editor }) => {
+          const nodes = editor?.state.doc.content.content || [];
+
+          if (node.type.name === "heading") {
             return "Başlıq";
           }
-          if (node.type.name === "description") {
-            return "Açıqlama";
+
+          if (node.type.name === "paragraph") {
+            const firstParagraphIndex = nodes.findIndex(
+              (n) => n.type.name === "paragraph"
+            );
+            const currentIndex = nodes.findIndex((n) => n === node);
+
+            if (firstParagraphIndex === currentIndex) {
+              return "Açıqlama";
+            }
           }
 
           return "";
@@ -431,43 +305,26 @@ export function SimpleEditor({
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
+    autofocus: true,
     content: {
       type: "doc",
       content: [
         {
-          type: "title",
-          content: title ? [{ type: "text", text: title }] : [],
-        },
-        {
-          type: "description",
-          content: description ? [{ type: "text", text: description }] : [],
+          type: "heading",
+          attrs: {
+            level: 1,
+          },
+          content: title ? [{ type: "text", text: title }] : undefined,
         },
         {
           type: "paragraph",
+          content: description
+            ? [{ type: "text", text: description }]
+            : undefined,
         },
       ],
     },
     onUpdate: ({ editor }) => {
-      // Başlık ve açıklama içeriğini izleme - daha güvenli erişim
-      const doc = editor.state.doc;
-
-      try {
-        const titleNode = doc.child(0);
-        const descriptionNode = doc.child(1);
-
-        if (titleNode && titleNode.type.name === "title") {
-          const titleContent = titleNode.textContent;
-          handleTitleUpdate(titleContent);
-        }
-
-        if (descriptionNode && descriptionNode.type.name === "description") {
-          const descContent = descriptionNode.textContent;
-          handleDescriptionUpdate(descContent);
-        }
-      } catch (error) {
-        console.warn("Error accessing title/description nodes:", error);
-      }
-
       if (onUpdate) {
         onUpdate(editor.getJSON());
       }
@@ -479,106 +336,204 @@ export function SimpleEditor({
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
   });
 
+  // Başlık ve açıklama değerlerini izlemek için bir useEffect kullanıyoruz
+  React.useEffect(() => {
+    if (!editor) return;
+
+    // Başlık ve açıklama değerlerini izlemek için bir işlev
+    const updateTitleAndDescription = () => {
+      try {
+        const content = editor.getJSON().content;
+
+        if (!content || content.length === 0) return;
+
+        // Başlık değerini al
+        const headingNode = content.find((node) => node.type === "heading");
+        if (headingNode?.content && onTitleChange) {
+          const headingText = headingNode.content
+            .filter((item) => item.type === "text")
+            .map((item) => ("text" in item ? item.text : ""))
+            .join("");
+
+          if (headingText && headingText !== title) {
+            onTitleChange(headingText);
+          }
+        }
+
+        // Açıklama değerini al
+        const paragraphNode = content.find((node) => node.type === "paragraph");
+        if (paragraphNode?.content && onDescriptionChange) {
+          const paragraphText = paragraphNode.content
+            .filter((item) => item.type === "text")
+            .map((item) => ("text" in item ? item.text : ""))
+            .join("");
+
+          if (paragraphText && paragraphText !== description) {
+            onDescriptionChange(paragraphText);
+          }
+        }
+      } catch (error) {
+        console.error("Editör içeriği güncellenirken hata oluştu:", error);
+      }
+    };
+
+    // Editör içeriği değiştiğinde başlık ve açıklama değerlerini güncelle
+    editor.on("update", updateTitleAndDescription);
+
+    // Temizleme işlevi
+    return () => {
+      editor.off("update", updateTitleAndDescription);
+    };
+  }, [editor, onTitleChange, onDescriptionChange, title, description]);
+
   React.useEffect(() => {
     if (!isMobile && mobileView !== "main") {
       setMobileView("main");
     }
   }, [isMobile, mobileView]);
 
-  // Editor mount olduktan sonra document yapısını kontrol et ve düzelt
+  // Document yapısı kontrolü kaldırıldı
+
+  // Title ve description değişikliklerini izleme
+  const handleTitleChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (onTitleChange) {
+        onTitleChange(e.target.value);
+      }
+    },
+    [onTitleChange]
+  );
+
+  const handleDescriptionChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      if (onDescriptionChange) {
+        onDescriptionChange(e.target.value);
+      }
+    },
+    [onDescriptionChange]
+  );
+
+  // Kapak resmi işlemleri
   React.useEffect(() => {
-    if (editor && editor.isEditable) {
-      // Debounced document structure validation
-      let timeoutId: number;
-
-      const validateDocumentStructure = () => {
-        const { state } = editor;
-        const { doc } = state;
-
-        // Title ve description node'larının düzgün konumda olduğunu kontrol et
-        const firstChild = doc.child(0);
-        const secondChild = doc.child(1);
-
-        // İlk iki node title ve description olmalı
-        if (
-          firstChild.type.name !== "title" ||
-          secondChild.type.name !== "description"
-        ) {
-          return; // Yapı bozuksa müdahale etme, kullanıcı deneyimini bozabilir
-        }
-
-        // Duplike title/description kontrolü - sadece 3. pozisyondan sonrası için
-        let hasInvalidDuplicate = false;
-        let pos = 0;
-
-        doc.descendants((node, nodePos) => {
-          if (nodePos > firstChild.nodeSize + secondChild.nodeSize) {
-            if (
-              node.type.name === "title" ||
-              node.type.name === "description"
-            ) {
-              hasInvalidDuplicate = true;
-            }
-          }
-        });
-
-        if (hasInvalidDuplicate) {
-          console.warn("Invalid duplicate title/description detected");
-        }
+    // Eğer dışarıdan bir coverImage gelirse, önizlemeyi güncelle
+    if (coverImage) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCoverImagePreview(reader.result as string);
       };
-
-      const handleEditorUpdate = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = window.setTimeout(validateDocumentStructure, 100); // 100ms debounce
-      };
-
-      // İlk kontrol
-      timeoutId = window.setTimeout(validateDocumentStructure, 0);
-
-      // Editor update'lerinde kontrol et
-      editor.on("update", handleEditorUpdate);
-
-      return () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        editor.off("update", handleEditorUpdate);
-      };
+      reader.readAsDataURL(coverImage);
+    } else {
+      setCoverImagePreview("");
     }
-  }, [editor]);
+  }, [coverImage]);
+
+  // Kapak resmi yükleme işleyicisi
+  const handleCoverImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (onCoverImageChange) {
+        onCoverImageChange(file);
+      }
+
+      // Resim önizlemesi oluştur
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCoverImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Kapak resmi seçme dialogunu açma
+  const handleSelectCoverImage = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Kapak resmini kaldırma
+  const handleRemoveCoverImage = () => {
+    if (onCoverImageChange) {
+      onCoverImageChange(null);
+    }
+    setCoverImagePreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   return (
-    <div className="simple-editor-wrapper">
-      <EditorContext.Provider value={{ editor }}>
-        <Toolbar
-          ref={toolbarRef}
-          style={{
-            ...(isMobile
-              ? {
-                  bottom: `calc(100% - ${height - rect.y}px)`,
-                }
-              : {}),
-          }}
-        >
-          {mobileView === "main" ? (
-            <MainToolbarContent
-              onHighlighterClick={() => setMobileView("highlighter")}
-              onLinkClick={() => setMobileView("link")}
-              isMobile={isMobile}
-              editor={editor}
-            />
-          ) : (
-            <MobileToolbarContent
-              type={mobileView === "highlighter" ? "highlighter" : "link"}
-              onBack={() => setMobileView("main")}
-            />
-          )}
-        </Toolbar>
+    <>
+      <div className="simple-editor-wrapper">
+        <EditorContext.Provider value={{ editor }}>
+          <Toolbar
+            ref={toolbarRef}
+            style={{
+              ...(isMobile
+                ? {
+                    bottom: `calc(100% - ${height - rect.y}px)`,
+                  }
+                : {}),
+            }}
+          >
+            {mobileView === "main" ? (
+              <MainToolbarContent
+                onHighlighterClick={() => setMobileView("highlighter")}
+                onLinkClick={() => setMobileView("link")}
+                isMobile={isMobile}
+                editor={editor}
+              />
+            ) : (
+              <MobileToolbarContent
+                type={mobileView === "highlighter" ? "highlighter" : "link"}
+                onBack={() => setMobileView("main")}
+              />
+            )}
+          </Toolbar>
 
-        <EditorContent
-          editor={editor}
-          role="presentation"
-          className="simple-editor-content"
-        />
-      </EditorContext.Provider>
-    </div>
+          <div className="simple-editor-content">
+            {/* Kapak resmi alanı */}
+            <div className="editor-cover-image-container">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleCoverImageChange}
+                accept="image/*"
+                style={{ display: "none" }}
+              />
+
+              {!coverImagePreview ? (
+                <button
+                  type="button"
+                  onClick={handleSelectCoverImage}
+                  className="cover-image-button"
+                >
+                  Örtük şəkli əlavə et
+                </button>
+              ) : (
+                <div className="cover-image-preview-container">
+                  <img
+                    src={coverImagePreview}
+                    alt="Örtük şəkli önizləmə"
+                    className="cover-image-preview"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoverImage}
+                    className="remove-cover-image"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <EditorContent
+              editor={editor}
+              role="presentation"
+              className="tiptap-editor-content"
+            />
+          </div>
+        </EditorContext.Provider>
+      </div>
+    </>
   );
 }
