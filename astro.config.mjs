@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
-import db from "@astrojs/db";
+
 
 import react from "@astrojs/react";
 import node from "@astrojs/node";
@@ -26,7 +26,7 @@ export default defineConfig({
     drafts: true,
   },
   site: "http://localhost:4321",
-  integrations: [db(), sitemap(), mdx(), react()],
+  integrations: [sitemap(), mdx(), react()],
   adapter: node({
     mode: "standalone",
   }),

@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { verify } from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
 export const prerender = false;
 
@@ -38,9 +38,13 @@ export const POST: APIRoute = async (ctx) => {
     // If refresh token exists, invalidate it
     if (refreshToken) {
       try {
-        const decoded = verify(refreshToken, REFRESH_SECRET) as any;
-        if (decoded.tokenId) {
-          refreshTokenStore.delete(decoded.tokenId);
+        const { payload } = await jwtVerify(
+          refreshToken,
+          new TextEncoder().encode(REFRESH_SECRET)
+        );
+        
+        if (payload.tokenId) {
+          refreshTokenStore.delete(payload.tokenId as string);
         }
       } catch (error) {
         // Token might be invalid, but we still want to clear cookies

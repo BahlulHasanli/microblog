@@ -1,4 +1,9 @@
-import { db, users, isDbError, eq } from "astro:db";
+import db from "../../../../db";
+import { usersTable } from "../../../../db/schema";
+import { eq } from "drizzle-orm";
+
+// MySQL hata işleme için
+type DatabaseError = Error & { code?: string; };
 import type { APIRoute } from "astro";
 import * as bcrypt from "bcrypt";
 import { SignJWT, jwtVerify } from "jose";
@@ -164,13 +169,17 @@ export const POST: APIRoute = async (ctx) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Save to database
-    const result = await db.insert(users).values({
+    const now = Math.floor(Date.now() / 1000); // Unix timestamp
+
+    const result = await db.insert(usersTable).values({
       fullName,
       email,
       password: hashedPassword,
+      createdAt: now,
+      updatedAt: now
     });
 
-    if (result?.rowsAffected === 0) {
+    if (!result) {
       return new Response(
         JSON.stringify({
           message: "Xəta baş verdi",
@@ -186,10 +195,11 @@ export const POST: APIRoute = async (ctx) => {
     }
 
     // Get the created user ID
-    const [newUser] = await db
+    const newUser = await db
       .select()
-      .from(users)
-      .where(eq(users.email, email));
+      .from(usersTable)
+      .where(eq(usersTable.email, email))
+      .then(rows => rows[0]);
 
     if (!newUser) {
       throw new Error("İstifadəçi mövcud deyil");
@@ -261,7 +271,7 @@ export const POST: APIRoute = async (ctx) => {
   } catch (e) {
     console.error("Qeydiyyat xətası:", e);
 
-    if (isDbError(e)) {
+    if ((e as DatabaseError).code) {
       // Email already exists
       if (
         e.message.includes("UNIQUE constraint failed") ||

@@ -1,6 +1,11 @@
-import { db, users, eq } from "astro:db";
+import db from "../../../../db";
+import { usersTable } from "../../../../db/schema";
+import { eq } from "drizzle-orm";
+
+// MySQL hata işleme için
+type DatabaseError = Error & { code?: string; };
 import type { APIRoute } from "astro";
-import { sign, verify } from "jsonwebtoken";
+import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
 
 export const prerender = false;
@@ -73,7 +78,11 @@ export const POST: APIRoute = async (ctx) => {
     let decoded: any;
 
     try {
-      decoded = verify(refreshToken, REFRESH_SECRET);
+      const { payload } = await jwtVerify(
+        refreshToken,
+        new TextEncoder().encode(REFRESH_SECRET)
+      );
+      decoded = payload;
     } catch (error) {
       return new Response(
         JSON.stringify({
@@ -103,10 +112,11 @@ export const POST: APIRoute = async (ctx) => {
     }
 
     // Get user from database
-    const [user] = await db
+    const user = await db
       .select()
-      .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)));
+      .from(usersTable)
+      .where(eq(usersTable.id, parseInt(decoded.userId)))
+      .then(rows => rows[0]);
 
     if (!user) {
       return new Response(
@@ -122,29 +132,27 @@ export const POST: APIRoute = async (ctx) => {
     }
 
     // Create new access token
-    const newAccessToken = sign(
-      {
-        userId: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        type: "access",
-      },
-      JWT_SECRET,
-      { expiresIn: ACCESS_TOKEN_EXPIRY }
-    );
+    const newAccessToken = await new SignJWT({
+      userId: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      type: "access",
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime(ACCESS_TOKEN_EXPIRY)
+      .sign(new TextEncoder().encode(JWT_SECRET));
 
     // Create new refresh token
     const newRefreshTokenId = crypto.randomUUID();
-    const newRefreshToken = sign(
-      {
-        tokenId: newRefreshTokenId,
-        userId: user.id,
-        email: user.email,
-        type: "refresh",
-      },
-      REFRESH_SECRET,
-      { expiresIn: REFRESH_TOKEN_EXPIRY }
-    );
+    const newRefreshToken = await new SignJWT({
+      tokenId: newRefreshTokenId,
+      userId: user.id,
+      email: user.email,
+      type: "refresh",
+    })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime(REFRESH_TOKEN_EXPIRY)
+      .sign(new TextEncoder().encode(REFRESH_SECRET));
 
     // Remove old refresh token and store new one
     refreshTokenStore.delete(decoded.tokenId);

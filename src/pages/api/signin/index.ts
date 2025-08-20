@@ -1,8 +1,12 @@
-import { db, users, isDbError, eq } from "astro:db";
+import db from "@db/index";
+import { usersTable } from "@db/schema";
+import { eq } from "drizzle-orm";
 import type { APIRoute } from "astro";
 import * as bcrypt from "bcrypt";
-import { SignJWT, jwtVerify } from "jose";
+import { SignJWT } from "jose";
 import * as crypto from "crypto";
+
+type DatabaseError = Error & { code?: string };
 
 export const prerender = false;
 
@@ -66,22 +70,22 @@ export const POST: APIRoute = async (ctx) => {
       ctx.request.headers.get("x-real-ip") ||
       "unknown";
 
-    // if (!checkRateLimit(clientIP)) {
-    //   return new Response(
-    //     JSON.stringify({
-    //       message:
-    //         "Çox sayda uğursuz giriş cəhdi. 15 dəqiqə sonra yenidən cəhd edin.",
-    //       status: 429,
-    //     }),
-    //     {
-    //       status: 429,
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //         "Retry-After": "900", // 15 dəqiqə
-    //       },
-    //     }
-    //   );
-    // }
+    if (!checkRateLimit(clientIP)) {
+      return new Response(
+        JSON.stringify({
+          message:
+            "Çox sayda uğursuz giriş cəhdi. 15 dəqiqə sonra yenidən cəhd edin.",
+          status: 429,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": "900", // 15 dəqiqə
+          },
+        }
+      );
+    }
 
     // Parse request body
     let { email, password } = await ctx.request.json();
@@ -115,10 +119,11 @@ export const POST: APIRoute = async (ctx) => {
 
     // Find user in database
     try {
-      const [findUser] = await db
+      const findUser = await db
         .select()
-        .from(users)
-        .where(eq(users.email, email));
+        .from(usersTable)
+        .where(eq(usersTable.email, email))
+        .then((rows) => rows[0]);
 
       if (typeof findUser === "undefined") {
         return new Response(
@@ -245,7 +250,7 @@ export const POST: APIRoute = async (ctx) => {
   } catch (error) {
     console.error("Signin error:", error);
 
-    if (isDbError(error)) {
+    if ((error as DatabaseError).code) {
       return new Response(
         JSON.stringify({
           message: "Database error",
