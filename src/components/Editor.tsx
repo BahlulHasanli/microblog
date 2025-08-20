@@ -6,7 +6,6 @@ export default function Editor() {
   const [editorContent, setEditorContent] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -14,17 +13,7 @@ export default function Editor() {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
-
-  // Kategori seçme/kaldırma işleyicisi
-  const handleCategoryToggle = (categoryId: string) => {
-    setCategories((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId);
-      } else {
-        return [...prev, categoryId];
-      }
-    });
-  };
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Kapak resmi değişikliğini izleme
   const handleCoverImageChange = (file: File | null) => {
@@ -83,7 +72,7 @@ export default function Editor() {
       formData.append("title", title);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
-      formData.append("categories", categories.join(","));
+      formData.append("categories", selectedCategories.join(","));
 
       // Kapak resmi varsa ekle
       if (coverImage) {
@@ -328,35 +317,14 @@ export default function Editor() {
 
   return (
     <div className="editor-container">
-      <div className="editor-header">
-        <div className="editor-fields">
-          {/* Kategoriler Bölümü */}
-          <div className="editor-field-group">
-            <label className="field-label">Kateqoriyalar:</label>
-            <div className="categories-container">
-              {CATEGORIES.map((category) => (
-                <button
-                  key={slugifyCategory(category)}
-                  type="button"
-                  className={`category-button ${
-                    categories.includes(slugifyCategory(category))
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    handleCategoryToggle(slugifyCategory(category))
-                  }
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="max-w-[40rem] mx-auto text-sm h-[55px] fixed top-[0.7rem] left-0 right-0 flex justify-end items-center">
         <button
           onClick={handleSave}
           disabled={isSaving || !editorContent || !title}
-          className={`save-button ${saveStatus}`}
+          className={`py-1.5 px-2.5 border focus:ring-2 h-7.5 text-sm rounded-full 
+            border-transparent bg-emerald-600 hover:bg-white text-white 
+            duration-200 focus:ring-offset-2 focus:ring-white hover:text-emerald-500 inline-flex 
+            items-center justify-center ring-1 ring-transparent ${saveStatus} disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-emerald-500 disabled:text-white`}
         >
           {saveStatus === "saving"
             ? "Yadda saxlanılır..."
@@ -375,6 +343,7 @@ export default function Editor() {
         onDescriptionChange={setDescription}
         coverImage={coverImage}
         onCoverImageChange={handleCoverImageChange}
+        onCategoriesChange={setSelectedCategories}
       />
 
       <style>{`
@@ -416,28 +385,7 @@ export default function Editor() {
           border-radius: 4px;
           font-size: 14px;
         }
-        .categories-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-        .category-button {
-          padding: 6px 12px;
-          background-color: #f0f0f0;
-          border: 1px solid #ddd;
-          border-radius: 20px;
-          font-size: 13px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .category-button:hover {
-          background-color: #e0e0e0;
-        }
-        .category-button.selected {
-          background-color: #2563eb;
-          color: white;
-          border-color: #2563eb;
-        }
+
         .editor-title {
           font-weight: 600;
           font-size: 16px;

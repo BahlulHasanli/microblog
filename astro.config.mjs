@@ -6,6 +6,7 @@ import mdx from "@astrojs/mdx";
 import db from "@astrojs/db";
 
 import react from "@astrojs/react";
+import node from "@astrojs/node";
 
 // https://astro.build/config
 export default defineConfig({
@@ -24,6 +25,9 @@ export default defineConfig({
     skipInline: false,
     drafts: true,
   },
-  site: "https://yourwebsite.com",
+  site: "http://localhost:4321",
   integrations: [db(), sitemap(), mdx(), react()],
+  adapter: node({
+    mode: "standalone",
+  }),
 });

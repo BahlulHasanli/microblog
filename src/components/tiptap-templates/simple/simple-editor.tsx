@@ -74,6 +74,8 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
 
+import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
+
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
@@ -163,7 +165,7 @@ const MainToolbarContent = ({
       <ToolbarSeparator />
 
       <ToolbarGroup>
-        <ImageUploadButton text="Add" />
+        <ImageUploadButton text="Şəkil" />
       </ToolbarGroup>
 
       <Spacer />
@@ -214,6 +216,7 @@ interface SimpleEditorProps {
   onDescriptionChange?: (description: string) => void;
   coverImage?: File | null;
   onCoverImageChange?: (file: File | null) => void;
+  onCategoriesChange?: (categories: string[]) => void;
 }
 
 export function SimpleEditor({
@@ -224,6 +227,7 @@ export function SimpleEditor({
   onDescriptionChange,
   coverImage = null,
   onCoverImageChange,
+  onCategoriesChange,
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const { height } = useWindowSize();
@@ -233,6 +237,7 @@ export function SimpleEditor({
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [coverImagePreview, setCoverImagePreview] = React.useState<string>("");
+  const [categories, setCategories] = React.useState<string[]>([]);
 
   const FixedDocument = Document.extend({
     content: "heading paragraph block*",
@@ -427,6 +432,13 @@ export function SimpleEditor({
     }
   }, [coverImage]);
 
+  // Kategoriler değiştiğinde dışarıya bildir
+  React.useEffect(() => {
+    if (onCategoriesChange) {
+      onCategoriesChange(categories);
+    }
+  }, [categories, onCategoriesChange]);
+
   // Kapak resmi yükleme işleyicisi
   const handleCoverImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -460,9 +472,25 @@ export function SimpleEditor({
     }
   };
 
+  // Kategori seçme/kaldırma işleyicisi
+  const handleCategoryToggle = (categoryId: string) => {
+    setCategories((prev) => {
+      const newCategories = prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId];
+
+      // Kategorileri dışarıya bildir
+      if (onCategoriesChange) {
+        onCategoriesChange(newCategories);
+      }
+
+      return newCategories;
+    });
+  };
+
   return (
     <>
-      <div className="simple-editor-wrapper">
+      <div className="simple-editor-wrapper mt-8">
         <EditorContext.Provider value={{ editor }}>
           <Toolbar
             ref={toolbarRef}
@@ -490,6 +518,28 @@ export function SimpleEditor({
           </Toolbar>
 
           <div className="simple-editor-content">
+            {/* Kategoriler Bölümü */}
+            <div className="categories-container mt-8 mb-5">
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((category) => (
+                  <button
+                    key={slugifyCategory(category)}
+                    type="button"
+                    className={`cursor-pointer px-3 py-1 rounded-full text-sm bg-neutral-100 transition-all font-medium hover:bg-neutral-200 hover:text-base-800 ${
+                      categories.includes(slugifyCategory(category))
+                        ? "bg-rose-500 text-white"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      handleCategoryToggle(slugifyCategory(category))
+                    }
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Kapak resmi alanı */}
             <div className="editor-cover-image-container">
               <input
@@ -504,8 +554,22 @@ export function SimpleEditor({
                 <button
                   type="button"
                   onClick={handleSelectCoverImage}
-                  className="cover-image-button"
+                  className="cover-image-button font-medium font-display flex items-center gap-2"
                 >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                    className="size-6 stroke-rose-400"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                    />
+                  </svg>
                   Örtük şəkli əlavə et
                 </button>
               ) : (
@@ -525,7 +589,6 @@ export function SimpleEditor({
                 </div>
               )}
             </div>
-
             <EditorContent
               editor={editor}
               role="presentation"

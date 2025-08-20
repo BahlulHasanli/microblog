@@ -1,10 +1,12 @@
 // Standart kategoriler
 export const categories = [
   "Oyun",
+  "Qan, Tər və Piksellər",
   "Film & Serial",
-  "NBA",
-  "Comics",
+  "Animasya",
   "Anime & Manga",
+  "Comics",
+  "NBA",
   "Podcast",
 ];
 
