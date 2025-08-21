@@ -17,18 +17,9 @@ const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 dəqiqə
 
 // JWT secrets
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
-const REFRESH_SECRET =
-  process.env.REFRESH_SECRET || "your-refresh-secret-change-this";
 
-// Token durations
-const ACCESS_TOKEN_EXPIRY = "15m"; // 15 dəqiqə
-const REFRESH_TOKEN_EXPIRY = "7d"; // 7 gün
-
-// Refresh token store (production-da Redis istifadə edin)
-const refreshTokenStore = new Map<
-  string,
-  { userId: string; email: string; expiresAt: number }
->();
+// Token duration
+const ACCESS_TOKEN_EXPIRY = "1d"; // 1 gün
 
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -70,22 +61,22 @@ export const POST: APIRoute = async (ctx) => {
       ctx.request.headers.get("x-real-ip") ||
       "unknown";
 
-    if (!checkRateLimit(clientIP)) {
-      return new Response(
-        JSON.stringify({
-          message:
-            "Çox sayda uğursuz giriş cəhdi. 15 dəqiqə sonra yenidən cəhd edin.",
-          status: 429,
-        }),
-        {
-          status: 429,
-          headers: {
-            "Content-Type": "application/json",
-            "Retry-After": "900", // 15 dəqiqə
-          },
-        }
-      );
-    }
+    // if (!checkRateLimit(clientIP)) {
+    //   return new Response(
+    //     JSON.stringify({
+    //       message:
+    //         "Çox sayda uğursuz giriş cəhdi. 15 dəqiqə sonra yenidən cəhd edin.",
+    //       status: 429,
+    //     }),
+    //     {
+    //       status: 429,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //         "Retry-After": "900", // 15 dəqiqə
+    //       },
+    //     }
+    //   );
+    // }
 
     // Parse request body
     let { email, password } = await ctx.request.json();
@@ -167,8 +158,7 @@ export const POST: APIRoute = async (ctx) => {
         );
       }
 
-      // Create access token (kısa süreli)
-
+      // Create access token
       const accessToken = await new SignJWT({
         userId: findUser.id,
         email: findUser.email,
@@ -178,28 +168,6 @@ export const POST: APIRoute = async (ctx) => {
         .setProtectedHeader({ alg: "HS256" })
         .setExpirationTime(ACCESS_TOKEN_EXPIRY)
         .sign(new TextEncoder().encode(JWT_SECRET));
-
-      // Create refresh token (uzun süreli)
-      const refreshTokenId = crypto.randomUUID();
-
-      const refreshToken = await new SignJWT({
-        tokenId: refreshTokenId,
-        userId: findUser.id,
-        email: findUser.email,
-        type: "refresh",
-      })
-        .setProtectedHeader({ alg: "HS256" })
-        .setExpirationTime(REFRESH_TOKEN_EXPIRY)
-        .sign(new TextEncoder().encode(REFRESH_SECRET));
-
-      // Store refresh token
-      const refreshExpiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 gün
-
-      refreshTokenStore.set(refreshTokenId, {
-        userId: findUser.id.toString(),
-        email: findUser.email,
-        expiresAt: refreshExpiresAt,
-      });
 
       // Reset rate limit
       loginAttempts.delete(clientIP);
@@ -223,14 +191,10 @@ export const POST: APIRoute = async (ctx) => {
         }
       );
 
-      // Set cookies separately (remove Secure for development)
+      // Set access token cookie (1 gün süreli)
       response.headers.append(
         "Set-Cookie",
-        `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=900; Path=/`
-      );
-      response.headers.append(
-        "Set-Cookie",
-        `refresh-token=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=604800; Path=/`
+        `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/`
       );
 
       return response;

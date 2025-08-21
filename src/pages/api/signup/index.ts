@@ -17,20 +17,11 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 dəqiqə
 const MAX_REQUESTS = 5; // 15 dəqiqədə maksimum 5 qeydiyyat
 
-// JWT secrets
+// JWT secret
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
-const REFRESH_SECRET =
-  process.env.REFRESH_SECRET || "your-refresh-secret-change-this";
 
-// Token durations
-const ACCESS_TOKEN_EXPIRY = "15m"; // 15 dəqiqə
-const REFRESH_TOKEN_EXPIRY = "7d"; // 7 gün
-
-// Refresh token store (production-da Redis istifadə edin)
-const refreshTokenStore = new Map<
-  string,
-  { userId: string; email: string; expiresAt: number }
->();
+// Token duration
+const ACCESS_TOKEN_EXPIRY = "1d"; // 1 gün
 
 // Email format validation
 const isValidEmail = (email: string): boolean => {
@@ -205,7 +196,7 @@ export const POST: APIRoute = async (ctx) => {
       throw new Error("İstifadəçi mövcud deyil");
     }
 
-    // Create access token (short term)
+    // Create access token
     const accessToken = await new SignJWT({
       userId: newUser.id,
       email: newUser.email,
@@ -215,28 +206,6 @@ export const POST: APIRoute = async (ctx) => {
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime(ACCESS_TOKEN_EXPIRY)
       .sign(new TextEncoder().encode(JWT_SECRET));
-
-    // Create refresh token (long term)
-    const refreshTokenId = crypto.randomUUID();
-
-    const refreshToken = await new SignJWT({
-      tokenId: refreshTokenId,
-      userId: newUser.id,
-      email: newUser.email,
-      type: "refresh",
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime(REFRESH_TOKEN_EXPIRY)
-      .sign(new TextEncoder().encode(REFRESH_SECRET));
-
-    // Store refresh token
-    const refreshExpiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 gün
-
-    refreshTokenStore.set(refreshTokenId, {
-      userId: newUser.id.toString(),
-      email: newUser.email,
-      expiresAt: refreshExpiresAt,
-    });
 
     // Set cookies using Response headers
     const response = new Response(
@@ -257,14 +226,10 @@ export const POST: APIRoute = async (ctx) => {
       }
     );
 
-    // Set cookies separately (remove Secure for development)
+    // Set access token cookie (1 gün süreli)
     response.headers.append(
       "Set-Cookie",
-      `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=900; Path=/`
-    );
-    response.headers.append(
-      "Set-Cookie",
-      `refresh-token=${refreshToken}; HttpOnly; SameSite=Strict; Max-Age=604800; Path=/`
+      `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/`
     );
 
     return response;

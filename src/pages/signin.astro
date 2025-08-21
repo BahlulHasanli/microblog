@@ -2,7 +2,9 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { isAuthenticated } from "@/utils/auth";
 import SigninView from "@/components/auth/signinView";
- 
+
+export const prerender = false
+
 // Check if user is already authenticated
 if (isAuthenticated(Astro.cookies)) { 
   return Astro.redirect('/');
@@ -10,5 +12,5 @@ if (isAuthenticated(Astro.cookies)) {
 --- 
 
 <BaseLayout>
-    <SigninView />
+  <SigninView client:load />
 </BaseLayout>

@@ -3,7 +3,7 @@ import { usersTable } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 
 // MySQL hata işleme için
-type DatabaseError = Error & { code?: string; };
+type DatabaseError = Error & { code?: string };
 import type { APIRoute } from "astro";
 import { SignJWT, jwtVerify } from "jose";
 import * as crypto from "crypto";
@@ -16,7 +16,7 @@ const REFRESH_SECRET =
   process.env.REFRESH_SECRET || "your-refresh-secret-change-this";
 
 // Token durations
-const ACCESS_TOKEN_EXPIRY = "15m"; // 15 dəqiqə
+const ACCESS_TOKEN_EXPIRY = "1m"; // 15 dəqiqə
 const REFRESH_TOKEN_EXPIRY = "7d"; // 7 gün
 
 // Refresh token store (production-da Redis istifadə edin)
@@ -116,7 +116,7 @@ export const POST: APIRoute = async (ctx) => {
       .select()
       .from(usersTable)
       .where(eq(usersTable.id, parseInt(decoded.userId)))
-      .then(rows => rows[0]);
+      .then((rows) => rows[0]);
 
     if (!user) {
       return new Response(
