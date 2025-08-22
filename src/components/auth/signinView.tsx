@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { navigate } from "astro:transitions/client";
 
 export default function SigninView() {
   const [email, setEmail] = useState("");
@@ -7,43 +8,35 @@ export default function SigninView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
-    // Formun varsayılan davranışını engelle
     e.preventDefault();
     e.stopPropagation();
-    console.log("Form gönderiliyor...");
 
-    // Form gönderimini başlat
     setIsSubmitting(true);
 
     setMessage({ text: "", type: "" });
 
     try {
-      // API isteği gönder
       const response = await fetch("/api/signin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
-        credentials: "include", // Cookie'lerin gönderilmesini sağla
+        credentials: "include",
       });
 
       const result = await response.json();
-      console.log("API yanıtı:", result);
 
       if (response.ok) {
-        // Başarılı giriş
         setMessage({
           text: result.message || "Uğurla daxil oldunuz!",
           type: "success",
         });
 
-        // Ana sayfaya yönlendir
         setTimeout(() => {
-          window.location.href = "/";
+          navigate("/");
         }, 1000);
       } else {
-        // Hata
         setMessage({
           text: result.message || "Bir xəta baş verdi",
           type: "error",
@@ -59,7 +52,6 @@ export default function SigninView() {
 
   return (
     <section className="max-w-md mx-auto py-12">
-      {/* Başlık */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-big-shoulders font-bold text-base-900 mb-2">
           Daxil Ol
@@ -67,9 +59,7 @@ export default function SigninView() {
         <p className="text-base-600 text-sm">Hesabınıza daxil olun</p>
       </div>
 
-      {/* Form */}
       <form id="signinForm" className="space-y-6" onSubmit={handleSignin}>
-        {/* Email */}
         <div>
           <label
             htmlFor="email"
@@ -89,7 +79,6 @@ export default function SigninView() {
           />
         </div>
 
-        {/* Şifre */}
         <div>
           <label
             htmlFor="password"
@@ -109,7 +98,6 @@ export default function SigninView() {
           />
         </div>
 
-        {/* Remember Me & Forgot Password */}
         <div className="flex items-center justify-between">
           <label htmlFor="remember" className="flex items-center">
             <input
@@ -128,7 +116,6 @@ export default function SigninView() {
           </a>
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}
@@ -145,7 +132,6 @@ export default function SigninView() {
           )}
         </button>
 
-        {/* Error/Success Messages */}
         {message.text && (
           <div
             className={`p-3 rounded-xl text-sm font-medium ${
@@ -159,7 +145,6 @@ export default function SigninView() {
         )}
       </form>
 
-      {/* Signup Link */}
       <div className="text-center mt-6">
         <p className="text-base-600 text-sm">
           Hesabınız yoxdur?{" "}

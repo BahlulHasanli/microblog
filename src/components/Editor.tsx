@@ -321,7 +321,7 @@ export default function Editor() {
         <button
           onClick={handleSave}
           disabled={isSaving || !editorContent || !title}
-          className={`py-1.5 px-2.5 border focus:ring-2 h-7.5 text-sm rounded-full 
+          className={`cursor-pointer py-1.5 px-2.5 border focus:ring-2 h-7.5 text-sm rounded-full 
             border-transparent bg-emerald-600 hover:bg-white text-white 
             duration-200 focus:ring-offset-2 focus:ring-white hover:text-emerald-500 inline-flex 
             items-center justify-center ring-1 ring-transparent ${saveStatus} disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-emerald-500 disabled:text-white`}

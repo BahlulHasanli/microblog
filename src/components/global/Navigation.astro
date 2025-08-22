@@ -7,7 +7,7 @@ const hasNotStudioRoute = Astro.url.pathname === '/studio';
 ---
 <div
   x-data="{ open: false }"
-  class="max-w-3xl relative flex flex-col w-full mx-auto rounded-xl md:rounded-full md:items-center md:justify-between md:flex-row"
+  class="max-w-3xl relative flex flex-col w-full z-20 mx-auto rounded-xl md:rounded-full md:items-center md:justify-between md:flex-row"
 >
   <div class="flex flex-row items-center justify-between md:justify-start">
     <a href="/" class="relative z-10 pt-5 py-2 h-full flex items-center justify-center cursor-pointer group overflow-hidden rounded-b-xl">
@@ -92,27 +92,4 @@ const hasNotStudioRoute = Astro.url.pathname === '/studio';
   </nav>
 </div> 
 
-  <script>
-   import { navigate } from "astro:transitions/client";
-
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-      try {
-        const response = await fetch('/api/logout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (response.ok) {
-          // Redirect to home page after logout
-          navigate('/');
-        } else {
-          alert('Çıxış zamanı xəta baş verdi');
-        }
-      } catch (error) {
-        alert('Şəbəkə xətası baş verdi');
-      }
-    });
-  </script>
 

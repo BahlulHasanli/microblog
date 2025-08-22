@@ -68,17 +68,17 @@ export default function ProfileDropdown({
       {isOpen && (
         <div
           onClick={handleMenuClick}
-          className="absolute bg-amber-400 right-0 mt-2 w-48 rounded-lg shadow-lg py-1  animate-fadeIn"
+          className="absolute bg-white/40 overflow-hidden backdrop-blur-xl right-0 mt-2 w-48 rounded-lg shadow-lg py-1  animate-fadeIn"
         >
           <a
             href="/settings"
             onClick={(e) => e.stopPropagation()}
-            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            className="block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
           >
             <div className="flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-2"
+                className="size-4 mr-2 stroke-zinc-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -96,7 +96,7 @@ export default function ProfileDropdown({
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              Ayarlar
+              Hesabım
             </div>
           </a>
           <button
@@ -104,12 +104,12 @@ export default function ProfileDropdown({
               e.stopPropagation();
               handleLogout();
             }}
-            className="w-full cursor-pointer text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            className="w-full cursor-pointer text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
           >
             <div className="flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-2"
+                className="size-4 mr-2"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -121,7 +121,7 @@ export default function ProfileDropdown({
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-              Çıkış
+              Çıxış
             </div>
           </button>
         </div>
