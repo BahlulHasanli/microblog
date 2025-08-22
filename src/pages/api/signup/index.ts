@@ -3,7 +3,7 @@ import { usersTable } from "../../../../db/schema";
 import { eq } from "drizzle-orm";
 
 // MySQL hata işleme için
-type DatabaseError = Error & { code?: string; };
+type DatabaseError = Error & { code?: string };
 import type { APIRoute } from "astro";
 import * as bcrypt from "bcrypt";
 import { SignJWT, jwtVerify } from "jose";
@@ -21,7 +21,7 @@ const MAX_REQUESTS = 5; // 15 dəqiqədə maksimum 5 qeydiyyat
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
 
 // Token duration
-const ACCESS_TOKEN_EXPIRY = "1d"; // 1 gün
+const ACCESS_TOKEN_EXPIRY = "1m"; // 1 gün
 
 // Email format validation
 const isValidEmail = (email: string): boolean => {
@@ -167,7 +167,7 @@ export const POST: APIRoute = async (ctx) => {
       email,
       password: hashedPassword,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     });
 
     if (!result) {
@@ -190,7 +190,7 @@ export const POST: APIRoute = async (ctx) => {
       .select()
       .from(usersTable)
       .where(eq(usersTable.email, email))
-      .then(rows => rows[0]);
+      .then((rows) => rows[0]);
 
     if (!newUser) {
       throw new Error("İstifadəçi mövcud deyil");

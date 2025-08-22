@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import type { APIRoute } from "astro";
 import * as bcrypt from "bcrypt";
 import { SignJWT } from "jose";
-import * as crypto from "crypto";
 
 type DatabaseError = Error & { code?: string };
 
@@ -16,10 +15,31 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 dəqiqə
 
 // JWT secrets
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = import.meta.env.JWT_SECRET;
+
+console.log("JWT_SECRET", JWT_SECRET);
 
 // Token duration
-const ACCESS_TOKEN_EXPIRY = "1d"; // 1 gün
+const ACCESS_TOKEN_EXPIRY = "1m";
+
+// Token süresini saniyeye çeviren yardımcı fonksiyon
+function getExpiryInSeconds(expiry: string): number {
+  const unit = expiry.slice(-1);
+  const value = parseInt(expiry.slice(0, -1));
+
+  switch (unit) {
+    case "s":
+      return value;
+    case "m":
+      return value * 60;
+    case "h":
+      return value * 60 * 60;
+    case "d":
+      return value * 24 * 60 * 60;
+    default:
+      return 900; // Varsayılan olarak 15 dakika (900 saniye)
+  }
+}
 
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -191,10 +211,11 @@ export const POST: APIRoute = async (ctx) => {
         }
       );
 
-      // Set access token cookie (1 gün süreli)
+      // Access token cookie'sini dinamik süre ile ayarla
+      const maxAge = getExpiryInSeconds(ACCESS_TOKEN_EXPIRY);
       response.headers.append(
         "Set-Cookie",
-        `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/`
+        `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=${maxAge}; Path=/`
       );
 
       return response;

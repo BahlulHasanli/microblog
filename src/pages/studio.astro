@@ -1,6 +1,13 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Editor from '../components/Editor';
+
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
+
+if(!user) Astro.redirect("/");
 ---
 
 <BaseLayout title="Studio">
