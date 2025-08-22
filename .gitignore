@@ -37,3 +37,4 @@ Thumbs.db
 # Authentication tokens
 .npmrc
 /public/images
+/src/content/posts

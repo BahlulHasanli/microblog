@@ -1,4 +1,6 @@
 ---
+import ProfileDropdown from "./ProfileDropdown";
+
 const { isLoggedIn, user } = Astro.props;
 
 const hasNotStudioRoute = Astro.url.pathname === '/studio';
@@ -8,7 +10,7 @@ const hasNotStudioRoute = Astro.url.pathname === '/studio';
   class="max-w-3xl relative flex flex-col w-full mx-auto rounded-xl md:rounded-full md:items-center md:justify-between md:flex-row"
 >
   <div class="flex flex-row items-center justify-between md:justify-start">
-    <a href="/" class="relative z-10 pt-5 py-2 h-full flex items-center justify-center cursor-pointer group relative overflow-hidden rounded-b-xl">
+    <a href="/" class="relative z-10 pt-5 py-2 h-full flex items-center justify-center cursor-pointer group overflow-hidden rounded-b-xl">
       <h2 class="text-[1.9rem] font-big-shoulders font-bold m-0 text-base-900 select-none transition-all duration-500 group-hover:-translate-y-full group-hover:opacity-0">
           <span class="font-light">THE</span> DOXSANDOQQUZ 
       </h2>
@@ -82,20 +84,13 @@ const hasNotStudioRoute = Astro.url.pathname === '/studio';
                 </svg>
               <div class="text-[15px] font-medium font-display group-hover:text-base-900 transition-all">Yaz</div>
             </div>
-          </a>} 
-
-          <button id="logoutBtn" class="text-base-700 group">
-            Çıxış
-          </button>
- 
-          <div class="overflow-hidden !size-11 squircle ml-4">
-             <img src="https://miro.medium.com/v2/resize:fill:300:300/1*cqroLdqSWbISklp0mVJuvQ@2x.jpeg" alt={user?.fullName} />
-          </div>
+          </a>}  
+           <ProfileDropdown client:only="react" userImage={'https://miro.medium.com/v2/resize:fill:300:300/1*cqroLdqSWbISklp0mVJuvQ@2x.jpeg'} userName={user?.fullName} />
         </div>
       )}
     </div>
   </nav>
-</div>
+</div> 
 
   <script>
    import { navigate } from "astro:transitions/client";

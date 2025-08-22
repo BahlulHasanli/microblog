@@ -18,10 +18,28 @@ const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 dəqiqə
 const MAX_REQUESTS = 5; // 15 dəqiqədə maksimum 5 qeydiyyat
 
 // JWT secret
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this";
+const JWT_SECRET = import.meta.env.JWT_SECRET;
 
 // Token duration
-const ACCESS_TOKEN_EXPIRY = "1m"; // 1 gün
+const ACCESS_TOKEN_EXPIRY = "1d";
+
+function getExpiryInSeconds(expiry: string): number {
+  const unit = expiry.slice(-1);
+  const value = parseInt(expiry.slice(0, -1));
+
+  switch (unit) {
+    case "s":
+      return value;
+    case "m":
+      return value * 60;
+    case "h":
+      return value * 60 * 60;
+    case "d":
+      return value * 24 * 60 * 60;
+    default:
+      return 900; // Varsayılan olarak 15 dakika (900 saniye)
+  }
+}
 
 // Email format validation
 const isValidEmail = (email: string): boolean => {
@@ -227,9 +245,10 @@ export const POST: APIRoute = async (ctx) => {
     );
 
     // Set access token cookie (1 gün süreli)
+    const maxAge = getExpiryInSeconds(ACCESS_TOKEN_EXPIRY);
     response.headers.append(
       "Set-Cookie",
-      `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=86400; Path=/`
+      `access-token=${accessToken}; HttpOnly; SameSite=Strict; Max-Age=${maxAge}; Path=/`
     );
 
     return response;

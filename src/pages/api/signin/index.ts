@@ -17,10 +17,8 @@ const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 dəqiqə
 // JWT secrets
 const JWT_SECRET = import.meta.env.JWT_SECRET;
 
-console.log("JWT_SECRET", JWT_SECRET);
-
 // Token duration
-const ACCESS_TOKEN_EXPIRY = "1m";
+const ACCESS_TOKEN_EXPIRY = "1d";
 
 // Token süresini saniyeye çeviren yardımcı fonksiyon
 function getExpiryInSeconds(expiry: string): number {
