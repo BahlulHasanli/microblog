@@ -1,6 +1,13 @@
-import { useState, useRef, ChangeEvent, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  ChangeEvent,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
+import { isSaveBtn } from "@/store/buttonStore";
 
 export default function Editor() {
   const [editorContent, setEditorContent] = useState(null);
@@ -13,6 +20,7 @@ export default function Editor() {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Kapak resmi değişikliğini izleme
@@ -312,29 +320,18 @@ export default function Editor() {
   }
 
   useEffect(() => {
-    console.log(editorContent);
-  }, [editorContent]);
+    isSaveBtn.set({
+      isView: true,
+      handleSave,
+      isSaving,
+      editorContent,
+      title,
+      saveStatus,
+    });
+  }, []);
 
   return (
     <div className="editor-container">
-      <div className="max-w-[40rem] mx-auto text-sm h-[55px] fixed top-[0.7rem] left-0 right-0 flex justify-end items-center">
-        <button
-          onClick={handleSave}
-          disabled={isSaving || !editorContent || !title}
-          className={`cursor-pointer py-1.5 px-2.5 border focus:ring-2 h-7.5 text-sm rounded-full 
-            border-transparent bg-emerald-600 hover:bg-white text-white 
-            duration-200 focus:ring-offset-2 focus:ring-white hover:text-emerald-500 inline-flex 
-            items-center justify-center ring-1 ring-transparent ${saveStatus} disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-emerald-500 disabled:text-white`}
-        >
-          {saveStatus === "saving"
-            ? "Yadda saxlanılır..."
-            : saveStatus === "success"
-            ? "Yadda saxlanıldı!"
-            : saveStatus === "error"
-            ? "Xəta!"
-            : "Yadda saxla"}
-        </button>
-      </div>
       <SimpleEditor
         onUpdate={setEditorContent}
         title={title}
