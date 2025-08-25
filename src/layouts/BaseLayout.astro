@@ -5,11 +5,11 @@ import Footer from "@/components/global/Footer.astro";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
-const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
+const user = isLoggedIn ? await getUserFromCookies(Astro.cookies, Astro.redirect) : null;
 ---
 
 <html lang="en">  
-  <head>
+  <head>   
     <BaseHead />
   </head>
   <body class=`flex flex-col  min-h-screen px-8 mx-auto bg-white`>

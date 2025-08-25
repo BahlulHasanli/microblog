@@ -51,7 +51,7 @@ const isStudioRoutePath = Astro.url.pathname === '/studio';
   >
     <div
       class="items-center justify-center list-none space-y-2 md:space-y-0 md:ml-auto md:inline-flex md:text-left gap-3"
-    >
+    > 
       {!isLoggedIn ? (
         <div class="relative z-10">
           <a
@@ -62,7 +62,7 @@ const isStudioRoutePath = Astro.url.pathname === '/studio';
             items-center justify-center ring-1 ring-transparent"
           >
             Giriş
-          </a>
+          </a> 
 
           <a
             href="/signup"
@@ -80,7 +80,7 @@ const isStudioRoutePath = Astro.url.pathname === '/studio';
               userName={user?.fullName}
             />
         </div> 
-      )}
+      )} 
     </div>
   </nav>
 </div> 

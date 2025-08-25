@@ -23,7 +23,7 @@ if (isAuthenticated(Astro.cookies)) {
         <!-- Form -->
         <form id="signupForm" class="space-y-6">
             <!-- Ad Soyad -->
-            <div>
+            <!-- <div>
                 <label for="fullName" class="block text-sm font-medium text-base-900 mb-2">
                     Ad Soyad
                 </label>
@@ -35,7 +35,7 @@ if (isAuthenticated(Astro.cookies)) {
                     required
                     class="w-full px-4 py-3 border border-base-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200 text-base-900 placeholder-base-400"
                 />
-            </div>
+            </div> --> 
 
             <!-- Email -->
             <div>
@@ -108,13 +108,12 @@ if (isAuthenticated(Astro.cookies)) {
             
             // Get form data
             const data = {
-                fullName: formData.get('fullName') as string,
                 email: formData.get('email') as string,
                 password: formData.get('password') as string
             };
              
             try {
-                const response = await fetch('/api/signup', {
+                const response = await fetch('/api/auth/signup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

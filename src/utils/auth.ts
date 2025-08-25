@@ -1,6 +1,7 @@
 import { jwtVerify, errors } from "jose";
 import type { APIContext } from "astro";
 import type { AstroCookies } from "astro";
+import { supabase } from "@/db/supabase";
 
 // JWT secrets
 const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key-change-this";
@@ -8,35 +9,79 @@ const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key-change-this";
 /**
  * Check if user is authenticated using Astro cookies
  */
-export function isAuthenticated(cookies: AstroCookies): boolean {
-  const accessToken = cookies.get("access-token");
+export function isAuthenticated(
+  cookies: AstroCookies,
+  redirect?: (
+    path: string,
+    status?: 301 | 302 | 303 | 307 | 308 | 300 | 304
+  ) => Response
+): boolean {
+  const accessToken = cookies.get("sb-access-token");
+  const refreshToken = cookies.get("sb-refresh-token");
 
-  return accessToken !== undefined && accessToken.value !== "";
+  return (
+    accessToken !== undefined &&
+    accessToken.value !== "" &&
+    refreshToken !== undefined &&
+    refreshToken.value !== ""
+  );
 }
 
 /**
  * Get user info from access token cookie
  */
-export async function getUserFromCookies(cookies: AstroCookies): Promise<any> {
-  const accessToken = cookies.get("access-token");
-
-  if (!accessToken || !accessToken.value) return null;
-
+export async function getUserFromCookies(
+  cookies: AstroCookies,
+  redirect: any
+): Promise<any> {
   try {
-    const { payload } = await jwtVerify(
-      accessToken.value,
-      new TextEncoder().encode(JWT_SECRET)
-    );
+    const accessToken = cookies.get("sb-access-token");
+    const refreshToken = cookies.get("sb-refresh-token");
 
-    console.log("getUserFromCookies - payload:", payload);
+    if (
+      !accessToken ||
+      !accessToken.value ||
+      !refreshToken ||
+      !refreshToken.value
+    )
+      return null;
 
-    if (payload.type !== "access") return null;
+    let session: any;
 
-    return {
-      userId: payload.userId,
-      email: payload.email,
-      fullName: payload.fullName,
-    };
+    try {
+      session = await supabase.auth.setSession({
+        refresh_token: refreshToken.value,
+        access_token: accessToken.value,
+      });
+      if (session.error) {
+        cookies.delete("sb-access-token", {
+          path: "/",
+        });
+
+        cookies.delete("sb-refresh-token", {
+          path: "/",
+        });
+
+        return redirect("/signin");
+      }
+    } catch (error) {
+      cookies.delete("sb-access-token", {
+        path: "/",
+      });
+      cookies.delete("sb-refresh-token", {
+        path: "/",
+      });
+
+      return redirect("/signin");
+    }
+
+    const findUser = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", session.data.user?.email)
+      .single();
+
+    return findUser.data;
   } catch (error) {
     console.log("getUserFromCookies - error:", error);
     return null;

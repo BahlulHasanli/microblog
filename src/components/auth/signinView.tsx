@@ -16,7 +16,7 @@ export default function SigninView() {
     setMessage({ text: "", type: "" });
 
     try {
-      const response = await fetch("/api/signin", {
+      const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

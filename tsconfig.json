@@ -8,12 +8,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
-      "@db/*": [
-        "db/*"
-      ]
+      "@/*": ["src/*"],
+      "@db/*": ["src/db/*"]
     },
     "jsx": "react-jsx",
     "jsxImportSource": "react"
