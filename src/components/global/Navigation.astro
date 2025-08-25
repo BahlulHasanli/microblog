@@ -2,6 +2,8 @@
 import ProfileDropdown from "./ProfileDropdown";
 
 const { isLoggedIn, user } = Astro.props;
+
+const isStudioRoutePath = Astro.url.pathname === '/studio';
 ---
 <div
   x-data="{ open: false }"
@@ -31,14 +33,14 @@ const { isLoggedIn, user } = Astro.props;
           class="inline-flex"
           stroke-linecap="round"
           stroke-linejoin="round"
-          strokeWidth="2"
+          stroke-width="2"
           d="M4 6h16M4 12h16M4 18h16"></path>
         <path
           :class="{'hidden': !open, 'inline-flex': open }"
           class="hidden"
           stroke-linecap="round"
           stroke-linejoin="round"
-          strokeWidth="2"
+          stroke-width="2"
           d="M6 18L18 6M6 6l12 12"></path>
       </svg>
     </button>
@@ -68,10 +70,15 @@ const { isLoggedIn, user } = Astro.props;
           >
             Qeydiyyat
           </a>
-        </div>
+        </div> 
       ) : (
         <div class="relative z-10 flex items-center gap-3">
-           <ProfileDropdown client:only="react" userImage={'https://miro.medium.com/v2/resize:fill:300:300/1*cqroLdqSWbISklp0mVJuvQ@2x.jpeg'} userName={user?.fullName} />
+           <ProfileDropdown
+              client:load
+              isStudioRoutePath={isStudioRoutePath} 
+              userImage={'https://miro.medium.com/v2/resize:fill:300:300/1*cqroLdqSWbISklp0mVJuvQ@2x.jpeg'} 
+              userName={user?.fullName}
+            />
         </div> 
       )}
     </div>

@@ -2,22 +2,25 @@ import { navigate } from "astro:transitions/client";
 import { useState, useRef, useEffect } from "react";
 import { isSaveBtn } from "@/store/buttonStore";
 import { useStore } from "@nanostores/react";
+import { Suspense } from "react";
 
 interface ProfileDropdownProps {
   userImage: string;
   userName: string;
+  isStudioRoutePath: boolean;
 }
 
 export default function ProfileDropdown({
   userImage,
   userName,
+  isStudioRoutePath,
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
 
   const isSaveBtnState = useStore(isSaveBtn);
 
-  // Dropdown dışına tıklandığında kapanması için
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -34,7 +37,15 @@ export default function ProfileDropdown({
     };
   }, []);
 
-  // Menü içi tıklamalarda event propagation'ı durdurma
+  useEffect(() => {
+    async function fetchData() {
+      // Simulate data fetching
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setLoading(false);
+    }
+    fetchData();
+  }, []);
+
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
@@ -50,7 +61,6 @@ export default function ProfileDropdown({
       });
 
       if (response.ok) {
-        // Başarılı çıkış sonrası ana sayfaya yönlendirme
         navigate("/");
       } else {
         alert("Çıxış zamanı xəta baş verdi");
@@ -60,32 +70,40 @@ export default function ProfileDropdown({
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex gap-2">
+        <div className="w-40 h-10 mx-auto bg-gray-300 animate-pulse rounded-lg"></div>
+        <div className="mx-auto bg-gray-300 animate-pulse rounded-2xl w-[40px] h-[40px]"></div>
+      </div>
+    );
+  }
+
   return (
     <>
-      {isSaveBtn.get().isView && (
+      {isStudioRoutePath && isSaveBtnState.isView && (
         <button
-          onClick={isSaveBtn.get().handleSave}
+          onClick={isSaveBtnState.handleSave}
           disabled={
-            isSaveBtn.get().isSaving ||
-            !isSaveBtn.get().editorContent ||
-            !isSaveBtn.get().title
+            isSaveBtnState.isSaving ||
+            !isSaveBtnState.editorContent ||
+            !isSaveBtnState.title
           }
           className={`cursor-pointer py-1.5 px-2.5 border focus:ring-2 h-7.5 text-sm rounded-full 
             border-transparent bg-emerald-600 hover:bg-white text-white 
             duration-200 focus:ring-offset-2 focus:ring-white hover:text-emerald-500 inline-flex 
-            items-center justify-center ring-1 ring-transparent ${
-              isSaveBtn.get().saveStatus
-            } disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-emerald-500 disabled:text-white`}
+            items-center justify-center ring-1 ring-transparent ${isSaveBtnState.saveStatus} disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-emerald-500 disabled:text-white`}
         >
-          {isSaveBtn.get().saveStatus === "saving"
+          {isSaveBtnState.saveStatus === "saving"
             ? "Yadda saxlanılır..."
-            : isSaveBtn.get().saveStatus === "success"
+            : isSaveBtnState.saveStatus === "success"
             ? "Yadda saxlanıldı!"
-            : isSaveBtn.get().saveStatus === "error"
+            : isSaveBtnState.saveStatus === "error"
             ? "Xəta!"
             : "Yadda saxla"}
         </button>
       )}
+
       <div className="relative z-50" ref={dropdownRef}>
         <div
           onClick={() => setIsOpen(!isOpen)}
