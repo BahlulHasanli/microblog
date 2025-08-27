@@ -1,5 +1,5 @@
 import { navigate } from "astro:transitions/client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { isSaveBtn } from "@/store/buttonStore";
 import { useStore } from "@nanostores/react";
 import { Suspense } from "react";
@@ -37,13 +37,8 @@ export default function ProfileDropdown({
     };
   }, []);
 
-  useEffect(() => {
-    async function fetchData() {
-      // Simulate data fetching
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setLoading(false);
-    }
-    fetchData();
+  useLayoutEffect(() => {
+    setLoading(false);
   }, []);
 
   const handleMenuClick = (e: React.MouseEvent) => {
@@ -72,8 +67,8 @@ export default function ProfileDropdown({
 
   if (loading) {
     return (
-      <div className="flex gap-2">
-        <div className="w-40 h-10 mx-auto bg-zinc-500/10 backdrop-blur-xl animate-pulse rounded-lg"></div>
+      <div className="flex gap-2 items-center">
+        <div className="w-[130px] h-[30px] mx-auto bg-zinc-500/10 backdrop-blur-xl animate-pulse rounded-lg"></div>
         <div className="mx-auto bg-zinc-500/10 backdrop-blur-xl animate-pulse rounded-2xl w-[40px] h-[40px]"></div>
       </div>
     );
