@@ -2,6 +2,14 @@ import type { Node as TiptapNode } from "@tiptap/pm/model"
 import { NodeSelection } from "@tiptap/pm/state"
 import type { Editor } from "@tiptap/react"
 
+// Global tip tanımlaması
+declare global {
+  interface Window {
+    _currentEditorTitle?: string;
+    _imageCounters?: Record<string, number>;
+  }
+}
+
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 export const MAC_SYMBOLS: Record<string, string> = {
@@ -246,6 +254,16 @@ export function isNodeTypeSelected(
  * @param abortSignal Optional AbortSignal for cancelling the upload
  * @returns Promise resolving to the URL of the uploaded image
  */
+// Geçici olarak saklanan resimler için bir depo
+export const temporaryImages: Map<string, File> = new Map();
+
+// Resim sayaçları için global değişken tanımı
+declare global {
+  interface Window {
+    _imageCounters?: Record<string, number>;
+  }
+}
+
 export const handleImageUpload = async (
   file: File,
   onProgress?: (event: { progress: number }) => void,
@@ -263,53 +281,146 @@ export const handleImageUpload = async (
   }
   
   try {
-    // Dosya adını oluştur (rastgele bir isim ve orijinal uzantı)
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const fileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}.${fileExtension}`;
+    // Dosya için benzersiz bir ID oluştur
+    const fileId = `temp-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     
-    // FormData oluştur
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("fileName", fileName);
+    // Dosyayı geçici depolama alanına kaydet
+    temporaryImages.set(fileId, file);
     
-    // İlerleme simülasyonu (gerçek yükleme sırasında da göstermek için)
-    let lastProgress = 0;
-    const simulateProgress = () => {
-      if (abortSignal?.aborted) return;
-      const progress = Math.min(lastProgress + 10, 90); // Gerçek yükleme tamamlanana kadar max %90
-      lastProgress = progress;
-      onProgress?.({ progress });
-    };
-    
-    // İlerleme simülasyonunu başlat
-    const progressInterval = setInterval(simulateProgress, 300);
-    
-    // Resmi yükle
-    const response = await fetch('/api/upload-image', {
-      method: 'POST',
-      body: formData,
-    });
-    
-    // İlerleme simülasyonunu durdur
-    clearInterval(progressInterval);
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Resim yükleme başarısız oldu');
+    // İlerleme simülasyonu (gerçek bir yükleme yapmıyoruz)
+    if (onProgress) {
+      // Hızlı bir ilerleme simülasyonu
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 20;
+        if (progress <= 100) {
+          onProgress({ progress });
+        } else {
+          clearInterval(interval);
+        }
+      }, 100);
     }
     
-    // Başarılı yanıt
-    const data = await response.json();
+    // Geçici bir URL oluştur (blob URL)
+    const tempUrl = URL.createObjectURL(file);
     
-    // Yükleme tamamlandı
-    onProgress?.({ progress: 100 });
-    
-    // Yüklenen resmin URL'sini döndür
-    return data.imageUrl;
+    // Gerçek URL yerine geçici URL ve ID'yi birlikte döndür
+    return `${tempUrl}#${fileId}`;
   } catch (error) {
     console.error('Resim yükleme hatası:', error);
     throw new Error('Resim yüklenirken bir hata oluştu');
   }
+}
+
+// Geçici resimleri gerçek CDN URL'lerine dönüştürme
+export const uploadTemporaryImages = async (
+  content: any,
+  onProgress?: (current: number, total: number) => void
+): Promise<any> => {
+  // İçerikte resim yoksa doğrudan içeriği döndür
+  if (!content || !content.content) return content;
+  
+  // İçeriği kopyala
+  const newContent = JSON.parse(JSON.stringify(content));
+  
+  // Tüm resimleri bul
+  const imageNodes: {node: any, path: (string | number)[]}[] = [];
+  
+  // İçerikteki tüm resim düğümlerini bul
+  const findImageNodes = (node: any, path: (string | number)[] = []) => {
+    if (node.type === 'image' && node.attrs?.src) {
+      imageNodes.push({node, path});
+    }
+    
+    if (node.content && Array.isArray(node.content)) {
+      node.content.forEach((child: any, index: number) => {
+        findImageNodes(child, [...path, 'content', index]);
+      });
+    }
+  };
+  
+  findImageNodes(newContent);
+  
+  // Geçici resimleri yükle
+  let uploadedCount = 0;
+  const totalImages = imageNodes.length;
+  
+  for (const {node, path} of imageNodes) {
+    const src = node.attrs.src;
+    
+    // Eğer bu bir geçici resimse (URL'de # işareti varsa)
+    if (src.includes('#temp-')) {
+      console.log(`Geçici resim bulundu: ${src}`);
+      const [tempUrl, fileId] = src.split('#');
+      const file = temporaryImages.get(fileId);
+      
+      if (file) {
+        console.log(`Geçici resim dosyası bulundu: ${file.name}, boyut: ${file.size}`);
+        try {
+          // Bunny CDN'e yükle
+          const { uploadToBunny } = await import('../lib/bunny-cdn');
+          
+          // Makale başlığını al - window._currentEditorTitle global değişkeninden
+          const title = window._currentEditorTitle || '';
+          const slugify = (str: string) => {
+            return str
+              .toLowerCase()
+              .trim()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/[\s_-]+/g, '-')
+              .replace(/^-+|-+$/g, '');
+          };
+          
+          let slug = title ? slugify(title) : '';
+          
+          // Eğer slug bulunamadıysa tarih bazlı bir slug oluştur
+          if (!slug) {
+            const date = new Date();
+            slug = `post-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getTime().toString().slice(-6)}`;
+          }
+          
+          console.log(`Resim yükleniyor: ${file.name}, slug: ${slug}`);
+          
+          // Resim sayacını artır (her post için benzersiz numaralar)
+          const imageCounter = (window._imageCounters = window._imageCounters || {});
+          imageCounter[slug] = (imageCounter[slug] || 0) + 1;
+          
+          const imageUrl = await uploadToBunny({
+            file,
+            slug: `${slug}-${imageCounter[slug]}`,
+            folder: `notes/${slug}/images`
+          });
+          // CDN URL'sini düzelt (the99-storage yerine the99 kullan)
+          const correctedImageUrl = imageUrl.replace('the99-storage.b-cdn.net', 'the99.b-cdn.net');
+          console.log(`Resim başarıyla yüklendi: ${imageUrl}`);
+          
+          // İçerikteki URL'yi güncelle
+          let current = newContent;
+          for (let i = 0; i < path.length - 2; i += 2) {
+            const key = path[i] as string | number;
+            const nextKey = path[i+1] as string | number;
+            current = current[key][nextKey];
+          }
+          current.attrs.src = correctedImageUrl;
+          
+          // Geçici URL'yi serbest bırak
+          URL.revokeObjectURL(tempUrl);
+          
+          // Geçici depodan kaldır
+          temporaryImages.delete(fileId);
+        } catch (error) {
+          console.error('Resim CDN yükleme hatası:', error);
+        }
+      }
+    }
+    
+    uploadedCount++;
+    if (onProgress) {
+      onProgress(uploadedCount, totalImages);
+    }
+  }
+  
+  return newContent;
 }
 
 type ProtocolOptions = {

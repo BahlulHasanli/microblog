@@ -5,9 +5,14 @@ import Editor from '../components/Editor';
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
-const user = isLoggedIn ? await getUserFromCookies(Astro.cookies) : null;
 
-if(!user) Astro.redirect("/");
+if (!isLoggedIn) {
+  return Astro.redirect("/");
+}
+
+const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+
+if (!user) return Astro.redirect("/");
 ---
 
 <BaseLayout title="Studio">

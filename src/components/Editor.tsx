@@ -8,10 +8,16 @@ import {
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
 import { isSaveBtn } from "@/store/buttonStore";
+import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 
 export default function Editor() {
   const [editorContent, setEditorContent] = useState(null);
   const [title, setTitle] = useState("");
+  
+  // Başlık değerini global değişkene ata
+  useEffect(() => {
+    window._currentEditorTitle = title;
+  }, [title]);
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>("");
@@ -45,19 +51,27 @@ export default function Editor() {
     setSaveStatus("saving");
 
     try {
-      // JSON içeriğini Markdown'a dönüştür
-      const markdownContent = convertJsonToMarkdown(editorContent);
+      // Geçici resimleri yükle ve içeriği güncelle
+      console.log("Geçici resimler Bunny CDN'e yükleniyor...");
+      
+      // Yükleme ilerlemesini takip etmek için
+      const updatedContent = await uploadTemporaryImages(editorContent, (current, total) => {
+        console.log(`Resim yükleniyor: ${current}/${total}`);
+      });
+      
+      // Güncellenmiş içeriği kullan
+      const markdownContent = convertJsonToMarkdown(updatedContent);
 
       // Editör içeriğinden description değerini kontrol et
       // Eğer description değeri boşsa ve editorContent içinde description düğümü varsa
       // description değerini editorContent'ten al
       let descriptionValue = description;
       if (
-        editorContent &&
-        editorContent.content &&
-        editorContent.content.length >= 2
+        updatedContent &&
+        updatedContent.content &&
+        updatedContent.content.length >= 2
       ) {
-        const descNode = editorContent.content[1];
+        const descNode = updatedContent.content[1];
         if (descNode && descNode.type === "description" && descNode.content) {
           // Description düğümünden metin içeriğini al
           const descText = descNode.content
@@ -328,7 +342,7 @@ export default function Editor() {
       title,
       saveStatus,
     });
-  }, []);
+  }, [editorContent, title, isSaving, saveStatus]);
 
   return (
     <div className="editor-container">
