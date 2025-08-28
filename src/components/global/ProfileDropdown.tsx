@@ -37,7 +37,7 @@ export default function ProfileDropdown({
     };
   }, []);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     setLoading(false);
   }, []);
 

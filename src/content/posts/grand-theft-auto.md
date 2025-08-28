@@ -6,7 +6,7 @@ author:
 title: Grand Theft Auto VI
 description: "Grand Theft Auto VI is an upcoming action-adventure game developed and published by Rockstar Games. It is due to be the eighth main Grand Theft Auto game, following Grand Theft Auto V, and the sixteenth entry overall."
 image:
-  url: "https://images5.alphacoders.com/134/thumb-1920-1343612.png"
+  url: "https://the99.b-cdn.net/notes/grand-theft-auto-6/images/gta6.png"
   alt: "asdasd"
 categories: ["Oyun"]
 ---

@@ -6,7 +6,7 @@ author:
 title: "Mafia: The Old Country"
 description: "Mafia: The Old Country is a 2025 action-adventure game developed by Hangar 13 and published by 2K. It takes place before the events of the first game and is the fourth main entry in the Mafia series. The game was released for PlayStation 5, Windows, and Xbox Series X/S on August 8, 2025."
 image:
-  url: "https://4kwallpapers.com/images/wallpapers/mafia-the-old-3840x2160-22472.jpg"
+  url: "https://the99.b-cdn.net/notes/mafia-old-country/images/mafia-the-old.jpg"
   alt: "Mafia: The Old Country"
 categories: ["Oyun"]
 ---
