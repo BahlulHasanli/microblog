@@ -281,8 +281,11 @@ export const handleImageUpload = async (
   }
   
   try {
-    // Dosya için benzersiz bir ID oluştur
-    const fileId = `temp-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    // Dosya formatını al
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    
+    // Dosya için benzersiz bir ID oluştur (format bilgisini içeren)
+    const fileId = `temp-${Date.now()}-${fileExtension}`;
     
     // Dosyayı geçici depolama alanına kaydet
     temporaryImages.set(fileId, file);
@@ -362,14 +365,8 @@ export const uploadTemporaryImages = async (
           
           // Makale başlığını al - window._currentEditorTitle global değişkeninden
           const title = window._currentEditorTitle || '';
-          const slugify = (str: string) => {
-            return str
-              .toLowerCase()
-              .trim()
-              .replace(/[^\w\s-]/g, '')
-              .replace(/[\s_-]+/g, '-')
-              .replace(/^-+|-+$/g, '');
-          };
+          // Ortak slugify fonksiyonunu kullan
+          const { slugify } = await import('../utils/slugify');
           
           let slug = title ? slugify(title) : '';
           
@@ -385,14 +382,20 @@ export const uploadTemporaryImages = async (
           const imageCounter = (window._imageCounters = window._imageCounters || {});
           imageCounter[slug] = (imageCounter[slug] || 0) + 1;
           
+          // Dosya uzantısını al
+          const fileExtension = file.name.split('.').pop() || 'jpg';
+          
+          // Resim adını oluştur: slug-1.jpg formatında
+          const imageFileName = `${slug}-${imageCounter[slug]}.${fileExtension}`;
+          
           const imageUrl = await uploadToBunny({
             file,
-            slug: `${slug}-${imageCounter[slug]}`,
+            slug: imageFileName,
             folder: `notes/${slug}/images`
           });
           // CDN URL'sini düzelt (the99-storage yerine the99 kullan)
           const correctedImageUrl = imageUrl.replace('the99-storage.b-cdn.net', 'the99.b-cdn.net');
-          console.log(`Resim başarıyla yüklendi: ${imageUrl}`);
+          console.log(`Resim başarıyla yüklendi: ${correctedImageUrl}`);
           
           // İçerikteki URL'yi güncelle
           let current = newContent;

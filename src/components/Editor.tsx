@@ -9,6 +9,7 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
+import { slugify } from "../utils/slugify";
 
 export default function Editor() {
   const [editorContent, setEditorContent] = useState(null);
@@ -105,17 +106,14 @@ export default function Editor() {
           coverImage.size
         );
 
-        // Slug oluştur (başlıktan)
-        const slug = title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "");
+        // Slug oluştur (başlıktan) - utils/slugify.ts kullanarak
+        const slug = slugify(title);
 
         // Dosya uzantısını al
         const fileExtension = coverImage.name.split(".").pop() || "jpg";
 
-        // Resim adını oluştur: slug.extension
-        const imageFileName = `${slug}.${fileExtension}`;
+        // Resim adını oluştur: slug-cover.extension formatında
+        const imageFileName = `${slug}-cover.${fileExtension}`;
         console.log("Oluşturulan resim dosya adı:", imageFileName);
 
         try {
@@ -125,7 +123,8 @@ export default function Editor() {
             type: coverImage.type,
           });
           formData.append("uploadedImage", newFile);
-          formData.append("image", `/images/posts/${imageFileName}`);
+          // Kapak resmi için aynı klasör yapısını kullan (notes/[slug]/images)
+          formData.append("image", `notes/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
         } catch (error) {
@@ -285,7 +284,20 @@ export default function Editor() {
 
   function processImage(node: any): string {
     const alt = node.attrs?.alt || "";
-    const src = node.attrs?.src || "";
+    let src = node.attrs?.src || "";
+    
+    // Eğer src bir URL nesnesi ise, düzgün bir şekilde dönüştür
+    try {
+      // URL'yi düzgün bir şekilde işle
+      if (src.includes('blob:') || src.includes('#temp-')) {
+        console.warn('Geçici resim URL bulundu:', src);
+        // Geçici URL'leri işleme - bunlar zaten CDN'e yüklenmiş olmalı
+        // Bu durumda boş bir string döndürüyoruz, çünkü bu resimler uploadTemporaryImages tarafından düzeltilecek
+      }
+    } catch (error) {
+      console.error('Resim URL işleme hatası:', error);
+    }
+    
     return `![${alt}](${src})`;
   }
 

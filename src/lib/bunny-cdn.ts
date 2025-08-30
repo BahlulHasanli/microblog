@@ -27,10 +27,7 @@ export const uploadToBunny = async ({
     console.log(`Bunny CDN'e yükleme başlıyor: ${file.name}, boyut: ${file.size} byte`);
     
     // Dosya adını oluştur
-    const fileExtension = file.name.split(".").pop() || "jpg";
-    const fileName = slug
-      ? `${slugify(slug)}.${fileExtension}`
-      : `${Date.now()}-${Math.floor(Math.random() * 10000)}.${fileExtension}`;
+    const fileName = slug || `${Date.now()}-${Math.floor(Math.random() * 10000)}.${file.name.split(".").pop() || "jpg"}`;
 
     // CDN URL'sini oluştur
     const cdnUrl = `https://the99.b-cdn.net/${folder}/${fileName}`;

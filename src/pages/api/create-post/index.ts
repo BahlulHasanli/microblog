@@ -2,7 +2,12 @@ import type { APIRoute } from "astro";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { requireAuth } from "../../../utils/auth";
-import slugify from "slugify";
+import { slugify } from "../../../utils/slugify";
+
+// Global resim sayacı tanımı
+declare global {
+  var _imageCounters: Record<string, number>;
+}
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -60,7 +65,7 @@ export const POST: APIRoute = async (context) => {
     const pubDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD formatı
 
     // Dosya adını oluştur
-    const slug = slugify(title, { lower: true, strict: true });
+    const slug = slugify(title);
     const fileName = `${slug}.md`;
     const filePath = path.join(process.cwd(), "src/content/posts", fileName);
 
@@ -72,7 +77,7 @@ export const POST: APIRoute = async (context) => {
         const fileExtension = uploadedImage.name.split('.').pop() || 'jpg';
         const imageFileName = `${slug}-cover.${fileExtension}`;
         
-        // Bunny CDN klasör yapısı - tüm resimler için tek klasör kullan
+        // Bunny CDN klasör yapısı - içerik resimleriyle aynı klasörü kullan
         const folder = `notes/${slug}/images`;
         
         console.log("Bunny CDN klasör yapısı:", folder);
@@ -128,8 +133,8 @@ export const POST: APIRoute = async (context) => {
     // İçerikteki geçici resimleri CDN URL'leriyle değiştir
     let processedContent = content;
     
-    // Blob URL'lerini bul ve değiştir
-    const blobUrlRegex = /blob:http:\/\/localhost:4321\/[a-zA-Z0-9-]+#temp-[0-9-]+/g;
+    // Blob URL'lerini bul ve değiştir - format bilgisini de içeren regex
+    const blobUrlRegex = /blob:http:\/\/localhost:4321\/[a-zA-Z0-9-]+#temp-[0-9]+-[a-z]+/g;
     const blobUrls = content.match(blobUrlRegex) || [];
     
     for (const blobUrl of blobUrls) {
@@ -139,9 +144,25 @@ export const POST: APIRoute = async (context) => {
         
         if (!tempId) continue;
         
-        // Slug oluştur - kapak resmiyle aynı format
-        const imageSlug = `${slug}-${Date.now().toString().slice(-6)}`;
-        const cdnUrl = `https://the99.b-cdn.net/notes/${slug}/images/${imageSlug}.jpg`;
+        // Resim sayacını artır (her post için benzersiz numaralar)
+        // Global bir sayacı kullan
+        if (!global._imageCounters) {
+          global._imageCounters = {};
+        }
+        if (!global._imageCounters[slug]) {
+          global._imageCounters[slug] = 0;
+        }
+        global._imageCounters[slug] += 1;
+        
+        // Dosya formatını tespit et
+        // Blob URL'den format bilgisini çıkar
+        // Temp ID'den format bilgisini al (temp-123-png gibi)
+        const formatMatch = tempId.match(/temp-[0-9]+-([a-z]+)/);
+        const fileExtension = formatMatch && formatMatch[1] ? formatMatch[1] : 'png';
+        
+        // Resim adını oluştur: slug-1.png formatında (tiptap-utils.ts ile tutarlı)
+        const imageFileName = `${slug}-${global._imageCounters[slug]}.${fileExtension}`;
+        const cdnUrl = `https://the99.b-cdn.net/notes/${slug}/images/${imageFileName}`;
         
         // İçerikteki URL'yi değiştir
         processedContent = processedContent.replace(blobUrl, cdnUrl);
