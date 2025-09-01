@@ -1,0 +1,35 @@
+---
+// MDYouTubeProcessor.astro - YouTube videolarını işlemek için bileşen
+---
+
+<script is:inline>
+  // YouTube videolarını bul ve iframe'leri oluştur
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
+      console.log('YouTube konteyner sayısı:', youtubeContainers.length);
+      
+      youtubeContainers.forEach(container => {
+        const videoId = container.getAttribute('data-youtube-video');
+        console.log('Video ID:', videoId);
+        
+        if (videoId) {
+          // İframe oluştur
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube.com/embed/${videoId}`;
+          iframe.width = '100%';
+          iframe.height = '400';
+          iframe.frameBorder = '0';
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.classList.add('aspect-video');
+          
+          // Div içeriğini temizle ve iframe'i ekle
+          container.innerHTML = '';
+          container.appendChild(iframe);
+          console.log('YouTube iframe oluşturuldu');
+        }
+      });
+    }, 500); // 500ms gecikme ekledik
+  });
+</script>

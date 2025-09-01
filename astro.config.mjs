@@ -18,6 +18,15 @@ export default defineConfig({
     shikiConfig: {
       theme: "css-variables",
     },
+    render: [
+      { mode: 'md' },
+      {
+        mode: 'html',
+        htmlOptions: {
+          allowDangerousHtml: true,
+        },
+      },
+    ],
   },
   shikiConfig: {
     wrap: true,

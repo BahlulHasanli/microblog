@@ -47,7 +47,7 @@ export default function Editor({ author }: any) {
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
-    
+
     if (!editorContent) {
       console.error("İçerik alanı zorunludur");
       setSaveStatus("error");
@@ -178,37 +178,41 @@ export default function Editor({ author }: any) {
     }
 
     let markdown = "";
-    
+
     // İlk başlık (title) ve ilk paragraf (description) düğümlerini atla
     // Bunlar zaten frontmatter'da bulunuyor
     let foundHeading = false;
     let foundParagraph = false;
-    
+
     // İçerik sadece başlık ve açıklamadan oluşuyorsa boş bir içerik döndür
     // Bu durumda içerik boş olsa bile kaydetmeye izin ver
     if (json.content.length <= 2) {
       // Başlık ve açıklama varsa boş string döndür
-      const hasHeading = json.content.some((node: any) => node.type === "heading");
-      const hasParagraph = json.content.some((node: any) => node.type === "paragraph");
-      
+      const hasHeading = json.content.some(
+        (node: any) => node.type === "heading"
+      );
+      const hasParagraph = json.content.some(
+        (node: any) => node.type === "paragraph"
+      );
+
       if (hasHeading && hasParagraph) {
         return " "; // Boş olmayan bir string döndür (boşluk karakteri)
       }
     }
-    
+
     json.content.forEach((node: any) => {
       // İlk heading düğümünü atla (başlık)
       if (node.type === "heading" && !foundHeading) {
         foundHeading = true;
         return;
       }
-      
+
       // İlk paragraph düğümünü atla (açıklama)
       if (node.type === "paragraph" && !foundParagraph) {
         foundParagraph = true;
         return;
       }
-      
+
       markdown += processNode(node);
     });
 
@@ -350,12 +354,25 @@ export default function Editor({ author }: any) {
 
   function processYoutubeVideo(node: any): string {
     const src = node.attrs?.src || "";
-    const width = node.attrs?.width || 640;
-    const height = node.attrs?.height || 480;
-    
-    // YouTube videoları için HTML iframe kullanıyoruz
-    // Markdown'da doğrudan iframe desteği olmadığı için HTML kullanmak gerekiyor
-    return `<iframe width="${width}" height="${height}" src="${src}" frameborder="0" allowfullscreen></iframe>`;
+
+    // YouTube URL'sinden video ID'sini çıkar
+    let videoId = "";
+
+    try {
+      if (src.includes("youtube.com/embed/")) {
+        videoId = src.split("youtube.com/embed/")[1].split("?")[0];
+      } else if (src.includes("youtube.com/watch")) {
+        const url = new URL(src);
+        videoId = url.searchParams.get("v") || "";
+      } else if (src.includes("youtu.be/")) {
+        videoId = src.split("youtu.be/")[1].split("?")[0];
+      }
+    } catch (error) {
+      console.error("YouTube URL işleme hatası:", error);
+    }
+
+    // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
+    return `<div data-youtube-video="${videoId}" class="aspect-video"></div>`;
   }
 
   function processTextNode(node: any): string {

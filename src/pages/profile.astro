@@ -1,0 +1,77 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileTabs from "@/components/profile/ProfileTabs";
+import { supabase } from "@/db/supabase";
+import { getCollection } from "astro:content";
+
+// Kimlik doğrulama kontrolü
+const isLoggedIn = isAuthenticated(Astro.cookies);
+if (!isLoggedIn) {
+  return Astro.redirect("/signin");
+}
+
+// Kullanıcı bilgilerini al
+const authUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
+if (!authUser) {
+  return Astro.redirect("/signin");
+}
+
+// Supabase users tablosundan tam kullanıcı bilgilerini al
+const { data: userData, error: userError } = await supabase
+  .from("users")
+  .select("id, fullname, username, avatar, email")
+  .eq("id", authUser.id)
+  .single();
+
+if (userError) {
+  console.error("Kullanıcı bilgileri alınamadı:", userError);
+  return Astro.redirect("/signin");
+}
+
+const user = userData;
+
+// Content klasöründeki tüm makaleleri al
+const allPosts = await getCollection("posts");
+
+// Şimdilik tüm içerikleri gösteriyoruz
+// Daha sonra kullanıcıya özel filtreleme eklenebilir
+
+// Post formatını ProfileTabs bileşenine uygun hale getiriyoruz
+const posts = allPosts.map(post => {
+  // Resim URL'sini Bunny CDN formatına dönüştürüyoruz
+  let imageUrl = post.data.image.url.toString();
+  
+  // Eğer resim URL'si zaten CDN formatında değilse dönüştür
+  if (!imageUrl.includes('the99.b-cdn.net')) {
+    // Kapak resmi için slug-cover formatını kullanıyoruz
+    const fileName = `${post.slug}-cover.jpg`;
+    imageUrl = `https://the99.b-cdn.net/notes/${post.slug}/images/${fileName}`;
+  }
+  
+  return {
+    id: post.id,
+    title: post.data.title,
+    description: post.data.description,
+    slug: post.slug,
+    image: imageUrl,
+    created_at: post.data.pubDate.toISOString()
+  };
+});
+---
+
+<BaseLayout>
+  <div class="max-w-3xl mx-auto pt-8 pb-16">
+    <ProfileHeader 
+      client:load 
+      user={user} 
+    />
+    
+    <ProfileTabs 
+      client:load 
+      posts={posts || []} 
+      userId={user.id} 
+    />
+  </div>
+</BaseLayout>
