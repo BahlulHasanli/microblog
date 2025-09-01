@@ -11,14 +11,15 @@ import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { slugify } from "../utils/slugify";
 
-export default function Editor() {
+export default function Editor({ author }: any) {
   const [editorContent, setEditorContent] = useState(null);
   const [title, setTitle] = useState("");
-  
+
   // Başlık değerini global değişkene ata
   useEffect(() => {
     window._currentEditorTitle = title;
   }, [title]);
+
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>("");
@@ -40,10 +41,16 @@ export default function Editor() {
   };
 
   const handleSave = async () => {
-    if (!editorContent || !title) {
-      console.error("Başlık ve içerik alanları zorunludur");
+    if (!title) {
+      console.error("Başlık alanı zorunludur");
       setSaveStatus("error");
-
+      setTimeout(() => setSaveStatus("idle"), 3000);
+      return;
+    }
+    
+    if (!editorContent) {
+      console.error("İçerik alanı zorunludur");
+      setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
@@ -54,12 +61,15 @@ export default function Editor() {
     try {
       // Geçici resimleri yükle ve içeriği güncelle
       console.log("Geçici resimler Bunny CDN'e yükleniyor...");
-      
+
       // Yükleme ilerlemesini takip etmek için
-      const updatedContent = await uploadTemporaryImages(editorContent, (current, total) => {
-        console.log(`Resim yükleniyor: ${current}/${total}`);
-      });
-      
+      const updatedContent = await uploadTemporaryImages(
+        editorContent,
+        (current, total) => {
+          console.log(`Resim yükleniyor: ${current}/${total}`);
+        }
+      );
+
       // Güncellenmiş içeriği kullan
       const markdownContent = convertJsonToMarkdown(updatedContent);
 
@@ -93,6 +103,9 @@ export default function Editor() {
       // FormData oluştur
       const formData = new FormData();
       formData.append("title", title);
+      formData.append("author.fullname", author.fullname);
+      formData.append("author.avatar", author.avatar);
+      formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
       formData.append("categories", selectedCategories.join(","));
@@ -159,16 +172,48 @@ export default function Editor() {
    * Tiptap JSON içeriğini Markdown formatına dönüştürür
    */
   function convertJsonToMarkdown(json: any): string {
-    let markdown = "";
-
-    // İçeriği işle
-    if (json.content) {
-      json.content.forEach((node: any) => {
-        markdown += processNode(node);
-      });
+    // Eğer içerik yoksa boş bir string döndür
+    if (!json || !json.content || json.content.length === 0) {
+      return "";
     }
 
-    return markdown;
+    let markdown = "";
+    
+    // İlk başlık (title) ve ilk paragraf (description) düğümlerini atla
+    // Bunlar zaten frontmatter'da bulunuyor
+    let foundHeading = false;
+    let foundParagraph = false;
+    
+    // İçerik sadece başlık ve açıklamadan oluşuyorsa boş bir içerik döndür
+    // Bu durumda içerik boş olsa bile kaydetmeye izin ver
+    if (json.content.length <= 2) {
+      // Başlık ve açıklama varsa boş string döndür
+      const hasHeading = json.content.some((node: any) => node.type === "heading");
+      const hasParagraph = json.content.some((node: any) => node.type === "paragraph");
+      
+      if (hasHeading && hasParagraph) {
+        return " "; // Boş olmayan bir string döndür (boşluk karakteri)
+      }
+    }
+    
+    json.content.forEach((node: any) => {
+      // İlk heading düğümünü atla (başlık)
+      if (node.type === "heading" && !foundHeading) {
+        foundHeading = true;
+        return;
+      }
+      
+      // İlk paragraph düğümünü atla (açıklama)
+      if (node.type === "paragraph" && !foundParagraph) {
+        foundParagraph = true;
+        return;
+      }
+      
+      markdown += processNode(node);
+    });
+
+    // Eğer içerik boşsa (sadece başlık ve açıklama varsa) boş olmayan bir string döndür
+    return markdown || " ";
   }
 
   /**
@@ -209,6 +254,8 @@ export default function Editor() {
         return "---\n\n";
       case "image":
         return processImage(node) + "\n\n";
+      case "youtube":
+        return processYoutubeVideo(node) + "\n\n";
       default:
         if (node.content) {
           return node.content.map(processNode).join("");
@@ -285,20 +332,30 @@ export default function Editor() {
   function processImage(node: any): string {
     const alt = node.attrs?.alt || "";
     let src = node.attrs?.src || "";
-    
+
     // Eğer src bir URL nesnesi ise, düzgün bir şekilde dönüştür
     try {
       // URL'yi düzgün bir şekilde işle
-      if (src.includes('blob:') || src.includes('#temp-')) {
-        console.warn('Geçici resim URL bulundu:', src);
+      if (src.includes("blob:") || src.includes("#temp-")) {
+        console.warn("Geçici resim URL bulundu:", src);
         // Geçici URL'leri işleme - bunlar zaten CDN'e yüklenmiş olmalı
         // Bu durumda boş bir string döndürüyoruz, çünkü bu resimler uploadTemporaryImages tarafından düzeltilecek
       }
     } catch (error) {
-      console.error('Resim URL işleme hatası:', error);
+      console.error("Resim URL işleme hatası:", error);
     }
-    
+
     return `![${alt}](${src})`;
+  }
+
+  function processYoutubeVideo(node: any): string {
+    const src = node.attrs?.src || "";
+    const width = node.attrs?.width || 640;
+    const height = node.attrs?.height || 480;
+    
+    // YouTube videoları için HTML iframe kullanıyoruz
+    // Markdown'da doğrudan iframe desteği olmadığı için HTML kullanmak gerekiyor
+    return `<iframe width="${width}" height="${height}" src="${src}" frameborder="0" allowfullscreen></iframe>`;
   }
 
   function processTextNode(node: any): string {
@@ -370,6 +427,9 @@ export default function Editor() {
       />
 
       <style>{`
+      body { 
+        overflow-x: hidden;
+      }
         .editor-container {
           display: flex;
           flex-direction: column;

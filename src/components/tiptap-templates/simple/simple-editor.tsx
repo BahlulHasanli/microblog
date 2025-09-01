@@ -12,6 +12,7 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Selection, Placeholder, Focus } from "@tiptap/extensions";
+import Youtube from "@tiptap/extension-youtube";
 
 import { Document } from "@tiptap/extension-document";
 
@@ -243,6 +244,55 @@ export function SimpleEditor({
     content: "heading paragraph block*",
   });
 
+  const MenuBar = ({ editor }: { editor: any }) => {
+    const [height, setHeight] = React.useState<any>(480);
+    const [width, setWidth] = React.useState<any>(640);
+
+    if (!editor) {
+      return null;
+    }
+
+    const addYoutubeVideo = () => {
+      const url = prompt("Enter YouTube URL");
+
+      if (url) {
+        editor.commands.setYoutubeVideo({
+          src: url,
+          width: Math.max(320, parseInt(width, 10)) || 640,
+          height: Math.max(180, parseInt(height, 10)) || 480,
+        });
+      }
+    };
+
+    return (
+      <div className="control-group">
+        <div className="button-group">
+          <input
+            id="width"
+            type="number"
+            min="320"
+            max="1024"
+            placeholder="width"
+            value={width}
+            onChange={(event: any) => setWidth(event.target.value)}
+          />
+          <input
+            id="height"
+            type="number"
+            min="180"
+            max="720"
+            placeholder="height"
+            value={height}
+            onChange={(event: any) => setHeight(event.target.value)}
+          />
+          <button id="add" onClick={addYoutubeVideo}>
+            Add YouTube video
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const editor = useEditor({
     immediatelyRender: false,
     shouldRerenderOnTransaction: false,
@@ -257,6 +307,10 @@ export function SimpleEditor({
     },
     extensions: [
       FixedDocument,
+      Youtube.configure({
+        controls: false,
+        nocookie: true,
+      }),
       StarterKit.configure({
         document: false,
         horizontalRule: false,
@@ -397,27 +451,6 @@ export function SimpleEditor({
     }
   }, [isMobile, mobileView]);
 
-  // Document yapısı kontrolü kaldırıldı
-
-  // Title ve description değişikliklerini izleme
-  const handleTitleChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (onTitleChange) {
-        onTitleChange(e.target.value);
-      }
-    },
-    [onTitleChange]
-  );
-
-  const handleDescriptionChange = React.useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      if (onDescriptionChange) {
-        onDescriptionChange(e.target.value);
-      }
-    },
-    [onDescriptionChange]
-  );
-
   // Kapak resmi işlemleri
   React.useEffect(() => {
     // Eğer dışarıdan bir coverImage gelirse, önizlemeyi güncelle
@@ -520,6 +553,7 @@ export function SimpleEditor({
           <div className="simple-editor-content">
             {/* Kategoriler Bölümü */}
             <div className="categories-container mt-8 mb-5">
+              <MenuBar editor={editor} />
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((category) => (
                   <button

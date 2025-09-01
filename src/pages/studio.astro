@@ -12,11 +12,13 @@ if (!isLoggedIn) {
 
 const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
 
+console.log('User', user)
+
 if (!user) return Astro.redirect("/");
 ---
 
 <BaseLayout title="Studio">
-  <Editor client:visible />
+  <Editor author={user} client:visible />
 </BaseLayout>
 
 <style>

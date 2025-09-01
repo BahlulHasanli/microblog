@@ -101,3 +101,8 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add rounded corners to all images in blog content */
+.prose img {
+  border-radius: 0.75rem; /* rounded-xl equivalent */
+}

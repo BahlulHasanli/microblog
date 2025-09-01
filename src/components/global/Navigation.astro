@@ -76,7 +76,7 @@ const isStudioRoutePath = Astro.url.pathname === '/studio';
            <ProfileDropdown
               client:load
               isStudioRoutePath={isStudioRoutePath} 
-              userImage={'https://miro.medium.com/v2/resize:fill:300:300/1*cqroLdqSWbISklp0mVJuvQ@2x.jpeg'} 
+              userImage={user?.avatar} 
               userName={user?.fullName}
             />
         </div> 
