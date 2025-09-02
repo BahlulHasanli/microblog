@@ -122,7 +122,7 @@ const MainToolbarContent = ({
         editor.commands.setYoutubeVideo({
           src: url,
           width: "100%",
-          height: "400",
+          height: "260",
         });
       }
     };

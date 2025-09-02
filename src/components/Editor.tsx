@@ -372,7 +372,7 @@ export default function Editor({ author }: any) {
     }
 
     // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
-    return `<div data-youtube-video="${videoId}" class="aspect-video"></div>`;
+    return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
   }
 
   function processTextNode(node: any): string {

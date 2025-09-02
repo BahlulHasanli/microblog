@@ -4,12 +4,55 @@ import BlogEntries from "@/components/entries/BlogEntry.astro";
 import { getCollection } from "astro:content";
 import Slider from "@/components/entries/HomeSlider.astro";
 import { categories, slugifyCategory } from "@/data/categories";
+import { supabase } from "@/db/supabase";
 
-const allPosts = (await getCollection("posts"));
-// Sort posts by date in descending order (newest first)
-const sortedPosts = allPosts.sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+const { data: userData, error: userError } = await supabase
+  .from("users") 
+  .select("id, fullname, username, avatar, email")
+  .limit(10); 
+
+
+
+const user = userData;
+
+console.log('user ::>>', user)
+
+// const allPosts = (await getCollection("posts"));
+const allPosts = await getCollection("posts");
+
+const posts = allPosts.map(post => {
+  let imageUrl = post.data.image.url.toString();
+  
+  if (!imageUrl.includes('the99.b-cdn.net')) {
+    const fileName = `${post.slug}-cover.jpg`;
+    imageUrl = `https://the99.b-cdn.net/notes/${post.slug}/images/${fileName}`;
+  }
+
+  // Yazarın güncel bilgilerini Supabase'den alınan kullanıcılar arasından bulalım
+  const currentAuthorData = userData?.find(u => u.fullname === post.data.author.name);
+  
+  // Eğer yazar bulunduysa, güncel avatar bilgisini kullanalım
+  const updatedAuthor = currentAuthorData 
+    ? { 
+        ...post.data.author, 
+        avatar: currentAuthorData.avatar // Güncel avatar bilgisini kullan
+      } 
+    : post.data.author; // Yazar bulunamazsa mevcut bilgileri kullan
+  
+  return {
+    ...post,
+    data: {
+      ...post.data,
+      image: {
+        ...post.data.image,
+        url: imageUrl
+      },
+      author: updatedAuthor
+    }
+  };
+}).sort(
+  (a: any, b: any) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+)
 ---
 
 <BaseLayout>
@@ -45,9 +88,9 @@ const sortedPosts = allPosts.sort(
           </div>
           <div class="grid grid-cols-1 gap-8 gap-y-24 sm:grid-cols-2">
             {
-              sortedPosts.slice(0, 10).map((post) => (
+              posts.map((post) => (
                 <BlogEntries
-                  url={"/posts/" + post.slug}
+                  url={"/posts/" + post.slug} 
                   alt={post.data.title}
                   categories={post.data.categories}
                   title={post.data.title}
@@ -56,7 +99,7 @@ const sortedPosts = allPosts.sort(
                   description={post.data.description}
                   pubDate={post.data.pubDate.toString()}
                 />
-              ))
+              )).slice(0, 10)
             }
           </div>
         </div>

@@ -2,7 +2,6 @@
 import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { slugifyCategory } from "../data/categories";
-import MDYouTubeProcessor from "@/components/MDYouTubeProcessor.astro";
 
 const { frontmatter } = Astro.props;
 ---
@@ -66,37 +65,42 @@ const { frontmatter } = Astro.props;
         <slot />
       </div>
       
-      <script is:inline>
-        // YouTube videolarını bul ve iframe'leri oluştur
-        document.addEventListener('DOMContentLoaded', () => {
-          setTimeout(() => {
-            const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
-            console.log('YouTube konteyner sayısı:', youtubeContainers.length);
+      <script is:inline> 
+        // YouTube videolarını yükleyen fonksiyon
+        function loadYoutubeVideos() {
+          const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
+          
+          youtubeContainers.forEach(container => {
+            // Eğer container zaten bir iframe içeriyorsa tekrar yükleme
+            if (container.querySelector('iframe')) return;
             
-            youtubeContainers.forEach(container => {
-              const videoId = container.getAttribute('data-youtube-video');
-              console.log('Video ID:', videoId);
+            const videoId = container.getAttribute('data-youtube-video');
+            
+            if (videoId) {
+              const iframe = document.createElement('iframe');
+              iframe.src = `https://www.youtube.com/embed/${videoId}`;
+              iframe.width = '100%';
+              iframe.height = '100%'; 
+              iframe.frameBorder = '0';
+              iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+              iframe.allowFullscreen = true;
+              iframe.classList.add('aspect-video');
+              iframe.style.maxWidth = '100%';
               
-              if (videoId) {
-                // İframe oluştur
-                const iframe = document.createElement('iframe');
-                iframe.src = `https://www.youtube.com/embed/${videoId}`;
-                iframe.width = '100%';
-                iframe.height = '400';
-                iframe.frameBorder = '0';
-                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-                iframe.allowFullscreen = true;
-                iframe.classList.add('aspect-video');
-                iframe.style.maxWidth = '100%';
-                
-                // Div içeriğini temizle ve iframe'i ekle
-                container.innerHTML = '';
-                container.appendChild(iframe);
-                console.log('YouTube iframe oluşturuldu');
-              }
-            });
-          }, 500); // Sayfanın tam yüklenmesi için küçük bir gecikme
-        });
+              container.innerHTML = '';
+              container.appendChild(iframe);
+            }
+          });
+        }
+
+        // Sayfa ilk yüklenirken
+        document.addEventListener('DOMContentLoaded', loadYoutubeVideos);
+        
+        // Astro sayfa geçişlerinde
+        document.addEventListener('astro:page-load', loadYoutubeVideos);
+        
+        // Astro içerik güncellendiğinde
+        document.addEventListener('astro:after-swap', loadYoutubeVideos);
       </script>
     </div>
   </section>
