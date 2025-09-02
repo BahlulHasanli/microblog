@@ -56,7 +56,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
 
   return (
     <div className="mb-10">
-      <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+      <div className="flex flex-col md:flex-row items-center gap-6">
         {/* Avatar */}
         <div className="relative group">
           <div className="overflow-hidden !size-28 squircle cursor-pointer">
@@ -95,7 +95,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
         {/* User Info */}
         <div className="flex justify-between items-center w-full">
           <div>
-            <h1 className="text-xl font-bold text-base-900">
+            <h1 className="text-2xl font-semibold text-base-900">
               {currentUser.fullname}
             </h1>
             <p className="text-base-600 mt-1 text-sm">

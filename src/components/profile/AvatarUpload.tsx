@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { supabase } from "../../db/supabase";
 import AvatarSelector from "./AvatarSelector";
 import { updateUserAvatar } from "@/store/userStore";
+import { extractAvatarPathFromUrl, isDefaultAvatar } from "@/utils/avatarUtils";
 
 interface User {
   id: string;
@@ -118,12 +119,67 @@ export default function AvatarUpload({
     }
   };
 
+  // Eski avatarı BunnyCDN'den sil
+  const deleteOldAvatar = async (oldAvatarUrl: string) => {
+    try {
+      // Eğer avatar URL'si BunnyCDN'de değilse silme
+      if (!oldAvatarUrl || !oldAvatarUrl.includes('b-cdn.net')) {
+        console.log('Silinecek eski avatar yok');
+        return true;
+      }
+      
+      // Varsayılan avatarları (noavatar klasöründeki) silme
+      if (isDefaultAvatar(oldAvatarUrl)) {
+        console.log('Varsayılan avatar silinmeyecek:', oldAvatarUrl);
+        return true;
+      }
+
+      // Avatar yolunu URL'den çıkar
+      const avatarPath = extractAvatarPathFromUrl(oldAvatarUrl);
+      if (!avatarPath) {
+        console.log('Avatar yolu çıkarılamadı veya varsayılan avatar:', oldAvatarUrl);
+        return true; // Varsayılan avatar veya geçersiz yol için başarılı dön
+      }
+
+      console.log('Eski avatar siliniyor:', avatarPath);
+      
+      // BunnyCDN silme API'sini çağır
+      const deleteResponse = await fetch('/api/bunny-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filePath: avatarPath,
+        }),
+      });
+
+      if (!deleteResponse.ok) {
+        const errorData = await deleteResponse.json();
+        console.error('Avatar silme hatası:', errorData);
+        return false;
+      }
+
+      const deleteResult = await deleteResponse.json();
+      console.log('Avatar silme sonucu:', deleteResult);
+      return deleteResult.success;
+    } catch (error) {
+      console.error('Avatar silme işlemi sırasında hata:', error);
+      return false;
+    }
+  };
+
   // Helper function to update avatar in Supabase
   const updateAvatarInSupabase = async (avatarUrl: string) => {
     setLoading(true);
     setError("");
 
     try {
+      // Önce eski avatarı sil
+      if (user.avatar) {
+        await deleteOldAvatar(user.avatar);
+      }
+      
       // Kullanıcı bilgilerini güncelle
       const { data, error } = await supabase
         .from("users")
