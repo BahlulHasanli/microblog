@@ -25,17 +25,9 @@ export default function PostCard({ post }: PostCardProps) {
       <a href={`/posts/${post.slug}`} title={post.title} className="block">
         <div className="block w-full">
           <img
-            src={
-              post.image ||
-              `https://the99.b-cdn.net/notes/${post.slug}/images/${post.slug}-cover.jpg`
-            }
+            src={post.image}
             alt={post.title}
             className="object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
-            onError={(e) => {
-              // Resim yüklenemezse placeholder göster
-              (e.target as HTMLImageElement).src =
-                "https://via.placeholder.com/600x400";
-            }}
           />
         </div>
       </a>

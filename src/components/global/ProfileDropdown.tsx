@@ -1,6 +1,7 @@
 import { navigate } from "astro:transitions/client";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { isSaveBtn } from "@/store/buttonStore";
+import { userAvatar } from "@/store/userStore";
 import { useStore } from "@nanostores/react";
 import { Suspense } from "react";
 import { supabase } from "../../db/supabase";
@@ -25,6 +26,7 @@ export default function ProfileDropdown({
   });
 
   const isSaveBtnState = useStore(isSaveBtn);
+  const currentAvatar = useStore(userAvatar);
 
   // Supabase'den kullanıcı bilgilerini al
   useEffect(() => {
@@ -61,6 +63,16 @@ export default function ProfileDropdown({
 
     fetchUserData();
   }, []);
+  
+  // Listen for avatar updates from userStore
+  useEffect(() => {
+    if (currentAvatar) {
+      setUserData(prevData => ({
+        ...prevData,
+        avatar: currentAvatar
+      }));
+    }
+  }, [currentAvatar]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -169,7 +181,7 @@ export default function ProfileDropdown({
           className="overflow-hidden !size-11 squircle ml-4 cursor-pointer"
         >
           <img
-            src={userData.avatar || userImage}
+            src={currentAvatar || userData.avatar || userImage}
             alt={userData.fullname || userName}
             className="w-full h-full object-cover"
             onError={(e) => {

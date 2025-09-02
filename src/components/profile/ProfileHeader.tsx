@@ -59,16 +59,11 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
       <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
         {/* Avatar */}
         <div className="relative group">
-          <div className="overflow-hidden size-28 md:size-32 squircle cursor-pointer">
+          <div className="overflow-hidden !size-28 squircle cursor-pointer">
             <img
-              src={currentUser.avatar || "https://via.placeholder.com/150"}
+              src={currentUser.avatar}
               alt={currentUser.fullname}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                // Resim yüklenemezse placeholder göster
-                (e.target as HTMLImageElement).src =
-                  "https://via.placeholder.com/150";
-              }}
             />
           </div>
           <button
@@ -81,7 +76,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="size-8 text-white"
+              className="size-11 text-white"
             >
               <path
                 strokeLinecap="round"
@@ -98,35 +93,37 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
         </div>
 
         {/* User Info */}
-        <div className="flex-1 text-center md:text-left">
-          <h1 className="text-2xl md:text-3xl font-bold text-base-900">
-            {currentUser.fullname}
-          </h1>
-          <p className="text-base-600 mt-1">@{currentUser.username}</p>
-          <div className="mt-4">
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className="p-3 border cursor-pointer focus:ring-2 text-sm rounded-full 
+        <div className="flex justify-between items-center w-full">
+          <div>
+            <h1 className="text-xl font-bold text-base-900">
+              {currentUser.fullname}
+            </h1>
+            <p className="text-base-600 mt-1 text-sm">
+              @{currentUser.username}
+            </p>
+          </div>
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="p-3 border cursor-pointer focus:ring-2 text-sm rounded-full 
               border-base-300 bg-white hover:bg-base-900 hover:text-white 
               duration-200 focus:ring-offset-2 focus:ring-base-300 text-base-900 inline-flex 
               items-center justify-center gap-1"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-4"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="size-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                />
-              </svg>
-            </button>
-          </div>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+              />
+            </svg>
+          </button>
         </div>
       </div>
 

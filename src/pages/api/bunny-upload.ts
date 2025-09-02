@@ -38,7 +38,8 @@ export const POST: APIRoute = async ({ request }) => {
     const ACCESS_KEY = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
     
     // Storage klasör yapısını oluştur
-    // Storage klasörü kullanmıyoruz, doğrudan notes klasörüne yükleme yapıyoruz
+    // Dosya yolu belirtilmişse kullan, yoksa fileName'i kullan
+    // Özellikle avatars/ yolu için destek eklenmiştir
 
     console.log("Bunny CDN yükleme başlıyor:", {
       fileName,
