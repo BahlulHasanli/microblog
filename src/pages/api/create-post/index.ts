@@ -69,7 +69,7 @@ export const POST: APIRoute = async (context) => {
 
     // Dosya adını oluştur
     const slug = slugify(title);
-    const fileName = `${slug}.md`;
+    const fileName = `${slug}.mdx`;
     const filePath = path.join(process.cwd(), "src/content/posts", fileName);
 
     // Eğer yüklenen bir resim varsa, Bunny CDN'e yükle

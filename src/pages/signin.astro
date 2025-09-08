@@ -1,10 +1,11 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import SigninView from "@/components/auth/signinView";
+// import SigninView from "@/components/auth/signinView";
+import SignInView from "@/components/auth/SignIngView.svelte";
 
 export const prerender = false
 
-const { cookies, redirect } = Astro;
+const { cookies, redirect } = Astro;  
 
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
@@ -12,8 +13,8 @@ const refreshToken = cookies.get("sb-refresh-token");
 if (accessToken && refreshToken) { 
   return redirect("/");
 }
---- 
+---  
 
 <BaseLayout>
-  <SigninView client:load />
+  <SignInView client:load />
 </BaseLayout>

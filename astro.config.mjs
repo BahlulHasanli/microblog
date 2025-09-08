@@ -7,6 +7,8 @@ import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import node from "@astrojs/node";
 
+import svelte from "@astrojs/svelte";
+
 // https://astro.build/config
 export default defineConfig({
   output: "server",
@@ -34,7 +36,7 @@ export default defineConfig({
     drafts: true,
   },
   site: "http://localhost:4321",
-  integrations: [sitemap(), mdx(), react()],
+  integrations: [sitemap(), mdx(), react(), svelte()],
   adapter: node({
     mode: "standalone",
   }),
