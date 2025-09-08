@@ -11,18 +11,18 @@ const { frontmatter } = Astro.props;
       <div class="lg:text-center">
         <div class="max-w-xl mx-auto">
           <h1
-            class="text-4xl text-balance font-medium font-display text-base-900"
+            class="text-4xl text-balance font-nouvelr-semibold text-base-900"
           >
             {frontmatter.title}
           </h1>
-          <p class="max-w-2xl mx-auto mt-4 text-zinc-500 text-sm text-balance">
-            <em>{frontmatter.description}</em>
+          <p class="max-w-2xl mx-auto mt-4 text-zinc-500 text-sm font-nouvelr">
+            {frontmatter.description}
           </p>
         </div>
 
         <div class="flex justify-center items-center flex-col gap-2 my-10"> 
          <div class="relative">
-          <div class="squircle-border -left-[3px] -top-1"></div>
+          <div class="squircle-border -left-[3px] -top-[3.5px]"></div>
          <div class="squircle-wrapper">
             <Image
             width={1280}
@@ -41,7 +41,7 @@ const { frontmatter } = Astro.props;
           </div>
         </div>
 
-        <div class="max-w-6xl mx-auto">
+        <div class="max-w-7xl mx-auto">
           <div class="flex flex-col justify-between mt-4 md:flex-row">
             <div class="flex gap-3">
               {
