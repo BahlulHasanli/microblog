@@ -5,6 +5,7 @@ import toast, { Toaster } from 'svelte-french-toast';
  const formState = $state.raw({
     email: "",
     password: "",
+    remember: false
  });
 
  const isSubmitting = $state({
@@ -24,7 +25,11 @@ import toast, { Toaster } from 'svelte-french-toast';
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email: formState.email, password: formState.password }),
+            body: JSON.stringify({ 
+              email: formState.email, 
+              password: formState.password,
+              remember: formState.remember
+            }),
         });
 
         const result = await response.json();
@@ -51,19 +56,20 @@ import toast, { Toaster } from 'svelte-french-toast';
 </script>
 
 <Toaster />
-<section class="max-w-md mx-auto py-12">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-big-shoulders font-bold text-base-900 mb-2">
+<section class="max-w-md mx-auto py-12 px-4 sm:px-0">
+  <div class="bg-white rounded-lg p-6">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-big-shoulders font-bold text-base-900 mb-1">
         Daxil Ol
       </h1>
       <p class="text-base-600 text-sm">Hesabınıza daxil olun</p>
     </div>
 
-    <form id="signinForm" class="space-y-6" onsubmit={handleSubmit}>
+    <form id="signinForm" class="space-y-5" onsubmit={handleSubmit}>
       <div> 
         <label  
           for="email"
-          class="block text-sm font-medium text-base-900 mb-2"
+          class="block text-sm font-medium text-base-700 mb-1"
         >
           Email
         </label>
@@ -74,14 +80,14 @@ import toast, { Toaster } from 'svelte-french-toast';
           placeholder="email@example.com"
           required
           bind:value={formState.email}
-          class="w-full px-4 py-3 border border-base-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200 text-base-900 placeholder-base-400"
+          class="w-full px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-base-900 placeholder-base-400"
         />
       </div>
 
       <div> 
         <label
           for="password"
-          class="block text-sm font-medium text-base-900 mb-2"
+          class="block text-sm font-medium text-base-700 mb-1"
         >
           Şifre
         </label>
@@ -92,23 +98,24 @@ import toast, { Toaster } from 'svelte-french-toast';
           placeholder="Şifrənizi daxil edin"
           required
           bind:value={formState.password}
-          class="w-full px-4 py-3 border border-base-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all duration-200 text-base-900 placeholder-base-400"
+          class="w-full px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-base-900 placeholder-base-400"
         />
       </div>
 
       <div class="flex items-center justify-between">
-        <label for="remember" class="flex items-center">
+        <label for="remember" class="flex items-center cursor-pointer">
           <input
             type="checkbox"
             id="remember"
             name="remember"
-            class="w-4 h-4 text-rose-500 bg-white border-base-300 rounded focus:ring-rose-500 focus:ring-2"
+            bind:checked={formState.remember}
+            class="w-4 h-4 text-rose-500 bg-white border-base-300 rounded focus:ring-1 focus:ring-rose-500"
           />
           <span class="ml-2 text-sm text-base-600">Məni xatırla</span>
         </label> 
         <a
           href="/forgot-password"
-          class="text-sm text-rose-500 hover:text-rose-600 transition-colors duration-200"
+          class="text-sm text-rose-500 hover:text-rose-600 transition-colors"
         >
           Şifrəni unutdun?
         </a>
@@ -117,27 +124,26 @@ import toast, { Toaster } from 'svelte-french-toast';
       <button 
         type="submit"
         disabled={isSubmitting.value}
-        class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+        class="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
       >
         {#if isSubmitting.value}
-            <div>
-                <span class="loader"></span>
-            </div>
+          Daxil olunur...
         {:else}
-            Daxil Ol
+          Daxil Ol
         {/if}
       </button> 
     </form>
 
-    <div class="text-center mt-6">
+    <div class="text-center mt-6 pt-5 border-t border-base-100">
       <p class="text-base-600 text-sm">
         Hesabınız yoxdur?
         <a
           href="/signup"
-          class="text-rose-500 hover:text-rose-600 font-medium transition-colors duration-200"
+          class="text-rose-500 hover:text-rose-600 font-medium transition-colors"
         >
           Qeydiyyatdan keçin
         </a>
       </p>
     </div>
-  </section>
+  </div>
+</section>
