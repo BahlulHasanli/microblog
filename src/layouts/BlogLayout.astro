@@ -2,6 +2,8 @@
 import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { slugifyCategory } from "../data/categories";
+import Comments from "@/components/comments/Comments.svelte";
+import CommentButton from "@/components/comments/CommentButton.svelte";
 
 const { frontmatter } = Astro.props;
 ---
@@ -70,6 +72,9 @@ const { frontmatter } = Astro.props;
       <div class="prose prose-sm max-w-md mt-12 mx-auto">
         <slot />
       </div>
+      
+      <Comments client:load postSlug={frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-')} />
+      <CommentButton client:load />
       
       <script is:inline>  
         function loadYoutubeVideos() {

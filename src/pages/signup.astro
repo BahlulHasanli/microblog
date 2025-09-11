@@ -3,9 +3,9 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { isAuthenticated } from "@/utils/auth";
 
 // Check if user is already authenticated
-if (isAuthenticated(Astro.cookies)) {
-  return Astro.redirect('/');
-}
+// if (isAuthenticated(Astro.cookies)) {
+//   return Astro.redirect('/');
+// }
 ---
 
 <BaseLayout>
@@ -103,7 +103,7 @@ if (isAuthenticated(Astro.cookies)) {
             const form = e.target as HTMLFormElement;
             const formData = new FormData(form);
             const messageDiv = document.getElementById('message');
-            
+             
             if (!messageDiv) return;
             
             // Hide previous messages
