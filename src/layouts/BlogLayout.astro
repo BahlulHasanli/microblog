@@ -4,8 +4,17 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { slugifyCategory } from "../data/categories";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
 const { frontmatter } = Astro.props;
+
+// Kullanıcı giriş yapmış mı kontrol et
+const isLoggedIn = isAuthenticated(Astro.cookies);
+let currentUser = null;
+
+if (isLoggedIn) {
+  currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
+}
 ---
 <BaseLayout>
   <section>
@@ -54,6 +63,19 @@ const { frontmatter } = Astro.props;
                 ))
               }
             </div>
+            {currentUser && (
+              <div class="mt-2 md:mt-0">
+                <a 
+                  href={`/edit-post/${Astro.params.slug || frontmatter.slug}`} 
+                  class="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Düzenle
+                </a>
+              </div>
+            )}
           </div>
           
           {frontmatter.image && frontmatter.image.url && (

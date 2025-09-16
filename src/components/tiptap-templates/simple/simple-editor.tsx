@@ -268,6 +268,9 @@ interface SimpleEditorProps {
   coverImage?: File | null;
   onCoverImageChange?: (file: File | null) => void;
   onCategoriesChange?: (categories: string[]) => void;
+  initialContent?: string;
+  initialCoverImageUrl?: string;
+  selectedCategories?: string[];
 }
 
 export function SimpleEditor({
@@ -279,6 +282,9 @@ export function SimpleEditor({
   coverImage = null,
   onCoverImageChange,
   onCategoriesChange,
+  initialContent,
+  initialCoverImageUrl,
+  selectedCategories = [],
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const { height } = useWindowSize();
@@ -287,8 +293,8 @@ export function SimpleEditor({
   >("main");
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [coverImagePreview, setCoverImagePreview] = React.useState<string>("");
-  const [categories, setCategories] = React.useState<string[]>([]);
+  const [coverImagePreview, setCoverImagePreview] = React.useState<string>(initialCoverImageUrl || "");
+  const [categories, setCategories] = React.useState<string[]>(selectedCategories || []);
 
   const FixedDocument = Document.extend({
     content: "heading paragraph block*",
@@ -366,7 +372,7 @@ export function SimpleEditor({
       }),
     ],
     autofocus: true,
-    content: {
+    content: initialContent || {
       type: "doc",
       content: [
         {
@@ -445,6 +451,19 @@ export function SimpleEditor({
       editor.off("update", updateTitleAndDescription);
     };
   }, [editor, onTitleChange, onDescriptionChange, title, description]);
+  
+  // initialContent değiştiğinde editör içeriğini güncelle
+  React.useEffect(() => {
+    if (!editor || !initialContent) return;
+    
+    // Editör içeriğini güncelle
+    try {
+      editor.commands.setContent(initialContent);
+      console.log("Editör içeriği güncellendi", initialContent);
+    } catch (error) {
+      console.error("Editör içeriği güncellenirken hata oluştu:", error);
+    }
+  }, [editor, initialContent]);
 
   React.useEffect(() => {
     if (!isMobile && mobileView !== "main") {
@@ -461,10 +480,13 @@ export function SimpleEditor({
         setCoverImagePreview(reader.result as string);
       };
       reader.readAsDataURL(coverImage);
+    } else if (initialCoverImageUrl) {
+      // Eğer mevcut bir kapağımız varsa onu kullan
+      setCoverImagePreview(initialCoverImageUrl);
     } else {
       setCoverImagePreview("");
     }
-  }, [coverImage]);
+  }, [coverImage, initialCoverImageUrl]);
 
   // Kategoriler değiştiğinde dışarıya bildir
   React.useEffect(() => {

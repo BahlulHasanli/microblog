@@ -1,15 +1,15 @@
 <script lang="ts">
   import { supabase } from '@/db/supabase';
 
-   let { postSlug, user, parentId, onCommentAdded } = $props();
+   let { postSlug, user, parentId, onCommentAdded } = $props<{ postSlug: string; user: any; parentId?: any; onCommentAdded?: () => void }>();
 
   let content = $state('');
   let isSubmitting = $state(false);
-  let error = $state(''); 
+  let error = $state('');  
   let textareaRef = $state(null);
 
 
-  async function handleSubmit(e: Event) {
+  async function handleSubmit(e: Event) { 
     e.preventDefault();
     
     if (!content.trim()) {

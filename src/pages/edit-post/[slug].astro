@@ -1,0 +1,67 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PostEditor from '../../components/PostEditor';
+import { getEntry } from "astro:content";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+// Kullanıcı giriş yapmış mı kontrol et
+const isLoggedIn = isAuthenticated(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect("/signin");
+}
+
+const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+
+if (!user) {
+  return Astro.redirect("/signin");
+}
+
+// Post verisini getir
+const entry = await getEntry("posts", slug);
+
+if (!entry) {
+  return new Response(null, { status: 404 });
+}
+
+// Post içeriğini al
+const { Content, remarkPluginFrontmatter } = await entry.render();
+
+// Orijinal markdown dosyasını oku
+const fileName = `${slug}.mdx`;
+const filePath = path.join(process.cwd(), "src/content/posts", fileName);
+let rawContent = "";
+
+try {
+  const fileContent = await fs.readFile(filePath, "utf-8");
+  
+  // Frontmatter kısmını ayır
+  const frontmatterEnd = fileContent.indexOf("---", 3) + 3;
+  
+  // İçerik kısmını al (frontmatter sonrası)
+  rawContent = fileContent.substring(frontmatterEnd).trim();
+} catch (error) {
+  console.error("Dosya okuma hatası:", error);
+}
+---
+
+<BaseLayout title={`${entry.data.title} Düzenle`}>
+  <PostEditor 
+    post={entry.data} 
+    content={rawContent} 
+    slug={slug} 
+    author={user} 
+    client:visible 
+  />
+</BaseLayout>
+
+<style>
+  @import "../../styles/_variables.scss";
+  @import "../../styles/_keyframe-animations.scss";
+</style>
