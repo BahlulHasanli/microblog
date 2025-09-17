@@ -20,7 +20,7 @@ import { Toaster, toast } from 'svelte-sonner'
     isSubmitting.value = true;
 
     try {
-        const response = await fetch('/api/auth/signin', {
+        const response = await fetch('https://0f99ddc0.microblog-6c7.pages.dev/api/auth/signin', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
