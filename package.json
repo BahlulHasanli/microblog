@@ -59,6 +59,7 @@
     "slugify": "^1.6.6",
     "svelte": "^5.38.7",
     "svelte-french-toast": "^1.2.0",
+    "svelte-sonner": "^1.0.5",
     "typescript": "^5.9.2"
   },
   "devDependencies": {

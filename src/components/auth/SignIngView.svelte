@@ -1,6 +1,6 @@
 <script lang="ts">
 import { navigate } from "astro:transitions/client";
-import toast, { Toaster } from 'svelte-french-toast';
+import { Toaster, toast } from 'svelte-sonner'
 
  const formState = $state.raw({
     email: "",
@@ -28,7 +28,7 @@ import toast, { Toaster } from 'svelte-french-toast';
             body: JSON.stringify({ 
               email: formState.email, 
               password: formState.password,
-              remember: formState.remember
+              remember: formState.remember 
             }),
         });
 
@@ -55,7 +55,7 @@ import toast, { Toaster } from 'svelte-french-toast';
   
 </script>
 
-<Toaster />
+<Toaster position="top-center"/>
 <section class="max-w-md mx-auto py-12 px-4 sm:px-0">
   <div class="bg-white rounded-lg p-6">
     <div class="text-center mb-6">

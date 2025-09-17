@@ -4,6 +4,7 @@ import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import svelte from "@astrojs/svelte";
+import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
@@ -20,7 +21,7 @@ export default defineConfig({
       { mode: "md" },
       {
         mode: "html",
-        htmlOptions: {
+        htmlOptions: { 
           allowDangerousHtml: true,
         },
       },
@@ -28,9 +29,9 @@ export default defineConfig({
   },
   shikiConfig: {
     wrap: true,
-    skipInline: false,
+    skipInline: false, 
     drafts: true,
-  },
-  site: "http://localhost:4321",
+  }, 
   integrations: [sitemap(), mdx(), react(), svelte()],
+  adapter: cloudflare(),
 });
