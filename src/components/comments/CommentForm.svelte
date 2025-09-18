@@ -83,7 +83,7 @@
         <button
           type="submit"
           disabled={isSubmitting}
-          class="px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 text-sm font-nouvelr transition-colors"
+          class="cursor-pointer px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 text-sm font-nouvelr transition-colors"
         >
           {isSubmitting ? 'Göndərilir...' : 'Paylaş'}
         </button>

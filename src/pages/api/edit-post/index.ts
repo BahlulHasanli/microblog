@@ -200,12 +200,8 @@ export const POST: APIRoute = async (context) => {
       console.error("Resim silme işlemi sırasında hata oluştu:", error);
     }
     
-    // YouTube video etiketlerini düzelt
+    // İçerikteki geçici resimleri CDN URL'leriyle değiştir
     let processedContent = content;
-    
-    // Boşluksuz YouTube etiketlerini düzelt
-    const youtubeRegex = /<divdata-youtube-video="([^"]+)"([^>]*)><\/div>/g;
-    processedContent = processedContent.replace(youtubeRegex, '<div data-youtube-video="$1"$2></div>');
 
     // Blob URL'lerini bul ve değiştir - format bilgisini de içeren regex
     const blobUrlRegex = /blob:http:\/\/localhost:4321\/[a-zA-Z0-9-]+#temp-[0-9]+-[a-z]+/g;

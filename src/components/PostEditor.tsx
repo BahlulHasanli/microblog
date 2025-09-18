@@ -28,24 +28,17 @@ export default function PostEditor({ post, content, slug, author }: any) {
   useEffect(() => {
     window._currentEditorTitle = title;
   }, [title]);
-  
+
   // Markdown içeriğini JSON'a dönüştür
   const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
-  
+
   // Markdown içeriğini işle
   useEffect(() => {
     if (content) {
       try {
-        // YouTube video etiketlerini düzelt
-        let fixedContent = content;
-        
-        // Boşluksuz YouTube etiketlerini düzelt
-        const youtubeRegex = /<divdata-youtube-video="([^"]+)"([^>]*)><\/div>/g;
-        fixedContent = fixedContent.replace(youtubeRegex, '<div data-youtube-video="$1"$2></div>');
-        
         // Markdown içeriğini JSON'a dönüştür
-        const processedContent = markdownToTiptap(fixedContent, title, description);
-        
+        const processedContent = markdownToTiptap(content, title, description);
+
         // İçeriği ayarla
         setInitialEditorContent(processedContent);
         console.log("Markdown içeriği başarıyla işlendi", processedContent);
@@ -125,9 +118,9 @@ export default function PostEditor({ post, content, slug, author }: any) {
       formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
-      
+
       // Kategorileri ekle
-      selectedCategories.forEach(category => {
+      selectedCategories.forEach((category) => {
         formData.append("categories", category);
       });
 
@@ -398,8 +391,11 @@ export default function PostEditor({ post, content, slug, author }: any) {
       console.error("YouTube URL işleme hatası:", error);
     }
 
+    console.log("Video ID:", videoId);
+
     // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
-    return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
+    // Tam olarak istenen formatta oluştur (boşluk olmadan)
+    return `<div data-youtube-video="${videoId}"class="aspect-video rounded-xl overflow-hidden"></div>`;
   }
 
   function processTextNode(node: any): string {

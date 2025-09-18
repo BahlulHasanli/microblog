@@ -12,7 +12,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Selection, Placeholder, Focus } from "@tiptap/extensions";
-import Youtube from "@tiptap/extension-youtube";
+// import Youtube from "@tiptap/extension-youtube";
+import { YoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node-extension";
 
 import { Document } from "@tiptap/extension-document";
 
@@ -314,9 +315,12 @@ export function SimpleEditor({
     },
     extensions: [
       FixedDocument,
-      Youtube.configure({
+      YoutubeNode.configure({
         controls: false,
         nocookie: true,
+        HTMLAttributes: {
+          class: "aspect-video rounded-xl overflow-hidden",
+        },
       }),
       StarterKit.configure({
         document: false,

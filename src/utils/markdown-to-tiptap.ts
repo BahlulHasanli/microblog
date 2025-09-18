@@ -36,8 +36,17 @@ export function markdownToTiptap(
     ],
   };
 
+  // HTML elementlerini tek satıra birleştir
+  let processedMarkdown = markdown;
+  
+  // <div> etiketlerini tek satıra birleştir
+  processedMarkdown = processedMarkdown.replace(
+    /<div([\s\S]*?)<\/div>/g,
+    (match) => match.replace(/\s+/g, " ")
+  );
+  
   // Markdown içeriğini satırlara ayır
-  const lines = markdown.split("\n");
+  const lines = processedMarkdown.split("\n");
   let currentParagraph: TiptapNode | null = null;
   let inCodeBlock = false;
   let codeBlockContent = "";
@@ -121,17 +130,57 @@ export function markdownToTiptap(
       continue;
     }
 
-    // YouTube videoları - farklı format varyasyonlarını destekle
-    const youtubeMatch1 = line.match(/<div data-youtube-video="(.*?)".*?><\/div>/);
-    const youtubeMatch2 = line.match(/<divdata-youtube-video="(.*?)".*?><\/div>/);
+    // YouTube videoları - tam olarak istenen formatta kontrol et
+    if (line.includes('data-youtube-video')) {
+      // Video ID'yi çıkar - boşluksuz format için özel regex
+      const videoIdMatch = line.match(/data-youtube-video="([^"]+)"class=/); 
+      
+      if (videoIdMatch && videoIdMatch[1]) {
+        const videoId = videoIdMatch[1];
+        console.log("Bulunan YouTube video ID (boşluksuz format):", videoId);
+        
+        document.content.push({
+          type: "youtube",
+          attrs: { src: `https://www.youtube.com/embed/${videoId}` },
+        });
+        continue;
+      }
+      
+      // Boşluklu format için alternatif kontrol
+      const altVideoIdMatch = line.match(/data-youtube-video="([^"]+)"/); 
+      
+      if (altVideoIdMatch && altVideoIdMatch[1]) {
+        const videoId = altVideoIdMatch[1];
+        console.log("Bulunan YouTube video ID (boşluklu format):", videoId);
+        
+        document.content.push({
+          type: "youtube",
+          attrs: { src: `https://www.youtube.com/embed/${videoId}` },
+        });
+        continue;
+      }
+    }
     
-    if (youtubeMatch1 || youtubeMatch2) {
-      const videoId = youtubeMatch1 ? youtubeMatch1[1] : youtubeMatch2[1];
-      document.content.push({
-        type: "youtube",
-        attrs: { src: `https://www.youtube.com/embed/${videoId}` },
-      });
-      continue;
+    // YouTube videoları için alternatif format kontrolü
+    if (/<div[^>]*data-youtube-video/.test(line)) {
+      const multiLineContent = lines.slice(i, i + 5).join(" ");
+      const videoIdMatch = multiLineContent.match(/data-youtube-video="([^"]+)"/); 
+      
+      if (videoIdMatch && videoIdMatch[1]) {
+        const videoId = videoIdMatch[1];
+        console.log("Alternatif yolla bulunan YouTube video ID:", videoId);
+        
+        document.content.push({
+          type: "youtube",
+          attrs: { src: `https://www.youtube.com/embed/${videoId}` },
+        });
+        
+        // Birkaç satırı atlayarak ilerle
+        while (i < lines.length && !lines[i].includes("</div>")) {
+          i++;
+        }
+        continue;
+      }
     }
 
     // Alıntılar
@@ -239,7 +288,11 @@ export function markdownToTiptap(
   }
 
   // Son paragrafı ekle
-  if (currentParagraph && currentParagraph.content && currentParagraph.content.length > 0) {
+  if (
+    currentParagraph &&
+    currentParagraph.content &&
+    currentParagraph.content.length > 0
+  ) {
     document.content.push(currentParagraph);
   }
 
@@ -334,17 +387,17 @@ function processInlineMarkdown(text: string): TiptapNode[] {
 
       const closeBracket = text.indexOf("](", i);
       const closeParenthesis = text.indexOf(")", closeBracket);
-      
+
       if (closeParenthesis !== -1) {
         const linkText = text.substring(i + 1, closeBracket);
         const linkUrl = text.substring(closeBracket + 2, closeParenthesis);
-        
+
         nodes.push({
           type: "text",
           text: linkText,
           marks: [{ type: "link", attrs: { href: linkUrl } }],
         });
-        
+
         i = closeParenthesis + 1;
         continue;
       }

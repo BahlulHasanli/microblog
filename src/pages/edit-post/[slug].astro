@@ -30,9 +30,6 @@ if (!entry) {
   return new Response(null, { status: 404 });
 }
 
-// Post içeriğini al
-const { Content, remarkPluginFrontmatter } = await entry.render();
-
 // Orijinal markdown dosyasını oku
 const fileName = `${slug}.mdx`;
 const filePath = path.join(process.cwd(), "src/content/posts", fileName);
