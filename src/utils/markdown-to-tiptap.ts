@@ -92,28 +92,46 @@ export function markdownToTiptap(
 
     // Başlıklar
     if (line.startsWith("# ")) {
+      // Başlık içeriğini al
+      const headingContent = line.substring(2);
+      
+      // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
+      const processedContent = processInlineMarkdown(headingContent);
+      
       document.content.push({
         type: "heading",
         attrs: { level: 1 },
-        content: [{ type: "text", text: line.substring(2) }],
+        content: processedContent,
       });
       continue;
     }
 
     if (line.startsWith("## ")) {
+      // Başlık içeriğini al
+      const headingContent = line.substring(3);
+      
+      // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
+      const processedContent = processInlineMarkdown(headingContent);
+      
       document.content.push({
         type: "heading",
         attrs: { level: 2 },
-        content: [{ type: "text", text: line.substring(3) }],
+        content: processedContent,
       });
       continue;
     }
 
     if (line.startsWith("### ")) {
+      // Başlık içeriğini al
+      const headingContent = line.substring(4);
+      
+      // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
+      const processedContent = processInlineMarkdown(headingContent);
+      
       document.content.push({
         type: "heading",
         attrs: { level: 3 },
-        content: [{ type: "text", text: line.substring(4) }],
+        content: processedContent,
       });
       continue;
     }
@@ -132,26 +150,12 @@ export function markdownToTiptap(
 
     // YouTube videoları - tam olarak istenen formatta kontrol et
     if (line.includes('data-youtube-video')) {
-      // Video ID'yi çıkar - boşluksuz format için özel regex
-      const videoIdMatch = line.match(/data-youtube-video="([^"]+)"class=/); 
+      // Video ID'yi çıkar - önce boşluklu format için kontrol et
+      const videoIdMatch = line.match(/data-youtube-video="([^"]+)"/); 
       
       if (videoIdMatch && videoIdMatch[1]) {
         const videoId = videoIdMatch[1];
-        console.log("Bulunan YouTube video ID (boşluksuz format):", videoId);
-        
-        document.content.push({
-          type: "youtube",
-          attrs: { src: `https://www.youtube.com/embed/${videoId}` },
-        });
-        continue;
-      }
-      
-      // Boşluklu format için alternatif kontrol
-      const altVideoIdMatch = line.match(/data-youtube-video="([^"]+)"/); 
-      
-      if (altVideoIdMatch && altVideoIdMatch[1]) {
-        const videoId = altVideoIdMatch[1];
-        console.log("Bulunan YouTube video ID (boşluklu format):", videoId);
+        console.log("Bulunan YouTube video ID:", videoId);
         
         document.content.push({
           type: "youtube",
@@ -306,6 +310,24 @@ function processInlineMarkdown(text: string): TiptapNode[] {
   let i = 0;
 
   while (i < text.length) {
+    // Hem kalın hem italik metin (***text***)
+    if (text.substring(i, i + 3) === "***" && text.indexOf("***", i + 3) !== -1) {
+      if (currentText) {
+        nodes.push({ type: "text", text: currentText });
+        currentText = "";
+      }
+
+      const endBoldItalic = text.indexOf("***", i + 3);
+      const boldItalicText = text.substring(i + 3, endBoldItalic);
+      nodes.push({
+        type: "text",
+        text: boldItalicText,
+        marks: [{ type: "bold" }, { type: "italic" }],
+      });
+      i = endBoldItalic + 3;
+      continue;
+    }
+    
     // Kalın metin
     if (text.substring(i, i + 2) === "**" && text.indexOf("**", i + 2) !== -1) {
       if (currentText) {

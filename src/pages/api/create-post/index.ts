@@ -32,8 +32,6 @@ export const POST: APIRoute = async (context) => {
     const authorFullname: any =
       formData.get("author.fullname")?.toString() || "";
     const authorAvatar: any = formData.get("author.avatar")?.toString() || "";
-    const authorUsername: any =
-      formData.get("author.username")?.toString() || "";
     const description = formData.get("description")?.toString() || "";
     const content = formData.get("content")?.toString() || "";
     const categoriesData = formData

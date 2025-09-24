@@ -3,6 +3,15 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
+import { useStore } from "@nanostores/react";
+import { hasUnsavedChanges, markUnsavedChanges, resetUnsavedChanges, clearUploadedImages, setupBeforeUnloadWarning } from "@/store/editorStore";
+
+// Global tip tanımlaması
+declare global {
+  interface Window {
+    _currentEditorTitle?: string;
+  }
+}
 
 export default function PostEditor({ post, content, slug, author }: any) {
   const [editorContent, setEditorContent] = useState(null);
@@ -24,13 +33,52 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     post.categories || []
   );
+  
+  // Markdown içeriğini JSON'a dönüştür
+  const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
+  
+  // Kaydedilmemiş değişiklikleri izlemek için store kullan
+  const unsavedChanges = useStore(hasUnsavedChanges);
 
   useEffect(() => {
     window._currentEditorTitle = title;
-  }, [title]);
-
-  // Markdown içeriğini JSON'a dönüştür
-  const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
+    
+    // Başlık değiştiğinde kaydedilmemiş değişiklikleri işaretle
+    if (initialEditorContent) {
+      markUnsavedChanges();
+    }
+  }, [title, initialEditorContent]);
+  
+  // Editor içeriği değiştiğinde kaydedilmemiş değişiklikleri işaretle
+  useEffect(() => {
+    if (editorContent && initialEditorContent) {
+      markUnsavedChanges();
+    }
+  }, [editorContent, initialEditorContent]);
+  
+  // Kapak resmi değiştiğinde kaydedilmemiş değişiklikleri işaretle
+  useEffect(() => {
+    if (coverImage) {
+      markUnsavedChanges();
+    }
+  }, [coverImage]);
+  
+  // Kategoriler değiştiğinde kaydedilmemiş değişiklikleri işaretle
+  useEffect(() => {
+    if (initialEditorContent && JSON.stringify(post.categories) !== JSON.stringify(selectedCategories)) {
+      markUnsavedChanges();
+    }
+  }, [selectedCategories, post.categories, initialEditorContent]);
+  
+  // Sayfa yüklendiğinde beforeunload olay dinleyicisini ayarla
+  useEffect(() => {
+    // Kaydedilmemiş değişiklikleri sıfırla
+    resetUnsavedChanges();
+    clearUploadedImages();
+    
+    // Tarayıcı kapatılmadan önce uyarı gösterme mekanizmasını kur
+    return setupBeforeUnloadWarning();
+  }, []);
 
   // Markdown içeriğini işle
   useEffect(() => {
@@ -52,6 +100,10 @@ export default function PostEditor({ post, content, slug, author }: any) {
     setCoverImage(file);
     if (!file) {
       setCoverImagePreview(existingImageUrl);
+    } else {
+      // Create a preview URL for the new image
+      const previewUrl = URL.createObjectURL(file);
+      setCoverImagePreview(previewUrl);
     }
   };
 
@@ -76,12 +128,27 @@ export default function PostEditor({ post, content, slug, author }: any) {
     try {
       console.log("Geçici resimler Bunny CDN'e yükleniyor...");
 
+      // Resim ID'lerini saklamak için bir Map oluştur
+      let imageIdMapData: Record<string, string> = {};
+      
+      // window._imageIdMap varsa, içeriğini al
+      if (window._imageIdMap && window._imageIdMap.size > 0) {
+        console.log("Resim ID'leri bulundu:", Array.from(window._imageIdMap.entries()));
+        imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
+      }
+
       const updatedContent = await uploadTemporaryImages(
         editorContent,
         (current, total) => {
           console.log(`Resim yükleniyor: ${current}/${total}`);
         }
       );
+
+      // Yükleme sonrası güncel resim ID'lerini al
+      if (window._imageIdMap && window._imageIdMap.size > 0) {
+        console.log("Güncel resim ID'leri:", Array.from(window._imageIdMap.entries()));
+        imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
+      }
 
       const markdownContent = convertJsonToMarkdown(updatedContent);
 
@@ -118,6 +185,12 @@ export default function PostEditor({ post, content, slug, author }: any) {
       formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
+      
+      // Resim ID'lerini JSON olarak ekle
+      if (Object.keys(imageIdMapData).length > 0) {
+        console.log("Resim ID'leri API'ye gönderiliyor:", imageIdMapData);
+        formData.append("imageIdMap", JSON.stringify(imageIdMapData));
+      }
 
       // Kategorileri ekle
       selectedCategories.forEach((category) => {
@@ -156,6 +229,11 @@ export default function PostEditor({ post, content, slug, author }: any) {
           formData.append("image", `notes/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
+          
+          // Revoke any object URLs to prevent memory leaks
+          if (coverImagePreview && coverImagePreview !== existingImageUrl) {
+            URL.revokeObjectURL(coverImagePreview);
+          }
         } catch (error) {
           console.error("FormData'ya resim ekleme hatası:", error);
         }
@@ -173,6 +251,14 @@ export default function PostEditor({ post, content, slug, author }: any) {
         throw new Error(data.message || "Güncelleme işlemi başarısız oldu");
       }
 
+      // Başarılı kaydetme durumunda kaydedilmemiş değişiklikleri sıfırla
+      resetUnsavedChanges();
+      
+      // Yüklenen resimler listesini temizle
+      clearUploadedImages();
+      
+      console.log("Kaydedilmemiş değişiklikler sıfırlandı");
+      
       setSaveStatus("success");
       setTimeout(() => {
         setSaveStatus("idle");
@@ -363,7 +449,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
       if (src.includes("blob:") || src.includes("#temp-")) {
         console.warn("Geçici resim URL bulundu:", src);
         // Geçici URL'leri işleme - bunlar zaten CDN'e yüklenmiş olmalı
-        // Bu durumda boş bir string döndürüyoruz, çünkü bu resimler uploadTemporaryImages tarafından düzeltilecek
+        // Geçici URL'yi olduğu gibi bırak, uploadTemporaryImages tarafından düzeltilecek
+        // Bu sayede edit-post API'si tarafında da işlenebilir
       }
     } catch (error) {
       console.error("Resim URL işleme hatası:", error);
@@ -394,8 +481,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
     console.log("Video ID:", videoId);
 
     // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
-    // Tam olarak istenen formatta oluştur (boşluk olmadan)
-    return `<div data-youtube-video="${videoId}"class="aspect-video rounded-xl overflow-hidden"></div>`;
+    // Öznitelikler arasında boşluk bırak
+    return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
   }
 
   function processTextNode(node: any): string {

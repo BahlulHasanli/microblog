@@ -105,11 +105,29 @@ export const YoutubeNode = Node.create<YoutubeOptions>({
     return [
       'div',
       mergeAttributes(
-        { 'data-youtube-video': videoId, class: 'aspect-video rounded-xl overflow-hidden' },
+        { 
+          'data-youtube-video': videoId, 
+          'class': 'aspect-video rounded-xl overflow-hidden' 
+        },
         this.options.HTMLAttributes,
         rest
       ),
     ];
+  },
+
+  addCommands() {
+    return {
+      setYoutubeVideo: (options) => ({ commands }) => {
+        if (!options.src) {
+          return false;
+        }
+
+        return commands.insertContent({
+          type: this.name,
+          attrs: options,
+        });
+      },
+    };
   },
 
   addNodeView() {

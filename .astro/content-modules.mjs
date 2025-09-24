@@ -1,5 +1,6 @@
 
 export default new Map([
+["src/content/posts/fghfgh.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Ffghfgh.mdx&astroContentModuleFlag=true")],
 ["src/content/posts/007-first-light-icin-state-of-play-etkinligi-geliyor.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2F007-first-light-icin-state-of-play-etkinligi-geliyor.mdx&astroContentModuleFlag=true")],
 ["src/content/posts/grand-theft-auto.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fgrand-theft-auto.mdx&astroContentModuleFlag=true")],
 ["src/content/posts/hell-is-us-icin-geri-sayim-basladi.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fhell-is-us-icin-geri-sayim-basladi.mdx&astroContentModuleFlag=true")],
