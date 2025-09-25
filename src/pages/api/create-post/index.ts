@@ -3,6 +3,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import { requireAuth } from "../../../utils/auth";
 import { slugify } from "../../../utils/slugify";
+import { categories as CATEGORIES } from "../../../data/categories";
 
 // Global resim sayacı tanımı
 declare global {
@@ -34,9 +35,15 @@ export const POST: APIRoute = async (context) => {
     const authorAvatar: any = formData.get("author.avatar")?.toString() || "";
     const description = formData.get("description")?.toString() || "";
     const content = formData.get("content")?.toString() || "";
-    const categoriesData = formData
-      .getAll("categories")
-      .map((c) => c.toString());
+    // Kategorileri al ve virgülle ayrılmış stringleri ayır
+    const categoriesRaw = formData.getAll("categories").map((c) => c.toString());
+    
+    // Virgülle ayrılmış kategorileri ayır ve tekrar eden kategorileri kaldır
+    const categoriesData = [...new Set(
+      categoriesRaw.flatMap(category => 
+        category.includes(',') ? category.split(',').map(c => c.trim()) : [category.trim()]
+      )
+    )].filter(Boolean);
     // Resim URL'si ve alt metni için varsayılan değerler
     const imageAltFromForm = formData.get("imageAlt")?.toString();
 

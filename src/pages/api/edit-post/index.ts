@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { requireAuth } from "../../../utils/auth";
 import { getEntry } from "astro:content";
 import { slugify } from "../../../utils/slugify";
+import { categories as CATEGORIES } from "../../../data/categories";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -33,9 +34,15 @@ export const POST: APIRoute = async (context) => {
       formData.get("author.username")?.toString() || "";
     const description = formData.get("description") as string;
     const content = formData.get("content") as string;
-    const categoriesData = formData
-      .getAll("categories")
-      .map((c) => c.toString());
+    // Kategorileri al ve virgülle ayrılmış stringleri ayır
+    const categoriesRaw = formData.getAll("categories").map((c) => c.toString());
+    
+    // Virgülle ayrılmış kategorileri ayır ve tekrar eden kategorileri kaldır
+    const categoriesData = [...new Set(
+      categoriesRaw.flatMap(category => 
+        category.includes(',') ? category.split(',').map(c => c.trim()) : [category.trim()]
+      )
+    )].filter(Boolean);
     const existingImageUrl = formData.get("existingImageUrl") as string;
     const imageAlt = formData.get("imageAlt") as string || title;
     const uploadedImage = formData.get("uploadedImage") as File;

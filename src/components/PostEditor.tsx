@@ -5,6 +5,7 @@ import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
 import { useStore } from "@nanostores/react";
 import { hasUnsavedChanges, markUnsavedChanges, resetUnsavedChanges, clearUploadedImages, setupBeforeUnloadWarning } from "@/store/editorStore";
+import { categories as CATEGORIES } from "@/data/categories";
 
 // Global tip tanımlaması
 declare global {

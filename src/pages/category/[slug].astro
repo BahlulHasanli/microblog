@@ -2,13 +2,13 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
 import { getCollection } from "astro:content";
-import { categories, slugifyCategory } from "@/data/categories";
+import { categories } from "@/data/categories";
 
 export const prerender = false;
 
 const { slug } = Astro.params;
  
-const category = categories.find(cat => slugifyCategory(cat) === slug);
+const category = categories.find(cat => cat.slug === slug);
 
 if (!category) {
   return new Response(null, {
@@ -20,7 +20,7 @@ if (!category) {
 const allPosts = await getCollection("posts");
 
 const categoryPosts = allPosts.filter((post) => 
-  post.data.categories && post.data.categories.includes(category)
+  post.data.categories && post.data.categories.includes(slug)
 );
 
 const sortedPosts = categoryPosts.sort(
@@ -28,17 +28,17 @@ const sortedPosts = categoryPosts.sort(
 );
 ---
 
-<BaseLayout title={`${category} Kategorisi - Mikroblog`}>
+<BaseLayout title={`${category.name} Kategorisi - Mikroblog`}>
   <section>
     <div class="py-18 max-w-3xl mx-auto px-4">
       <div class="flex items-center gap-2 mb-6">
         <a href="/" class="text-sm text-base-500 hover:text-base-900">Ana Səhifə</a>
         <span class="text-base-400">/</span>
-        <span class="text-sm font-medium text-base-900">{category}</span>
+        <span class="text-sm font-medium text-base-900">{category.name}</span>
       </div>
       
       <h1 class="text-4xl text-balance font-light font-display text-base-900 mb-6">
-        <span class="font-semibold">{category}</span> bölməsi
+        <span class="font-semibold">{category.name}</span> bölməsi
       </h1>
 
       {sortedPosts.length === 0 ? (

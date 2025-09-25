@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { slugifyCategory } from "@/data/categories";
+import { categories as CATEGORIES } from "@/data/categories";
  
 
 const { title, url, description, author, image, categories } = Astro.props;
@@ -27,14 +27,17 @@ const { title, url, description, author, image, categories } = Astro.props;
       <span aria-hidden="true">&middot;</span>
       {categories && categories.length > 0 && (
         <span class="flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <a 
-              href={`/category/${slugifyCategory(category)}`}
-              class="text-yellow-700"
-            >
-              {category}
-            </a>
-          ))}
+          {categories.map((categorySlug) => {
+            const categoryObj = CATEGORIES.find(cat => cat.slug === categorySlug);
+            return (
+              <a 
+                href={`/category/${categorySlug}`}
+                class="text-yellow-700"
+              >
+                {categoryObj ? categoryObj.name : categorySlug}
+              </a>
+            );
+          })}
         </span>
       )}
     </div>

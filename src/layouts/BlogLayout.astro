@@ -1,7 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { slugifyCategory } from "../data/categories";
+import { categories as CATEGORIES } from "../data/categories";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
@@ -56,11 +56,14 @@ if (isLoggedIn) {
           <div class="flex flex-col justify-between mt-4 md:flex-row">
             <div class="flex gap-3">
               {
-                frontmatter.categories.map((category: string) => (
-                  <span class="hover:text-blue-500 text-sm font-medium text-base-600">
-                    <a href={`/category/${slugifyCategory(category)}`}>{category}</a>
-                  </span>
-                ))
+                frontmatter.categories.map((categorySlug: string) => {
+                  const categoryObj = CATEGORIES.find(cat => cat.slug === categorySlug);
+                  return (
+                    <span class="hover:text-blue-500 text-sm font-medium text-base-600">
+                      <a href={`/category/${categorySlug}`}>{categoryObj ? categoryObj.name : categorySlug}</a>
+                    </span>
+                  );
+                })
               }
             </div>
             {currentUser && (
