@@ -161,63 +161,46 @@ export function setupBeforeUnloadWarning(): () => void {
       e.preventDefault();
       e.returnValue = message;
       
-      // Kaydedilmemiş resimleri silme işlemi başlat
-      // Not: beforeunload olayında asenkron işlemler garanti edilmez,
-      // bu nedenle sendBeacon API'si kullanıyoruz
-      const images = uploadedImages.get();
-      if (images.length > 0) {
-        try {
-          // Silinecek resimleri bir JSON olarak hazırla
-          const payload = JSON.stringify({ images });
-          
-          // sendBeacon API'si tarayıcı tarafından destekleniyorsa kullan
-          if (navigator.sendBeacon) {
-            console.log('sendBeacon API kullanılıyor');
-            // Blob olarak gönder ve Content-Type başlığını ayarla
-            const blob = new Blob([payload], { type: 'application/json' });
-            const result = navigator.sendBeacon('/api/delete-unused-images', blob);
-            console.log(`${images.length} resim silme isteği gönderildi, sonuç: ${result}`);
-            
-            if (!result) {
-              console.error('sendBeacon başarısız oldu, fetch ile tekrar deneniyor');
-              // sendBeacon başarısız olduysa fetch ile dene
-              fetch('/api/delete-unused-images', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: payload,
-                keepalive: true
-              }).catch(err => console.error('Fetch hatası:', err));
-            }
-          } else {
-            // sendBeacon desteklenmiyorsa fetch API kullan
-            // Not: Bu durumda istek tamamlanmayabilir çünkü sayfa kapatılıyor
-            console.warn('sendBeacon API desteklenmiyor, fetch kullanılıyor');
-            fetch('/api/delete-unused-images', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: payload,
-              // keepalive özelliği sayfa kapatılsa bile isteğin devam etmesini sağlar
-              keepalive: true
-            }).catch(err => console.error('Fetch hatası:', err));
-          }
-        } catch (error) {
-          console.error('Resim silme isteği gönderilemedi:', error);
-        }
-      }
-      
       return message;
     }
   };
   
-  // Sayfa kapatılmadan önce olayı dinle
+  // Sayfa tamamen yüklendiğinde/kapatıldığında çağrılacak işlev
+  const handleUnload = () => {
+    console.log('unload olayı tetiklendi - sayfa gerçekten kapatılıyor');
+    
+    // Kaydedilmemiş değişiklikler varsa ve yüklenen resimler varsa sil
+    const unsavedChangesExist = hasUnsavedChanges.get();
+    const images = uploadedImages.get();
+    
+    if (unsavedChangesExist && images.length > 0) {
+      try {
+        // Silinecek resimleri bir JSON olarak hazırla
+        const payload = JSON.stringify({ images });
+        
+        // sendBeacon API'si tarayıcı tarafından destekleniyorsa kullan
+        if (navigator.sendBeacon) {
+          console.log('sendBeacon API kullanılıyor (unload)');
+          // Blob olarak gönder ve Content-Type başlığını ayarla
+          const blob = new Blob([payload], { type: 'application/json' });
+          const result = navigator.sendBeacon('/api/delete-unused-images', blob);
+          console.log(`${images.length} resim silme isteği gönderildi, sonuç: ${result}`);
+        }
+      } catch (error) {
+        console.error('Resim silme isteği gönderilemedi:', error);
+      }
+    }
+  };
+  
+  // Sayfa kapatılmadan önce olayı dinle (uyarı için)
   window.addEventListener('beforeunload', handleBeforeUnload);
+  
+  // Sayfa gerçekten kapatıldığında olayı dinle (resim silme için)
+  window.addEventListener('unload', handleUnload);
   
   // Cleanup function
   return () => {
     window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.removeEventListener('unload', handleUnload);
   };
 }

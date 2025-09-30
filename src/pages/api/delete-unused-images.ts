@@ -120,14 +120,92 @@ export async function POST(context: APIContext) {
     
     console.log(`API: ${successful} resim başarıyla silindi, ${failed} resim silinemedi`);
     
+    // Resimleri sildikten sonra, klasörleri de sil
+    // Benzersiz klasörleri bul (notes/[slug]/images/)
+    const folders = new Set<string>();
+    images.forEach((imageUrl: string) => {
+      try {
+        const url = new URL(imageUrl);
+        const filePath = url.pathname.substring(1);
+        // Dosya yolundan klasör yolunu çıkar (son / işaretine kadar)
+        const folderPath = filePath.substring(0, filePath.lastIndexOf('/'));
+        if (folderPath) {
+          folders.add(folderPath);
+        }
+      } catch (error) {
+        console.error('Klasör yolu çıkarma hatası:', error);
+      }
+    });
+    
+    console.log(`API: ${folders.size} klasör silinecek:`, Array.from(folders));
+    
+    // Her klasörü sil
+    const folderResults = await Promise.allSettled(
+      Array.from(folders).map(async (folderPath: string) => {
+        try {
+          // Klasörü sil (BunnyCDN'de klasör silmek için sonuna / eklemek gerekiyor)
+          const deleteResponse = await fetch(
+            `https://${HOSTNAME}/${STORAGE_ZONE_NAME}/${folderPath}/`,
+            {
+              method: "DELETE",
+              headers: {
+                AccessKey: ACCESS_KEY,
+              },
+            }
+          );
+          
+          if (!deleteResponse.ok) {
+            const errorText = await deleteResponse.text();
+            console.error(`API: Klasör silme hatası: ${folderPath}`, errorText);
+            return { success: false, folder: folderPath, error: `Silme hatası: ${deleteResponse.status}` };
+          }
+          
+          console.log(`API: Klasör başarıyla silindi: ${folderPath}`);
+          
+          // Üst klasörleri de sil (notes/[slug]/)
+          const parentFolder = folderPath.substring(0, folderPath.lastIndexOf('/'));
+          if (parentFolder && parentFolder.startsWith('notes/')) {
+            console.log(`API: Üst klasör siliniyor: ${parentFolder}`);
+            const parentDeleteResponse = await fetch(
+              `https://${HOSTNAME}/${STORAGE_ZONE_NAME}/${parentFolder}/`,
+              {
+                method: "DELETE",
+                headers: {
+                  AccessKey: ACCESS_KEY,
+                },
+              }
+            );
+            
+            if (parentDeleteResponse.ok) {
+              console.log(`API: Üst klasör başarıyla silindi: ${parentFolder}`);
+            } else {
+              console.error(`API: Üst klasör silme hatası: ${parentFolder}`);
+            }
+          }
+          
+          return { success: true, folder: folderPath };
+        } catch (error) {
+          console.error(`API: Klasör silme sırasında hata: ${error.message}`);
+          return { success: false, folder: folderPath, error: error.message };
+        }
+      })
+    );
+    
+    const foldersDeleted = folderResults.filter(
+      result => result.status === 'fulfilled' && (result.value as any).success
+    ).length;
+    
+    console.log(`API: ${foldersDeleted} klasör başarıyla silindi`);
+    
     // Başarılı yanıt döndür
     return new Response(
       JSON.stringify({
         success: true,
-        message: `${successful} resim başarıyla silindi, ${failed} resim silinemedi`,
+        message: `${successful} resim ve ${foldersDeleted} klasör başarıyla silindi, ${failed} resim silinemedi`,
         results: results.map(result => 
           result.status === 'fulfilled' ? result.value : { success: false, error: 'Promise rejected' }
         ),
+        foldersDeleted,
       }),
       {
         status: 200,
