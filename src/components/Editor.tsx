@@ -3,13 +3,23 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { slugify } from "../utils/slugify";
+import { hasUnsavedChanges, markUnsavedChanges, resetUnsavedChanges, clearUploadedImages, setupBeforeUnloadWarning } from "@/store/editorStore";
+import { useStore } from "@nanostores/react";
 
 export default function Editor({ author }: any) {
   const [editorContent, setEditorContent] = useState(null);
   const [title, setTitle] = useState("");
+  
+  // Kaydedilmemiş değişiklikleri izlemek için store kullan
+  const unsavedChanges = useStore(hasUnsavedChanges);
 
   useEffect(() => {
     window._currentEditorTitle = title;
+    
+    // Başlık değiştiğinde kaydedilmemiş değişiklikleri işaretle
+    if (title) {
+      markUnsavedChanges();
+    }
   }, [title]);
 
   const [description, setDescription] = useState("");
@@ -22,6 +32,37 @@ export default function Editor({ author }: any) {
   >("idle");
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Sayfa yüklendiğinde beforeunload olay dinleyicisini ayarla
+  useEffect(() => {
+    // Kaydedilmemiş değişiklikleri sıfırla
+    resetUnsavedChanges();
+    clearUploadedImages();
+    
+    // Tarayıcı kapatılmadan önce uyarı gösterme mekanizmasını kur
+    return setupBeforeUnloadWarning();
+  }, []);
+  
+  // Editor içeriği değiştiğinde kaydedilmemiş değişiklikleri işaretle
+  useEffect(() => {
+    if (editorContent) {
+      markUnsavedChanges();
+    }
+  }, [editorContent]);
+  
+  // Kapak resmi değiştiğinde kaydedilmemiş değişiklikleri işaretle
+  useEffect(() => {
+    if (coverImage) {
+      markUnsavedChanges();
+    }
+  }, [coverImage]);
+  
+  // Kategoriler değiştiğinde kaydedilmemiş değişiklikleri işaretle
+  useEffect(() => {
+    if (selectedCategories.length > 0) {
+      markUnsavedChanges();
+    }
+  }, [selectedCategories]);
 
   const handleCoverImageChange = (file: File | null) => {
     setCoverImage(file);
@@ -141,8 +182,20 @@ export default function Editor({ author }: any) {
         throw new Error(data.message || "Kaydetme işlemi başarısız oldu");
       }
 
+      // Başarılı kaydetme durumunda kaydedilmemiş değişiklikleri sıfırla
+      resetUnsavedChanges();
+      
+      // Yüklenen resimler listesini temizle
+      clearUploadedImages();
+      
+      console.log("Kaydedilmemiş değişiklikler sıfırlandı");
+      
       setSaveStatus("success");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      setTimeout(() => {
+        setSaveStatus("idle");
+        // Başarılı kaydetme sonrası gönderi sayfasına yönlendir
+        window.location.href = `/posts/${data.slug}`;
+      }, 2000);
     } catch (error) {
       console.error("Kaydetme hatası:", error);
       setSaveStatus("error");

@@ -2,9 +2,47 @@ import { APIContext } from "astro";
 
 export async function POST(context: APIContext) {
   try {
-    // JSON verisini al
-    const data = await context.request.json();
-    const { images } = data;
+    // İsteğin Content-Type başlığını kontrol et
+    const contentType = context.request.headers.get('content-type') || '';
+    
+    let images: string[] = [];
+    
+    // İsteğin formatına göre işle
+    if (contentType.includes('application/json')) {
+      // JSON formatında gelen istek
+      const data = await context.request.json();
+      images = data.images || [];
+      console.log('JSON formatında istek alındı');
+    } else if (contentType.includes('text/plain')) {
+      // Düz metin formatında gelen istek
+      const text = await context.request.text();
+      try {
+        const data = JSON.parse(text);
+        images = data.images || [];
+        console.log('Text/plain formatında JSON istek alındı');
+      } catch (e) {
+        console.error('JSON ayrıştırma hatası:', e);
+      }
+    } else {
+      // Diğer formatlar için (sendBeacon genellikle blob olarak gönderir)
+      try {
+        const blob = await context.request.blob();
+        const text = await blob.text();
+        const data = JSON.parse(text);
+        images = data.images || [];
+        console.log('Blob formatında istek alındı');
+      } catch (e) {
+        // Son çare olarak raw body'yi okumaya çalış
+        try {
+          const text = await context.request.text();
+          const data = JSON.parse(text);
+          images = data.images || [];
+          console.log('Raw body formatında istek alındı');
+        } catch (e) {
+          console.error('Veri ayrıştırma hatası:', e);
+        }
+      }
+    }
     
     if (!images || !Array.isArray(images) || images.length === 0) {
       return new Response(

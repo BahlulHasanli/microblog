@@ -117,15 +117,47 @@ export const YoutubeNode = Node.create<YoutubeOptions>({
 
   addCommands() {
     return {
-      setYoutubeVideo: (options) => ({ commands }) => {
-        if (!options.src) {
+      setYoutubeVideo: (options) => ({ commands, chain }) => {
+        try {
+          // YouTube URL'sinden video ID'sini çıkar
+          let videoId = '';
+          let src = options.src;
+          
+          if (src.includes('youtube.com/embed/')) {
+            videoId = src.split('youtube.com/embed/')[1].split('?')[0];
+          } else if (src.includes('youtube.com/watch')) {
+            try {
+              const url = new URL(src);
+              videoId = url.searchParams.get('v') || '';
+            } catch (e) {
+              // URL parsing hatası
+              const match = src.match(/[?&]v=([^&]+)/);
+              if (match) videoId = match[1];
+            }
+          } else if (src.includes('youtu.be/')) {
+            videoId = src.split('youtu.be/')[1].split('?')[0];
+          }
+          
+          if (!videoId) {
+            console.error('Geçerli bir YouTube video ID bulunamadı:', src);
+            return false;
+          }
+          
+          // Embed URL oluştur
+          const embedSrc = `https://www.youtube.com/embed/${videoId}`;
+          
+          // İçeriği ekle
+          return commands.insertContent({
+            type: this.name,
+            attrs: { 
+              ...options,
+              src: embedSrc 
+            },
+          });
+        } catch (error) {
+          console.error('YouTube video ekleme hatası:', error);
           return false;
         }
-
-        return commands.insertContent({
-          type: this.name,
-          attrs: options,
-        });
       },
     };
   },

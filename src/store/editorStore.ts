@@ -31,6 +31,13 @@ export function resetUnsavedChanges(): void {
  */
 export function addUploadedImage(imageUrl: string): void {
   const currentImages = uploadedImages.get();
+  
+  // Eğer resim zaten listede varsa ekleme
+  if (currentImages.includes(imageUrl)) {
+    console.log(`Resim zaten listede mevcut: ${imageUrl}`);
+    return;
+  }
+  
   uploadedImages.set([...currentImages, imageUrl]);
   console.log(`Yüklenen resim listeye eklendi: ${imageUrl}`);
   console.log(`Toplam yüklenen resim sayısı: ${uploadedImages.get().length}`);
@@ -96,7 +103,7 @@ export async function deleteAllUploadedImages(): Promise<void> {
       return;
     }
     
-    console.log(`${images.length} resim silinecek`);
+    console.log(`${images.length} resim silinecek:`, images);
     
     // Tüm resimleri paralel olarak sil
     const deletePromises = images.map(imageUrl => deleteImageFromBunnyCDN(imageUrl));
@@ -107,6 +114,15 @@ export async function deleteAllUploadedImages(): Promise<void> {
     const failed = results.length - successful;
     
     console.log(`${successful} resim başarıyla silindi, ${failed} resim silinemedi`);
+    
+    // Başarısız olanları göster
+    if (failed > 0) {
+      results.forEach((result, index) => {
+        if (result.status === 'rejected' || !(result.value as boolean)) {
+          console.error(`Resim silme hatası (${index}):`, result.status === 'rejected' ? result.reason : 'Başarısız', images[index]);
+        }
+      });
+    }
     
     // Resim listesini temizle
     clearUploadedImages();
@@ -128,8 +144,18 @@ export async function deleteAllUploadedImages(): Promise<void> {
 export function setupBeforeUnloadWarning(): () => void {
   // Tarayıcı kapatıldığında çağrılacak işlev
   const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+    console.log('beforeunload olayı tetiklendi');
+    
+    // Yüklenen resimlerin durumunu kontrol et
+    const images = uploadedImages.get();
+    console.log(`Yüklenen resim sayısı: ${images.length}`, images);
+    
+    // Kaydedilmemiş değişikliklerin durumunu kontrol et
+    const unsavedChangesExist = hasUnsavedChanges.get();
+    console.log(`Kaydedilmemiş değişiklikler: ${unsavedChangesExist}`);
+    
     // Eğer kaydedilmemiş değişiklikler varsa
-    if (hasUnsavedChanges.get()) {
+    if (unsavedChangesExist) {
       // Kullanıcıya uyarı göster
       const message = "Kaydedilmemiş değişiklikleriniz var. Sayfadan ayrılmak istediğinizden emin misiniz?";
       e.preventDefault();
@@ -144,10 +170,40 @@ export function setupBeforeUnloadWarning(): () => void {
           // Silinecek resimleri bir JSON olarak hazırla
           const payload = JSON.stringify({ images });
           
-          // Navigator sendBeacon API'si ile sunucuya bildir
-          // Bu API, sayfa kapatılsa bile isteğin tamamlanmasını sağlar
-          navigator.sendBeacon('/api/delete-unused-images', payload);
-          console.log(`${images.length} resim silme isteği gönderildi`);
+          // sendBeacon API'si tarayıcı tarafından destekleniyorsa kullan
+          if (navigator.sendBeacon) {
+            console.log('sendBeacon API kullanılıyor');
+            // Blob olarak gönder ve Content-Type başlığını ayarla
+            const blob = new Blob([payload], { type: 'application/json' });
+            const result = navigator.sendBeacon('/api/delete-unused-images', blob);
+            console.log(`${images.length} resim silme isteği gönderildi, sonuç: ${result}`);
+            
+            if (!result) {
+              console.error('sendBeacon başarısız oldu, fetch ile tekrar deneniyor');
+              // sendBeacon başarısız olduysa fetch ile dene
+              fetch('/api/delete-unused-images', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: payload,
+                keepalive: true
+              }).catch(err => console.error('Fetch hatası:', err));
+            }
+          } else {
+            // sendBeacon desteklenmiyorsa fetch API kullan
+            // Not: Bu durumda istek tamamlanmayabilir çünkü sayfa kapatılıyor
+            console.warn('sendBeacon API desteklenmiyor, fetch kullanılıyor');
+            fetch('/api/delete-unused-images', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: payload,
+              // keepalive özelliği sayfa kapatılsa bile isteğin devam etmesini sağlar
+              keepalive: true
+            }).catch(err => console.error('Fetch hatası:', err));
+          }
         } catch (error) {
           console.error('Resim silme isteği gönderilemedi:', error);
         }

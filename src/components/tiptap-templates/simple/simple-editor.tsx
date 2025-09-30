@@ -76,7 +76,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
 
-import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
+import { categories as CATEGORIES } from "@/data/categories";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -117,14 +117,24 @@ const MainToolbarContent = ({
     }
 
     const addYoutubeVideo = () => {
-      const url = prompt("Enter YouTube URL");
+      try {
+        const url = prompt("YouTube URL'sini girin");
 
-      if (url) {
-        editor.commands.setYoutubeVideo({
-          src: url,
-          width: "100%",
-          height: "260",
-        });
+        if (url) {
+          console.log('YouTube video ekleme deneniyor:', url);
+          
+          // Komutu çağır
+          const result = editor.commands.setYoutubeVideo({
+            src: url,
+            width: "100%",
+            height: "260",
+          });
+          
+          console.log('YouTube video ekleme sonucu:', result);
+        }
+      } catch (error) {
+        console.error('YouTube video ekleme hatası:', error);
+        alert('YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin.');
       }
     };
 
@@ -583,18 +593,18 @@ export function SimpleEditor({
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((category) => (
                   <button
-                    key={slugifyCategory(category)}
+                    key={category.slug}
                     type="button"
                     className={`cursor-pointer px-3 py-1 rounded-full text-sm bg-neutral-100 transition-all font-medium hover:bg-neutral-200 hover:text-base-800 ${
-                      categories.includes(slugifyCategory(category))
+                      categories.includes(category.slug)
                         ? "bg-rose-500 text-white"
                         : ""
                     }`}
                     onClick={() =>
-                      handleCategoryToggle(slugifyCategory(category))
+                      handleCategoryToggle(category.slug)
                     }
                   >
-                    {category}
+                    {category.name}
                   </button>
                 ))}
               </div>
