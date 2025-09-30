@@ -90,6 +90,30 @@ export function markdownToTiptap(
       continue;
     }
 
+    // HTML styled heading veya paragraph kontrolü
+    const htmlStyleMatch = line.match(/^<(h[1-4]|p)\s+style="text-align:(left|center|right|justify)">(.+)<\/\1>$/);
+    if (htmlStyleMatch) {
+      const tag = htmlStyleMatch[1];
+      const textAlign = htmlStyleMatch[2];
+      const content = htmlStyleMatch[3];
+      
+      if (tag.startsWith('h')) {
+        const level = parseInt(tag.substring(1));
+        document.content.push({
+          type: "heading",
+          attrs: { level, textAlign },
+          content: processInlineMarkdown(content),
+        });
+      } else {
+        document.content.push({
+          type: "paragraph",
+          attrs: { textAlign },
+          content: processInlineMarkdown(content),
+        });
+      }
+      continue;
+    }
+
     // Başlıklar
     if (line.startsWith("# ")) {
       // Başlık içeriğini al
@@ -131,6 +155,21 @@ export function markdownToTiptap(
       document.content.push({
         type: "heading",
         attrs: { level: 3 },
+        content: processedContent,
+      });
+      continue;
+    }
+
+    if (line.startsWith("#### ")) {
+      // Başlık içeriğini al
+      const headingContent = line.substring(5);
+      
+      // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
+      const processedContent = processInlineMarkdown(headingContent);
+      
+      document.content.push({
+        type: "heading",
+        attrs: { level: 4 },
         content: processedContent,
       });
       continue;
@@ -187,17 +226,83 @@ export function markdownToTiptap(
       }
     }
 
-    // Alıntılar
+    // Alıntılar (blockquote)
     if (line.startsWith("> ")) {
-      document.content.push({
-        type: "blockquote",
-        content: [
-          {
+      const quoteText = line.substring(2);
+      const lastNode = document.content[document.content.length - 1];
+      
+      // Eğer önceki düğüm bir blockquote ise, ona ekle
+      if (lastNode?.type === "blockquote") {
+        // Boş satır ise yeni paragraf ekle
+        if (quoteText === "") {
+          lastNode.content?.push({
             type: "paragraph",
-            content: [{ type: "text", text: line.substring(2) }],
-          },
-        ],
-      });
+            content: [],
+          });
+        } else {
+          // Son paragrafı bul veya yeni paragraf oluştur
+          const lastQuoteNode = lastNode.content?.[lastNode.content.length - 1];
+          if (lastQuoteNode?.type === "paragraph" && lastQuoteNode.content?.length === 0) {
+            // Boş paragrafa metin ekle
+            lastQuoteNode.content = processInlineMarkdown(quoteText);
+          } else {
+            // Yeni paragraf ekle
+            lastNode.content?.push({
+              type: "paragraph",
+              content: processInlineMarkdown(quoteText),
+            });
+          }
+        }
+      } else {
+        // Yeni blockquote oluştur
+        document.content.push({
+          type: "blockquote",
+          content: [
+            {
+              type: "paragraph",
+              content: quoteText ? processInlineMarkdown(quoteText) : [],
+            },
+          ],
+        });
+      }
+      continue;
+    }
+
+    // Todo listeler (task items)
+    const taskItemMatch = line.match(/^-\s\[([ xX])\]\s(.*)$/);
+    if (taskItemMatch) {
+      const checked = taskItemMatch[1].toLowerCase() === "x";
+      const taskText = taskItemMatch[2];
+      
+      const lastNode = document.content[document.content.length - 1];
+      if (lastNode?.type !== "taskList") {
+        document.content.push({
+          type: "taskList",
+          content: [
+            {
+              type: "taskItem",
+              attrs: { checked },
+              content: [
+                {
+                  type: "paragraph",
+                  content: processInlineMarkdown(taskText),
+                },
+              ],
+            },
+          ],
+        });
+      } else {
+        lastNode.content.push({
+          type: "taskItem",
+          attrs: { checked },
+          content: [
+            {
+              type: "paragraph",
+              content: processInlineMarkdown(taskText),
+            },
+          ],
+        });
+      }
       continue;
     }
 
@@ -214,7 +319,7 @@ export function markdownToTiptap(
               content: [
                 {
                   type: "paragraph",
-                  content: [{ type: "text", text: line.substring(2) }],
+                  content: processInlineMarkdown(line.substring(2)),
                 },
               ],
             },
@@ -227,7 +332,7 @@ export function markdownToTiptap(
           content: [
             {
               type: "paragraph",
-              content: [{ type: "text", text: line.substring(2) }],
+              content: processInlineMarkdown(line.substring(2)),
             },
           ],
         });
@@ -248,7 +353,7 @@ export function markdownToTiptap(
               content: [
                 {
                   type: "paragraph",
-                  content: [{ type: "text", text: numberedListMatch[2] }],
+                  content: processInlineMarkdown(numberedListMatch[2]),
                 },
               ],
             },
@@ -260,7 +365,7 @@ export function markdownToTiptap(
           content: [
             {
               type: "paragraph",
-              content: [{ type: "text", text: numberedListMatch[2] }],
+              content: processInlineMarkdown(numberedListMatch[2]),
             },
           ],
         });
@@ -382,6 +487,69 @@ function processInlineMarkdown(text: string): TiptapNode[] {
       continue;
     }
 
+    // Altı çizili metin (HTML <u> tag)
+    if (text.substring(i, i + 3) === "<u>" && text.indexOf("</u>", i) !== -1) {
+      if (currentText) {
+        nodes.push({ type: "text", text: currentText });
+        currentText = "";
+      }
+
+      const endUnderline = text.indexOf("</u>", i);
+      const underlineText = text.substring(i + 3, endUnderline);
+      
+      // İç içe markdown işaretlerini işle
+      const innerNodes = processInlineMarkdown(underlineText);
+      
+      innerNodes.forEach(node => {
+        if (node.type === "text") {
+          const existingMarks = node.marks || [];
+          nodes.push({
+            ...node,
+            marks: [...existingMarks, { type: "underline" }],
+          });
+        }
+      });
+
+      i = endUnderline + 4;
+      continue;
+    }
+
+    // Superscript (HTML <sup> tag)
+    if (text.substring(i, i + 5) === "<sup>" && text.indexOf("</sup>", i) !== -1) {
+      if (currentText) {
+        nodes.push({ type: "text", text: currentText });
+        currentText = "";
+      }
+
+      const endSup = text.indexOf("</sup>", i);
+      const supText = text.substring(i + 5, endSup);
+      nodes.push({
+        type: "text",
+        text: supText,
+        marks: [{ type: "superscript" }],
+      });
+      i = endSup + 6;
+      continue;
+    }
+
+    // Subscript (HTML <sub> tag)
+    if (text.substring(i, i + 5) === "<sub>" && text.indexOf("</sub>", i) !== -1) {
+      if (currentText) {
+        nodes.push({ type: "text", text: currentText });
+        currentText = "";
+      }
+
+      const endSub = text.indexOf("</sub>", i);
+      const subText = text.substring(i + 5, endSub);
+      nodes.push({
+        type: "text",
+        text: subText,
+        marks: [{ type: "subscript" }],
+      });
+      i = endSub + 6;
+      continue;
+    }
+
     // Kod
     if (text[i] === "`" && text.indexOf("`", i + 1) !== -1) {
       if (currentText) {
@@ -423,6 +591,42 @@ function processInlineMarkdown(text: string): TiptapNode[] {
         i = closeParenthesis + 1;
         continue;
       }
+    }
+
+    // Highlight (mark elementi)
+    if (text.substring(i, i + 6) === "<mark " && text.indexOf("</mark>", i) !== -1) {
+      if (currentText) {
+        nodes.push({ type: "text", text: currentText });
+        currentText = "";
+      }
+
+      const endMark = text.indexOf("</mark>", i);
+      const markContent = text.substring(i, endMark + 7);
+      
+      // Style attribute'ünden rengi çıkar
+      const styleMatch = markContent.match(/style="background-color:([^"]+)"/);
+      const color = styleMatch ? styleMatch[1] : "var(--tt-color-highlight-yellow)";
+      
+      // Mark içindeki metni çıkar
+      const textMatch = markContent.match(/>([^<]+)</);
+      const markText = textMatch ? textMatch[1] : "";
+      
+      // İç içe markdown işaretlerini işle (bold, italic vb.)
+      const innerNodes = processInlineMarkdown(markText);
+      
+      // Her bir node'a highlight mark'ı ekle
+      innerNodes.forEach(node => {
+        if (node.type === "text") {
+          const existingMarks = node.marks || [];
+          nodes.push({
+            ...node,
+            marks: [...existingMarks, { type: "highlight", attrs: { color } }],
+          });
+        }
+      });
+
+      i = endMark + 7;
+      continue;
     }
 
     // Normal metin

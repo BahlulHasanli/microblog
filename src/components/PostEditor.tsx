@@ -4,7 +4,7 @@ import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
 import { useStore } from "@nanostores/react";
-import { hasUnsavedChanges, markUnsavedChanges, resetUnsavedChanges, clearUploadedImages, setupBeforeUnloadWarning } from "@/store/editorStore";
+import { hasUnsavedChanges, markUnsavedChanges, resetUnsavedChanges, clearUploadedImages, setProtectedImages, clearProtectedImages, setupBeforeUnloadWarning } from "@/store/editorStore";
 import { categories as CATEGORIES } from "@/data/categories";
 
 // Global tip tanımlaması
@@ -76,6 +76,29 @@ export default function PostEditor({ post, content, slug, author }: any) {
     // Kaydedilmemiş değişiklikleri sıfırla
     resetUnsavedChanges();
     clearUploadedImages();
+    clearProtectedImages();
+    
+    // Mevcut post'taki resimleri korunan listeye ekle
+    const existingImages: string[] = [];
+    
+    // Kapak resmini ekle
+    if (post.image?.url) {
+      existingImages.push(post.image.url);
+    }
+    
+    // İçerikteki resimleri bul ve ekle
+    if (content) {
+      const imageRegex = /!\[.*?\]\((https?:\/\/[^\)]+)\)/g;
+      let match;
+      while ((match = imageRegex.exec(content)) !== null) {
+        existingImages.push(match[1]);
+      }
+    }
+    
+    // Korunan resimleri ayarla
+    if (existingImages.length > 0) {
+      setProtectedImages(existingImages);
+    }
     
     // Tarayıcı kapatılmadan önce uyarı gösterme mekanizmasını kur
     return setupBeforeUnloadWarning();
@@ -258,6 +281,9 @@ export default function PostEditor({ post, content, slug, author }: any) {
       // Yüklenen resimler listesini temizle
       clearUploadedImages();
       
+      // Korunan resimleri temizle
+      clearProtectedImages();
+      
       console.log("Kaydedilmemiş değişiklikler sıfırlandı");
       
       setSaveStatus("success");
@@ -377,14 +403,31 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
   function processParagraph(node: any): string {
     if (!node.content) return "";
-    return node.content.map(processTextNode).join("");
+    const content = node.content.map(processTextNode).join("");
+    
+    // TextAlign desteği
+    const textAlign = node.attrs?.textAlign;
+    if (textAlign && textAlign !== "left") {
+      return `<p style="text-align:${textAlign}">${content}</p>`;
+    }
+    
+    return content;
   }
 
   function processHeading(node: any): string {
     if (!node.content) return "";
     const level = node.attrs?.level || 1;
-    const prefix = "#".repeat(level) + " ";
-    return prefix + node.content.map(processTextNode).join("");
+    const content = node.content.map(processTextNode).join("");
+    
+    // TextAlign desteği
+    const textAlign = node.attrs?.textAlign;
+    if (textAlign && textAlign !== "left") {
+      const tag = `h${Math.min(level, 4)}`;
+      return `<${tag} style="text-align:${textAlign}">${content}</${tag}>`;
+    }
+    
+    const prefix = "#".repeat(Math.min(level, 4)) + " ";
+    return prefix + content;
   }
 
   function processBulletList(node: any): string {
@@ -513,8 +556,17 @@ export default function PostEditor({ post, content, slug, author }: any) {
               break;
             case "highlight":
               // Markdown'da highlight için standart bir sözdizimi yok, HTML kullanabiliriz
-              const color = mark.attrs?.color || "yellow";
+              const color = mark.attrs?.color || "var(--tt-color-highlight-yellow)";
               text = `<mark style="background-color:${color}">${text}</mark>`;
+              break;
+            case "underline":
+              text = `<u>${text}</u>`;
+              break;
+            case "superscript":
+              text = `<sup>${text}</sup>`;
+              break;
+            case "subscript":
+              text = `<sub>${text}</sub>`;
               break;
           }
         });

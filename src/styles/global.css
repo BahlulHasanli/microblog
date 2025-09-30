@@ -46,6 +46,16 @@
   --astro-code-token-string-expression: #2522fc;
   --astro-code-token-punctuation: #ffffff;
   --astro-code-token-link: #ffffff;
+  
+  /* TipTap Editor highlight colors */
+  --tt-color-highlight-red: #ffc9c9;
+  --tt-color-highlight-orange: #ffe4cc;
+  --tt-color-highlight-yellow: #fff4cc;
+  --tt-color-highlight-green: #d4f4dd;
+  --tt-color-highlight-blue: #d4e4ff;
+  --tt-color-highlight-purple: #e4d4ff;
+  --tt-color-highlight-pink: #ffd4f4;
+  --tt-color-highlight-gray: #e4e4e4;
 }
 
 @font-face {
@@ -197,4 +207,35 @@
 /* Add rounded corners to all images in blog content */
 .prose img {
   border-radius: 0.75rem; /* rounded-xl equivalent */
+}
+
+/* Mark element styles for highlighted text */
+.prose mark {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  background-color: var(--tt-color-highlight-yellow);
+}
+
+/* Support for different highlight colors */
+.prose mark[style*="background-color"] {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+/* Underline text */
+.prose u {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* Superscript and subscript */
+.prose sup {
+  vertical-align: super;
+  font-size: 0.75em;
+}
+
+.prose sub {
+  vertical-align: sub;
+  font-size: 0.75em;
 }

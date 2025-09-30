@@ -6,6 +6,9 @@ export const hasUnsavedChanges = atom<boolean>(false);
 // Yüklenen resimleri izlemek için store
 export const uploadedImages = atom<string[]>([]);
 
+// Mevcut post'ta bulunan (korunan) resimleri izlemek için store
+export const protectedImages = atom<string[]>([]);
+
 // Silme işlemi sırasında mı kontrolü
 export const isDeletingImages = atom<boolean>(false);
 
@@ -44,6 +47,23 @@ export function addUploadedImage(imageUrl: string): void {
   
   // Resim yüklendiğinde kaydedilmemiş değişiklikleri işaretle
   markUnsavedChanges();
+}
+
+/**
+ * Korunan resimleri ayarlar (mevcut post'taki resimler)
+ * @param images Korunacak resim URL'leri
+ */
+export function setProtectedImages(images: string[]): void {
+  protectedImages.set(images);
+  console.log(`${images.length} korunan resim ayarlandı:`, images);
+}
+
+/**
+ * Korunan resimleri temizler
+ */
+export function clearProtectedImages(): void {
+  protectedImages.set([]);
+  console.log('Korunan resimler temizlendi');
 }
 
 /**
@@ -89,7 +109,7 @@ export async function deleteImageFromBunnyCDN(imageUrl: string): Promise<boolean
 }
 
 /**
- * Kaydedilmemiş tüm resimleri BunnyCDN'den siler
+ * Kaydedilmemiş tüm resimleri BunnyCDN'den siler (korunan resimler hariç)
  * @returns Promise<void>
  */
 export async function deleteAllUploadedImages(): Promise<void> {
@@ -97,16 +117,21 @@ export async function deleteAllUploadedImages(): Promise<void> {
     // Silme işlemi başladığını işaretle
     isDeletingImages.set(true);
     
-    const images = uploadedImages.get();
-    if (images.length === 0) {
-      console.log('Silinecek resim yok');
+    const allImages = uploadedImages.get();
+    const protectedImagesList = protectedImages.get();
+    
+    // Sadece korunan listede olmayan resimleri sil
+    const imagesToDelete = allImages.filter(img => !protectedImagesList.includes(img));
+    
+    if (imagesToDelete.length === 0) {
+      console.log('Silinecek resim yok (tüm resimler korunuyor)');
       return;
     }
     
-    console.log(`${images.length} resim silinecek:`, images);
+    console.log(`${imagesToDelete.length} resim silinecek (${protectedImagesList.length} resim korunuyor):`, imagesToDelete);
     
     // Tüm resimleri paralel olarak sil
-    const deletePromises = images.map(imageUrl => deleteImageFromBunnyCDN(imageUrl));
+    const deletePromises = imagesToDelete.map(imageUrl => deleteImageFromBunnyCDN(imageUrl));
     const results = await Promise.allSettled(deletePromises);
     
     // Başarılı ve başarısız sonuçları say
@@ -119,7 +144,7 @@ export async function deleteAllUploadedImages(): Promise<void> {
     if (failed > 0) {
       results.forEach((result, index) => {
         if (result.status === 'rejected' || !(result.value as boolean)) {
-          console.error(`Resim silme hatası (${index}):`, result.status === 'rejected' ? result.reason : 'Başarısız', images[index]);
+          console.error(`Resim silme hatası (${index}):`, result.status === 'rejected' ? result.reason : 'Başarısız', imagesToDelete[index]);
         }
       });
     }
