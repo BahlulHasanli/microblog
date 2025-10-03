@@ -2,7 +2,6 @@ import type { Node as TiptapNode } from "@tiptap/pm/model"
 import { NodeSelection } from "@tiptap/pm/state"
 import type { Editor } from "@tiptap/react"
 import { getOrCreateImageId } from "../utils/image-id-store"
-import { addUploadedImage, markUnsavedChanges } from "../store/editorStore"
 
 // Global tip tanımlaması
 declare global {
@@ -303,37 +302,11 @@ export const handleImageUpload = async (
       }, 100);
     }
     
-    // Makale başlığını al - window._currentEditorTitle global değişkeninden
-    const title = typeof window !== 'undefined' ? window._currentEditorTitle || '' : '';
-    // Ortak slugify fonksiyonunu kullan
-    const { slugify } = await import('../utils/slugify');
-    
-    let slug = title ? slugify(title) : '';
-    
-    // Eğer slug bulunamadıysa tarih bazlı bir slug oluştur
-    if (!slug) {
-      const date = new Date();
-      slug = `post-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getTime().toString().slice(-6)}`;
-    }
-    
-    console.log(`Resim yükleniyor: ${file.name}, slug: ${slug}`);
-    
-    // Geçici bir URL oluştur (blob URL) - bu sadece önizleme için
+    // Geçici bir URL oluştur (blob URL) - bu önizleme için
     const tempUrl = URL.createObjectURL(file);
     
-    // FormData oluştur
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("slug", slug);
-    formData.append("tempId", tempId);
-    formData.append("uploadType", "post-image"); // Yükleme türünü belirt
-    
-    // API'ye istek gönder
-    console.log(`API'ye resim yükleme isteği gönderiliyor: /api/bunny-upload`);
-    const response = await fetch("/api/bunny-upload", {
-      method: "POST",
-      body: formData,
-    });
+    // Dosyayı geçici depoda sakla
+    temporaryImages.set(tempUrl, file);
     
     // İlerleme simülasyonunu durdur
     if (progressInterval) {
@@ -346,28 +319,13 @@ export const handleImageUpload = async (
       onProgress({ progress: 100 });
     }
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Resim yükleme hata yanıtı:", errorData);
-      throw new Error(errorData.message || "Resim yükleme başarısız oldu");
-    }
+    console.log(`Geçici URL oluşturuldu: ${tempUrl}`);
     
-    const data = await response.json();
-    console.log("Resim yükleme başarılı, yanıt:", data);
-    
-    // Geçici URL'yi serbest bırak
-    URL.revokeObjectURL(tempUrl);
-    
-    // Yüklenen resmi store'a ekle
-    addUploadedImage(data.imageUrl);
-    // Kaydedilmemiş değişiklikleri işaretle
-    markUnsavedChanges();
-    
-    // Gerçek URL'yi döndür
-    return data.imageUrl;
+    // Geçici URL'yi döndür - Save zamanı BunnyCDN'e yüklenecek
+    return tempUrl;
   } catch (error) {
-    console.error('Resim yükleme hatası:', error);
-    throw new Error(`Resim yüklenirken bir hata oluştu: ${error.message}`);
+    console.error('Resim işleme hatası:', error);
+    throw new Error(`Resim işlenirken bir hata oluştu: ${error.message}`);
   }
 }
 
@@ -416,79 +374,46 @@ export const uploadTemporaryImages = async (
       console.log(`Geçici resim bulundu: ${src}`);
       
       try {
-        // Blob URL'den dosyayı al
-        console.log(`Blob URL'den dosya alınıyor: ${src}`);
-        const response = await fetch(src);
+        // Geçici depodan dosyayı al
+        const file = temporaryImages.get(src);
         
-        if (response.ok) {
+        if (!file) {
+          console.error(`Dosya geçici depoda bulunamadı: ${src}`);
+          // Blob URL'den almayı dene
+          const response = await fetch(src);
+          if (!response.ok) {
+            throw new Error(`Blob URL'den dosya alınamadı: ${response.status}`);
+          }
           const blob = await response.blob();
-          console.log(`Blob alındı: Tip: ${blob.type}, Boyut: ${blob.size} byte`);
-          
-          // Dosya formatını tespit et
           const fileExtension = blob.type.split('/').pop() || 'jpg';
+          const tempFile = new File([blob], `image_${Date.now()}.${fileExtension}`, { type: blob.type || 'image/jpeg' });
           
-          // Makale başlığını al
-          const title = window._currentEditorTitle || '';
-          const { slugify } = await import('../utils/slugify');
-          let slug = title ? slugify(title) : '';
+          // Dosyayı yükle
+          const cdnUrl = await uploadFileToBunnyCDN(tempFile);
           
-          // Eğer slug bulunamadıysa tarih bazlı bir slug oluştur
-          if (!slug) {
-            const date = new Date();
-            slug = `post-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getTime().toString().slice(-6)}`;
-          }
-          
-          // Blob'dan File nesnesi oluştur
-          const uniqueFileName = `image_${Date.now()}.${fileExtension}`;
-          const file = new File([blob], uniqueFileName, { type: blob.type || 'image/jpeg' });
-          console.log(`Blob URL'den dosya oluşturuldu: ${file.name}, boyut: ${file.size}, tip: ${file.type}`);
-          
-          // FormData oluştur
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("slug", slug);
-          formData.append("tempId", src); // Blob URL'yi tempId olarak kullan
-          
-          // API'ye istek gönder
-          console.log(`API'ye resim yükleme isteği gönderiliyor: /api/upload-image`);
-          const uploadResponse = await fetch("/api/upload-image", {
-            method: "POST",
-            body: formData,
-          });
-          
-          if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.json();
-            console.error("Resim yükleme hata yanıtı:", errorData);
-            throw new Error(errorData.message || "Resim yükleme başarısız oldu");
-          }
-          
-          const data = await uploadResponse.json();
-          console.log("Resim yükleme başarılı, yanıt:", data);
-          
-          // İçerikteki URL'yi güncelle
-          let current = newContent;
-          for (let i = 0; i < path.length - 2; i += 2) {
-            const key = path[i] as string | number;
-            const nextKey = path[i+1] as string | number;
-            current = current[key][nextKey];
-          }
-          
-          // Eski URL'yi logla
-          console.log(`Eski URL: ${current.attrs.src}`);
-          
-          // Yeni URL'yi ayarla
-          current.attrs.src = data.imageUrl;
-          console.log(`URL güncellendi: ${data.imageUrl}`);
+          // Node'u direkt güncelle (referans ile)
+          node.attrs.src = cdnUrl;
+          console.log(`URL güncellendi: ${src} -> ${cdnUrl}`);
           
           // Geçici URL'yi serbest bırak
           URL.revokeObjectURL(src);
-          console.log(`Geçici URL serbest bırakıldı: ${src}`);
         } else {
-          console.error(`Blob URL'den yanıt alınamadı: ${response.status} ${response.statusText}`);
-          throw new Error(`HTTP hata: ${response.status}`);
+          console.log(`Dosya geçici depoda bulundu: ${file.name}, boyut: ${file.size}`);
+          
+          // Dosyayı BunnyCDN'e yükle
+          const cdnUrl = await uploadFileToBunnyCDN(file);
+          
+          // Node'u direkt güncelle (referans ile)
+          node.attrs.src = cdnUrl;
+          console.log(`URL güncellendi: ${src} -> ${cdnUrl}`);
+          
+          // Geçici URL'yi serbest bırak ve depodan sil
+          URL.revokeObjectURL(src);
+          temporaryImages.delete(src);
         }
       } catch (error) {
         console.error(`Resim yükleme hatası:`, error);
+        throw error; // Hatayı yukarı fırlat ki kullanıcı görsün
       }
     }
     
@@ -500,6 +425,44 @@ export const uploadTemporaryImages = async (
   
   console.log("uploadTemporaryImages tamamlandı.");
   return newContent;
+}
+
+// Yardımcı fonksiyon: Dosyayı BunnyCDN'e yükle
+async function uploadFileToBunnyCDN(file: File): Promise<string> {
+  // Makale başlığını al
+  const title = window._currentEditorTitle || '';
+  const { slugify } = await import('../utils/slugify');
+  let slug = title ? slugify(title) : '';
+  
+  // Eğer slug bulunamadıysa tarih bazlı bir slug oluştur
+  if (!slug) {
+    const date = new Date();
+    slug = `post-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getTime().toString().slice(-6)}`;
+  }
+  
+  // FormData oluştur
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("slug", slug);
+  formData.append("uploadType", "post-image");
+  
+  // API'ye istek gönder
+  console.log(`API'ye resim yükleme isteği gönderiliyor: /api/bunny-upload`);
+  const uploadResponse = await fetch("/api/bunny-upload", {
+    method: "POST",
+    body: formData,
+  });
+  
+  if (!uploadResponse.ok) {
+    const errorData = await uploadResponse.json();
+    console.error("Resim yükleme hata yanıtı:", errorData);
+    throw new Error(errorData.message || "Resim yükleme başarısız oldu");
+  }
+  
+  const data = await uploadResponse.json();
+  console.log("Resim yükleme başarılı, CDN URL:", data.imageUrl);
+  
+  return data.imageUrl;
 }
 
 type ProtocolOptions = {

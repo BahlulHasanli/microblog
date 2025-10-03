@@ -34,16 +34,27 @@ export function resetUnsavedChanges(): void {
  */
 export function addUploadedImage(imageUrl: string): void {
   const currentImages = uploadedImages.get();
+  const protectedImagesList = protectedImages.get();
+  
+  console.log('🔍 addUploadedImage çağrıldı:', imageUrl);
+  console.log('   Korunan şəkillər:', protectedImagesList);
+  console.log('   Mövcud yüklənmiş şəkillər:', currentImages);
+  
+  // Eğer resim korunan listede varsa ekleme (bu mevcut post'un resmidir)
+  if (protectedImagesList.includes(imageUrl)) {
+    console.log(`✅ Resim korunan listede, yüklenen listeye eklenmedi: ${imageUrl}`);
+    return;
+  }
   
   // Eğer resim zaten listede varsa ekleme
   if (currentImages.includes(imageUrl)) {
-    console.log(`Resim zaten listede mevcut: ${imageUrl}`);
+    console.log(`⚠️ Resim zaten listede mevcut: ${imageUrl}`);
     return;
   }
   
   uploadedImages.set([...currentImages, imageUrl]);
-  console.log(`Yüklenen resim listeye eklendi: ${imageUrl}`);
-  console.log(`Toplam yüklenen resim sayısı: ${uploadedImages.get().length}`);
+  console.log(`✅ Yüklenen resim listeye eklendi: ${imageUrl}`);
+  console.log(`   Toplam yüklenen resim sayısı: ${uploadedImages.get().length}`);
   
   // Resim yüklendiğinde kaydedilmemiş değişiklikleri işaretle
   markUnsavedChanges();
@@ -104,6 +115,46 @@ export async function deleteImageFromBunnyCDN(imageUrl: string): Promise<boolean
     return true;
   } catch (error) {
     console.error(`Resim silme hatası: ${error.message}`);
+    return false;
+  }
+}
+
+/**
+ * Yüklenen resim listesinden bir resmi kaldırır
+ * @param imageUrl Kaldırılacak resmin URL'si
+ */
+export function removeUploadedImage(imageUrl: string): void {
+  const currentImages = uploadedImages.get();
+  const updatedImages = currentImages.filter(img => img !== imageUrl);
+  uploadedImages.set(updatedImages);
+  console.log(`Resim yüklenen listeden kaldırıldı: ${imageUrl}`);
+  console.log(`Kalan resim sayısı: ${updatedImages.length}`);
+}
+
+/**
+ * Editor'dan bir resim silindiğinde çağrılır
+ * Hem BunnyCDN'den siler hem de yüklenen listeden kaldırır
+ * @param imageUrl Silinecek resmin URL'si
+ * @returns Promise<boolean> Başarılı ise true, değilse false
+ */
+export async function handleImageDelete(imageUrl: string): Promise<boolean> {
+  try {
+    console.log(`Resim silme işlemi başlatılıyor: ${imageUrl}`);
+    
+    // BunnyCDN'den sil
+    const deleted = await deleteImageFromBunnyCDN(imageUrl);
+    
+    if (deleted) {
+      // Yüklenen listeden kaldır
+      removeUploadedImage(imageUrl);
+      console.log(`Resim başarıyla silindi: ${imageUrl}`);
+      return true;
+    } else {
+      console.error(`Resim BunnyCDN'den silinemedi: ${imageUrl}`);
+      return false;
+    }
+  } catch (error) {
+    console.error(`Resim silme işlemi hatası: ${error.message}`);
     return false;
   }
 }
@@ -196,12 +247,18 @@ export function setupBeforeUnloadWarning(): () => void {
     
     // Kaydedilmemiş değişiklikler varsa ve yüklenen resimler varsa sil
     const unsavedChangesExist = hasUnsavedChanges.get();
-    const images = uploadedImages.get();
+    const allImages = uploadedImages.get();
+    const protectedImagesList = protectedImages.get();
     
-    if (unsavedChangesExist && images.length > 0) {
+    // Korunan resimleri filtrele - yalnız yeni yüklenen resimleri sil
+    const imagesToDelete = allImages.filter(img => !protectedImagesList.includes(img));
+    
+    console.log(`Yüklenen resim sayısı: ${allImages.length}, Korunan: ${protectedImagesList.length}, Silinecek: ${imagesToDelete.length}`);
+    
+    if (unsavedChangesExist && imagesToDelete.length > 0) {
       try {
         // Silinecek resimleri bir JSON olarak hazırla
-        const payload = JSON.stringify({ images });
+        const payload = JSON.stringify({ images: imagesToDelete });
         
         // sendBeacon API'si tarayıcı tarafından destekleniyorsa kullan
         if (navigator.sendBeacon) {
@@ -209,7 +266,7 @@ export function setupBeforeUnloadWarning(): () => void {
           // Blob olarak gönder ve Content-Type başlığını ayarla
           const blob = new Blob([payload], { type: 'application/json' });
           const result = navigator.sendBeacon('/api/delete-unused-images', blob);
-          console.log(`${images.length} resim silme isteği gönderildi, sonuç: ${result}`);
+          console.log(`${imagesToDelete.length} resim silme isteği gönderildi (${protectedImagesList.length} korunuyor), sonuç: ${result}`);
         }
       } catch (error) {
         console.error('Resim silme isteği gönderilemedi:', error);

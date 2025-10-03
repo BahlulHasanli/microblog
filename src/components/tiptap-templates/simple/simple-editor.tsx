@@ -409,6 +409,7 @@ export function SimpleEditor({
         onUpdate(editor.getJSON());
       }
     },
+    // onTransaction artıq lazım deyil - şəkillər save zamanı yüklənir
   });
 
   const rect = useCursorVisibility({
@@ -510,7 +511,7 @@ export function SimpleEditor({
   }, [categories, onCategoriesChange]);
 
   // Kapak resmi yükleme işleyicisi
-  const handleCoverImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (onCoverImageChange) {
@@ -533,6 +534,7 @@ export function SimpleEditor({
 
   // Kapak resmini kaldırma
   const handleRemoveCoverImage = () => {
+    // Cover image silmə - artıq BunnyCDN-dən silmə lazım deyil
     if (onCoverImageChange) {
       onCoverImageChange(null);
     }

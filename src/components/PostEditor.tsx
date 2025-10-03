@@ -4,7 +4,7 @@ import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
 import { useStore } from "@nanostores/react";
-import { hasUnsavedChanges, markUnsavedChanges, resetUnsavedChanges, clearUploadedImages, setProtectedImages, clearProtectedImages, setupBeforeUnloadWarning } from "@/store/editorStore";
+// editorStore artıq lazım deyil - şəkillər save zamanı yüklənir
 import { categories as CATEGORIES } from "@/data/categories";
 
 // Global tip tanımlaması
@@ -38,71 +38,11 @@ export default function PostEditor({ post, content, slug, author }: any) {
   // Markdown içeriğini JSON'a dönüştür
   const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
   
-  // Kaydedilmemiş değişiklikleri izlemek için store kullan
-  const unsavedChanges = useStore(hasUnsavedChanges);
+  // Store artıq lazım deyil
 
   useEffect(() => {
     window._currentEditorTitle = title;
-    
-    // Başlık değiştiğinde kaydedilmemiş değişiklikleri işaretle
-    if (initialEditorContent) {
-      markUnsavedChanges();
-    }
-  }, [title, initialEditorContent]);
-  
-  // Editor içeriği değiştiğinde kaydedilmemiş değişiklikleri işaretle
-  useEffect(() => {
-    if (editorContent && initialEditorContent) {
-      markUnsavedChanges();
-    }
-  }, [editorContent, initialEditorContent]);
-  
-  // Kapak resmi değiştiğinde kaydedilmemiş değişiklikleri işaretle
-  useEffect(() => {
-    if (coverImage) {
-      markUnsavedChanges();
-    }
-  }, [coverImage]);
-  
-  // Kategoriler değiştiğinde kaydedilmemiş değişiklikleri işaretle
-  useEffect(() => {
-    if (initialEditorContent && JSON.stringify(post.categories) !== JSON.stringify(selectedCategories)) {
-      markUnsavedChanges();
-    }
-  }, [selectedCategories, post.categories, initialEditorContent]);
-  
-  // Sayfa yüklendiğinde beforeunload olay dinleyicisini ayarla
-  useEffect(() => {
-    // Kaydedilmemiş değişiklikleri sıfırla
-    resetUnsavedChanges();
-    clearUploadedImages();
-    clearProtectedImages();
-    
-    // Mevcut post'taki resimleri korunan listeye ekle
-    const existingImages: string[] = [];
-    
-    // Kapak resmini ekle
-    if (post.image?.url) {
-      existingImages.push(post.image.url);
-    }
-    
-    // İçerikteki resimleri bul ve ekle
-    if (content) {
-      const imageRegex = /!\[.*?\]\((https?:\/\/[^\)]+)\)/g;
-      let match;
-      while ((match = imageRegex.exec(content)) !== null) {
-        existingImages.push(match[1]);
-      }
-    }
-    
-    // Korunan resimleri ayarla
-    if (existingImages.length > 0) {
-      setProtectedImages(existingImages);
-    }
-    
-    // Tarayıcı kapatılmadan önce uyarı gösterme mekanizmasını kur
-    return setupBeforeUnloadWarning();
-  }, []);
+  }, [title]);
 
   // Markdown içeriğini işle
   useEffect(() => {
@@ -275,16 +215,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
         throw new Error(data.message || "Güncelleme işlemi başarısız oldu");
       }
 
-      // Başarılı kaydetme durumunda kaydedilmemiş değişiklikleri sıfırla
-      resetUnsavedChanges();
-      
-      // Yüklenen resimler listesini temizle
-      clearUploadedImages();
-      
-      // Korunan resimleri temizle
-      clearProtectedImages();
-      
-      console.log("Kaydedilmemiş değişiklikler sıfırlandı");
+      // Başarılı kaydetme
+      console.log("Post başarıyla güncellendi");
       
       setSaveStatus("success");
       setTimeout(() => {
