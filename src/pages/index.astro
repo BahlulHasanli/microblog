@@ -20,6 +20,9 @@ console.log('user ::>>', user)
 // const allPosts = (await getCollection("posts"));
 const allPosts = await getCollection("posts");
 
+console.log('allPosts count:', allPosts.length);
+console.log('allPosts:', allPosts);
+
 const posts = allPosts.map(post => {
   let imageUrl = post.data.image.url.toString();
   
@@ -75,16 +78,16 @@ const posts = allPosts.map(post => {
       <div class="tab-panels mt-4">
         <div id="weekly" class="tab-content block">
           <div class="flex flex-wrap gap-3 mt-8 mb-4">
-            {
+             {
               categories.map((category) => (
                 <a
                   class="hover:text-rose-500 text-sm font-medium text-base-600"
-                  href={`/category/${slugifyCategory(category)}`}
+                  href={`/category/${category.slug}`}
                 >
-                  {category}
+                  {category.name}
                 </a>
               ))
-            }
+            } 
           </div>
           <div class="grid grid-cols-1 gap-8 gap-y-24 sm:grid-cols-2">
             {

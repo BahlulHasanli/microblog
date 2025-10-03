@@ -1,8 +1,9 @@
 
 export default new Map([
-["src/content/posts/grand-theft-auto.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fgrand-theft-auto.mdx&astroContentModuleFlag=true")],
-["src/content/posts/007-first-light-icin-state-of-play-etkinligi-geliyor.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2F007-first-light-icin-state-of-play-etkinligi-geliyor.mdx&astroContentModuleFlag=true")],
-["src/content/posts/hell-is-us-icin-geri-sayim-basladi.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fhell-is-us-icin-geri-sayim-basladi.mdx&astroContentModuleFlag=true")],
-["src/content/posts/mafia-the-old-country.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fmafia-the-old-country.mdx&astroContentModuleFlag=true")],
-["src/content/posts/the-order-1886.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fthe-order-1886.mdx&astroContentModuleFlag=true")]]);
+["src/content/posts/sdgfdsdf.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fsdgfdsdf.mdx&astroContentModuleFlag=true")],
+["src/content/posts/test-post.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Ftest-post.mdx&astroContentModuleFlag=true")],
+["src/content/posts/fgdf.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Ffgdf.mdx&astroContentModuleFlag=true")],
+["src/content/posts/cggdd.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fcggdd.mdx&astroContentModuleFlag=true")],
+["src/content/posts/ghjfg.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fghjfg.mdx&astroContentModuleFlag=true")],
+["src/content/posts/ghjghj.mdx", () => import("astro:content-layer-deferred-module?astro%3Acontent-layer-deferred-module=&fileName=src%2Fcontent%2Fposts%2Fghjghj.mdx&astroContentModuleFlag=true")]]);
 		

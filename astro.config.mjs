@@ -1,13 +1,10 @@
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
-
 import sitemap from "@astrojs/sitemap";
 import mdx from "@astrojs/mdx";
-
 import react from "@astrojs/react";
-import node from "@astrojs/node";
-
 import svelte from "@astrojs/svelte";
+import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,10 +18,10 @@ export default defineConfig({
       theme: "css-variables",
     },
     render: [
-      { mode: 'md' },
+      { mode: "md" },
       {
-        mode: 'html',
-        htmlOptions: {
+        mode: "html",
+        htmlOptions: { 
           allowDangerousHtml: true,
         },
       },
@@ -32,12 +29,9 @@ export default defineConfig({
   },
   shikiConfig: {
     wrap: true,
-    skipInline: false,
+    skipInline: false, 
     drafts: true,
-  },
-  site: "http://localhost:4321",
+  }, 
   integrations: [sitemap(), mdx(), react(), svelte()],
-  adapter: node({
-    mode: "standalone",
-  }),
+  adapter: cloudflare(),
 });

@@ -1,14 +1,20 @@
 import type { Node as TiptapNode } from "@tiptap/pm/model"
 import { NodeSelection } from "@tiptap/pm/state"
 import type { Editor } from "@tiptap/react"
+import { getOrCreateImageId } from "../utils/image-id-store"
 
 // Global tip tanımlaması
 declare global {
   interface Window {
     _currentEditorTitle?: string;
     _imageCounters?: Record<string, number>;
+    _lastUploadedImageId?: string;
+    _lastUploadedImageExtension?: string;
   }
 }
+
+// Geçici resim deposu
+export const temporaryImages = new Map<string, File>();
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -254,15 +260,6 @@ export function isNodeTypeSelected(
  * @param abortSignal Optional AbortSignal for cancelling the upload
  * @returns Promise resolving to the URL of the uploaded image
  */
-// Geçici olarak saklanan resimler için bir depo
-export const temporaryImages: Map<string, File> = new Map();
-
-// Resim sayaçları için global değişken tanımı
-declare global {
-  interface Window {
-    _imageCounters?: Record<string, number>;
-  }
-}
 
 export const handleImageUpload = async (
   file: File,
@@ -285,33 +282,50 @@ export const handleImageUpload = async (
     const fileExtension = file.name.split('.').pop() || 'jpg';
     
     // Dosya için benzersiz bir ID oluştur (format bilgisini içeren)
-    const fileId = `temp-${Date.now()}-${fileExtension}`;
+    const timestamp = Date.now();
+    const tempId = `temp-${timestamp}-${fileExtension}`;
     
-    // Dosyayı geçici depolama alanına kaydet
-    temporaryImages.set(fileId, file);
+    console.log(`Geçici resim oluşturuluyor: ${tempId}, boyut: ${file.size} bytes`);
     
-    // İlerleme simülasyonu (gerçek bir yükleme yapmıyoruz)
+    // İlerleme simülasyonu başlat
+    let progressInterval: NodeJS.Timeout | null = null;
     if (onProgress) {
-      // Hızlı bir ilerleme simülasyonu
       let progress = 0;
-      const interval = setInterval(() => {
-        progress += 20;
-        if (progress <= 100) {
+      progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) {
           onProgress({ progress });
         } else {
-          clearInterval(interval);
+          clearInterval(progressInterval!);
+          progressInterval = null;
         }
       }, 100);
     }
     
-    // Geçici bir URL oluştur (blob URL)
+    // Geçici bir URL oluştur (blob URL) - bu önizleme için
     const tempUrl = URL.createObjectURL(file);
     
-    // Gerçek URL yerine geçici URL ve ID'yi birlikte döndür
-    return `${tempUrl}#${fileId}`;
+    // Dosyayı geçici depoda sakla
+    temporaryImages.set(tempUrl, file);
+    
+    // İlerleme simülasyonunu durdur
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    
+    // Yükleme tamamlandı
+    if (onProgress) {
+      onProgress({ progress: 100 });
+    }
+    
+    console.log(`Geçici URL oluşturuldu: ${tempUrl}`);
+    
+    // Geçici URL'yi döndür - Save zamanı BunnyCDN'e yüklenecek
+    return tempUrl;
   } catch (error) {
-    console.error('Resim yükleme hatası:', error);
-    throw new Error('Resim yüklenirken bir hata oluştu');
+    console.error('Resim işleme hatası:', error);
+    throw new Error(`Resim işlenirken bir hata oluştu: ${error.message}`);
   }
 }
 
@@ -322,6 +336,8 @@ export const uploadTemporaryImages = async (
 ): Promise<any> => {
   // İçerikte resim yoksa doğrudan içeriği döndür
   if (!content || !content.content) return content;
+  
+  console.log("uploadTemporaryImages başlatılıyor...");
   
   // İçeriği kopyala
   const newContent = JSON.parse(JSON.stringify(content));
@@ -344,6 +360,8 @@ export const uploadTemporaryImages = async (
   
   findImageNodes(newContent);
   
+  console.log(`Toplam ${imageNodes.length} resim düğümü bulundu`);
+  
   // Geçici resimleri yükle
   let uploadedCount = 0;
   const totalImages = imageNodes.length;
@@ -351,69 +369,51 @@ export const uploadTemporaryImages = async (
   for (const {node, path} of imageNodes) {
     const src = node.attrs.src;
     
-    // Eğer bu bir geçici resimse (URL'de # işareti varsa)
-    if (src.includes('#temp-')) {
+    // Eğer bu bir geçici resimse (blob: ile başlıyorsa)
+    if (src.startsWith('blob:')) {
       console.log(`Geçici resim bulundu: ${src}`);
-      const [tempUrl, fileId] = src.split('#');
-      const file = temporaryImages.get(fileId);
       
-      if (file) {
-        console.log(`Geçici resim dosyası bulundu: ${file.name}, boyut: ${file.size}`);
-        try {
-          // Bunny CDN'e yükle
-          const { uploadToBunny } = await import('../lib/bunny-cdn');
-          
-          // Makale başlığını al - window._currentEditorTitle global değişkeninden
-          const title = window._currentEditorTitle || '';
-          // Ortak slugify fonksiyonunu kullan
-          const { slugify } = await import('../utils/slugify');
-          
-          let slug = title ? slugify(title) : '';
-          
-          // Eğer slug bulunamadıysa tarih bazlı bir slug oluştur
-          if (!slug) {
-            const date = new Date();
-            slug = `post-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getTime().toString().slice(-6)}`;
+      try {
+        // Geçici depodan dosyayı al
+        const file = temporaryImages.get(src);
+        
+        if (!file) {
+          console.error(`Dosya geçici depoda bulunamadı: ${src}`);
+          // Blob URL'den almayı dene
+          const response = await fetch(src);
+          if (!response.ok) {
+            throw new Error(`Blob URL'den dosya alınamadı: ${response.status}`);
           }
+          const blob = await response.blob();
+          const fileExtension = blob.type.split('/').pop() || 'jpg';
+          const tempFile = new File([blob], `image_${Date.now()}.${fileExtension}`, { type: blob.type || 'image/jpeg' });
           
-          console.log(`Resim yükleniyor: ${file.name}, slug: ${slug}`);
+          // Dosyayı yükle
+          const cdnUrl = await uploadFileToBunnyCDN(tempFile);
           
-          // Resim sayacını artır (her post için benzersiz numaralar)
-          const imageCounter = (window._imageCounters = window._imageCounters || {});
-          imageCounter[slug] = (imageCounter[slug] || 0) + 1;
-          
-          // Dosya uzantısını al
-          const fileExtension = file.name.split('.').pop() || 'jpg';
-          
-          // Resim adını oluştur: slug-1.jpg formatında
-          const imageFileName = `${slug}-${imageCounter[slug]}.${fileExtension}`;
-          
-          const imageUrl = await uploadToBunny({
-            file,
-            slug: imageFileName,
-            folder: `notes/${slug}/images`
-          });
-          // CDN URL'sini düzelt (the99-storage yerine the99 kullan)
-          const correctedImageUrl = imageUrl.replace('the99-storage.b-cdn.net', 'the99.b-cdn.net');
-          console.log(`Resim başarıyla yüklendi: ${correctedImageUrl}`);
-          
-          // İçerikteki URL'yi güncelle
-          let current = newContent;
-          for (let i = 0; i < path.length - 2; i += 2) {
-            const key = path[i] as string | number;
-            const nextKey = path[i+1] as string | number;
-            current = current[key][nextKey];
-          }
-          current.attrs.src = correctedImageUrl;
+          // Node'u direkt güncelle (referans ile)
+          node.attrs.src = cdnUrl;
+          console.log(`URL güncellendi: ${src} -> ${cdnUrl}`);
           
           // Geçici URL'yi serbest bırak
-          URL.revokeObjectURL(tempUrl);
+          URL.revokeObjectURL(src);
+        } else {
+          console.log(`Dosya geçici depoda bulundu: ${file.name}, boyut: ${file.size}`);
           
-          // Geçici depodan kaldır
-          temporaryImages.delete(fileId);
-        } catch (error) {
-          console.error('Resim CDN yükleme hatası:', error);
+          // Dosyayı BunnyCDN'e yükle
+          const cdnUrl = await uploadFileToBunnyCDN(file);
+          
+          // Node'u direkt güncelle (referans ile)
+          node.attrs.src = cdnUrl;
+          console.log(`URL güncellendi: ${src} -> ${cdnUrl}`);
+          
+          // Geçici URL'yi serbest bırak ve depodan sil
+          URL.revokeObjectURL(src);
+          temporaryImages.delete(src);
         }
+      } catch (error) {
+        console.error(`Resim yükleme hatası:`, error);
+        throw error; // Hatayı yukarı fırlat ki kullanıcı görsün
       }
     }
     
@@ -423,7 +423,46 @@ export const uploadTemporaryImages = async (
     }
   }
   
+  console.log("uploadTemporaryImages tamamlandı.");
   return newContent;
+}
+
+// Yardımcı fonksiyon: Dosyayı BunnyCDN'e yükle
+async function uploadFileToBunnyCDN(file: File): Promise<string> {
+  // Makale başlığını al
+  const title = window._currentEditorTitle || '';
+  const { slugify } = await import('../utils/slugify');
+  let slug = title ? slugify(title) : '';
+  
+  // Eğer slug bulunamadıysa tarih bazlı bir slug oluştur
+  if (!slug) {
+    const date = new Date();
+    slug = `post-${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}-${date.getTime().toString().slice(-6)}`;
+  }
+  
+  // FormData oluştur
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("slug", slug);
+  formData.append("uploadType", "post-image");
+  
+  // API'ye istek gönder
+  console.log(`API'ye resim yükleme isteği gönderiliyor: /api/bunny-upload`);
+  const uploadResponse = await fetch("/api/bunny-upload", {
+    method: "POST",
+    body: formData,
+  });
+  
+  if (!uploadResponse.ok) {
+    const errorData = await uploadResponse.json();
+    console.error("Resim yükleme hata yanıtı:", errorData);
+    throw new Error(errorData.message || "Resim yükleme başarısız oldu");
+  }
+  
+  const data = await uploadResponse.json();
+  console.log("Resim yükleme başarılı, CDN URL:", data.imageUrl);
+  
+  return data.imageUrl;
 }
 
 type ProtocolOptions = {

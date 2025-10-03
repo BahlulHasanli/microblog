@@ -3,7 +3,8 @@ import ProfileDropdown from "./ProfileDropdown";
 
 const { isLoggedIn, user } = Astro.props;
 
-const isStudioRoutePath = Astro.url.pathname === '/studio';
+// Studio veya edit-post sayfalarında kaydet butonunu göster
+const isStudioRoutePath = Astro.url.pathname === '/studio' || Astro.url.pathname.includes('/edit-post/');
 ---
 <div
   x-data="{ open: false }"

@@ -1,15 +1,15 @@
 <script lang="ts">
   import { supabase } from '@/db/supabase';
 
-   let { postSlug, user, parentId, onCommentAdded } = $props();
+   let { postSlug, user, parentId, onCommentAdded } = $props<{ postSlug: string; user: any; parentId?: any; onCommentAdded?: () => void }>();
 
   let content = $state('');
   let isSubmitting = $state(false);
-  let error = $state(''); 
+  let error = $state('');  
   let textareaRef = $state(null);
 
 
-  async function handleSubmit(e: Event) {
+  async function handleSubmit(e: Event) { 
     e.preventDefault();
     
     if (!content.trim()) {
@@ -83,7 +83,7 @@
         <button
           type="submit"
           disabled={isSubmitting}
-          class="px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 text-sm font-nouvelr transition-colors"
+          class="cursor-pointer px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 text-sm font-nouvelr transition-colors"
         >
           {isSubmitting ? 'Göndərilir...' : 'Paylaş'}
         </button>

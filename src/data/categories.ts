@@ -1,20 +1,57 @@
-// Standart kategoriler
 export const categories = [
-  "Oyun",
-  "Art",
-  "Qan, Tər və Piksellər",
-  "Film & Serial",
-  "Qorxu",
-  "Animasiya",
-  "Anime & Manga",
-  "Comics",
-  "NBA",
-  "Podcast",
+  {
+    slug: "oyun",
+    name: "Oyun",
+  },
+  {
+    slug: "art",
+    name: "Art",
+  },
+  {
+    slug: "qan-ter-piksellər",
+    name: "Qan, Tər və Piksellər",
+  },
+  {
+    slug: "film-serial",
+    name: "Film & Serial",
+  },
+  {
+    slug: "qorxu",
+    name: "Qorxu",
+  },
+  {
+    slug: "animasiya",
+    name: "Animasiya",
+  },
+  {
+    slug: "anime-manga",
+    name: "Anime & Manga",
+  },
+  {
+    slug: "comics",
+    name: "Comics",
+  },
+  {
+    slug: "nba",
+    name: "NBA",
+  },
+  {
+    slug: "podcast",
+    name: "Podcast",
+  },
 ];
 
-// Kategori slug oluşturma fonksiyonu
-export function slugifyCategory(category: string): string {
-  return category
+export function slugifyCategory(categoryNameOrSlug: string): string {
+  // First check if this is already a slug in our categories array
+  const categoryObj = categories.find(cat => cat.slug === categoryNameOrSlug || cat.name === categoryNameOrSlug);
+  
+  // If it's a known category, return its slug
+  if (categoryObj) {
+    return categoryObj.slug;
+  }
+  
+  // Otherwise, create a new slug from the string
+  return categoryNameOrSlug
     .toLowerCase()
     .replace(/ğ/g, "g")
     .replace(/ü/g, "u")

@@ -12,7 +12,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { Subscript } from "@tiptap/extension-subscript";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Selection, Placeholder, Focus } from "@tiptap/extensions";
-import Youtube from "@tiptap/extension-youtube";
+// import Youtube from "@tiptap/extension-youtube";
+import { YoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node-extension";
 
 import { Document } from "@tiptap/extension-document";
 
@@ -75,7 +76,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
 
-import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
+import { categories as CATEGORIES } from "@/data/categories";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -116,14 +117,24 @@ const MainToolbarContent = ({
     }
 
     const addYoutubeVideo = () => {
-      const url = prompt("Enter YouTube URL");
+      try {
+        const url = prompt("YouTube URL'sini girin");
 
-      if (url) {
-        editor.commands.setYoutubeVideo({
-          src: url,
-          width: "100%",
-          height: "260",
-        });
+        if (url) {
+          console.log('YouTube video ekleme deneniyor:', url);
+          
+          // Komutu çağır
+          const result = editor.commands.setYoutubeVideo({
+            src: url,
+            width: "100%",
+            height: "260",
+          });
+          
+          console.log('YouTube video ekleme sonucu:', result);
+        }
+      } catch (error) {
+        console.error('YouTube video ekleme hatası:', error);
+        alert('YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin.');
       }
     };
 
@@ -268,6 +279,9 @@ interface SimpleEditorProps {
   coverImage?: File | null;
   onCoverImageChange?: (file: File | null) => void;
   onCategoriesChange?: (categories: string[]) => void;
+  initialContent?: string;
+  initialCoverImageUrl?: string;
+  selectedCategories?: string[];
 }
 
 export function SimpleEditor({
@@ -279,6 +293,9 @@ export function SimpleEditor({
   coverImage = null,
   onCoverImageChange,
   onCategoriesChange,
+  initialContent,
+  initialCoverImageUrl,
+  selectedCategories = [],
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const { height } = useWindowSize();
@@ -287,8 +304,8 @@ export function SimpleEditor({
   >("main");
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [coverImagePreview, setCoverImagePreview] = React.useState<string>("");
-  const [categories, setCategories] = React.useState<string[]>([]);
+  const [coverImagePreview, setCoverImagePreview] = React.useState<string>(initialCoverImageUrl || "");
+  const [categories, setCategories] = React.useState<string[]>(selectedCategories || []);
 
   const FixedDocument = Document.extend({
     content: "heading paragraph block*",
@@ -308,9 +325,12 @@ export function SimpleEditor({
     },
     extensions: [
       FixedDocument,
-      Youtube.configure({
+      YoutubeNode.configure({
         controls: false,
         nocookie: true,
+        HTMLAttributes: {
+          class: "aspect-video rounded-xl overflow-hidden",
+        },
       }),
       StarterKit.configure({
         document: false,
@@ -366,7 +386,7 @@ export function SimpleEditor({
       }),
     ],
     autofocus: true,
-    content: {
+    content: initialContent || {
       type: "doc",
       content: [
         {
@@ -389,6 +409,7 @@ export function SimpleEditor({
         onUpdate(editor.getJSON());
       }
     },
+    // onTransaction artıq lazım deyil - şəkillər save zamanı yüklənir
   });
 
   const rect = useCursorVisibility({
@@ -445,6 +466,19 @@ export function SimpleEditor({
       editor.off("update", updateTitleAndDescription);
     };
   }, [editor, onTitleChange, onDescriptionChange, title, description]);
+  
+  // initialContent değiştiğinde editör içeriğini güncelle
+  React.useEffect(() => {
+    if (!editor || !initialContent) return;
+    
+    // Editör içeriğini güncelle
+    try {
+      editor.commands.setContent(initialContent);
+      console.log("Editör içeriği güncellendi", initialContent);
+    } catch (error) {
+      console.error("Editör içeriği güncellenirken hata oluştu:", error);
+    }
+  }, [editor, initialContent]);
 
   React.useEffect(() => {
     if (!isMobile && mobileView !== "main") {
@@ -461,10 +495,13 @@ export function SimpleEditor({
         setCoverImagePreview(reader.result as string);
       };
       reader.readAsDataURL(coverImage);
+    } else if (initialCoverImageUrl) {
+      // Eğer mevcut bir kapağımız varsa onu kullan
+      setCoverImagePreview(initialCoverImageUrl);
     } else {
       setCoverImagePreview("");
     }
-  }, [coverImage]);
+  }, [coverImage, initialCoverImageUrl]);
 
   // Kategoriler değiştiğinde dışarıya bildir
   React.useEffect(() => {
@@ -474,7 +511,7 @@ export function SimpleEditor({
   }, [categories, onCategoriesChange]);
 
   // Kapak resmi yükleme işleyicisi
-  const handleCoverImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleCoverImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (onCoverImageChange) {
@@ -497,6 +534,7 @@ export function SimpleEditor({
 
   // Kapak resmini kaldırma
   const handleRemoveCoverImage = () => {
+    // Cover image silmə - artıq BunnyCDN-dən silmə lazım deyil
     if (onCoverImageChange) {
       onCoverImageChange(null);
     }
@@ -557,18 +595,18 @@ export function SimpleEditor({
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((category) => (
                   <button
-                    key={slugifyCategory(category)}
+                    key={category.slug}
                     type="button"
                     className={`cursor-pointer px-3 py-1 rounded-full text-sm bg-neutral-100 transition-all font-medium hover:bg-neutral-200 hover:text-base-800 ${
-                      categories.includes(slugifyCategory(category))
+                      categories.includes(category.slug)
                         ? "bg-rose-500 text-white"
                         : ""
                     }`}
                     onClick={() =>
-                      handleCategoryToggle(slugifyCategory(category))
+                      handleCategoryToggle(category.slug)
                     }
                   >
-                    {category}
+                    {category.name}
                   </button>
                 ))}
               </div>

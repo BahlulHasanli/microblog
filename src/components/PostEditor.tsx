@@ -2,31 +2,72 @@ import { useState, useRef, useEffect } from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
-import { slugify } from "../utils/slugify";
+import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
+import { useStore } from "@nanostores/react";
+// editorStore artıq lazım deyil - şəkillər save zamanı yüklənir
+import { categories as CATEGORIES } from "@/data/categories";
 
-export default function Editor({ author }: any) {
+// Global tip tanımlaması
+declare global {
+  interface Window {
+    _currentEditorTitle?: string;
+  }
+}
+
+export default function PostEditor({ post, content, slug, author }: any) {
   const [editorContent, setEditorContent] = useState(null);
-  const [title, setTitle] = useState("");
-
-  useEffect(() => {
-    window._currentEditorTitle = title;
-  }, [title]);
-
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState(post.title || "");
+  const [description, setDescription] = useState(post.description || "");
   const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+  const [coverImagePreview, setCoverImagePreview] = useState<string>(
+    post.image?.url || ""
+  );
+  const [existingImageUrl, setExistingImageUrl] = useState<string>(
+    post.image?.url || ""
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    post.categories || []
+  );
+  
+  // Markdown içeriğini JSON'a dönüştür
+  const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
+  
+  // Store artıq lazım deyil
+
+  useEffect(() => {
+    window._currentEditorTitle = title;
+  }, [title]);
+
+  // Markdown içeriğini işle
+  useEffect(() => {
+    if (content) {
+      try {
+        // Markdown içeriğini JSON'a dönüştür
+        const processedContent = markdownToTiptap(content, title, description);
+
+        // İçeriği ayarla
+        setInitialEditorContent(processedContent);
+        console.log("Markdown içeriği başarıyla işlendi", processedContent);
+      } catch (error) {
+        console.error("Markdown içeriği işlenirken hata oluştu:", error);
+      }
+    }
+  }, [content, title, description]);
 
   const handleCoverImageChange = (file: File | null) => {
     setCoverImage(file);
     if (!file) {
-      setCoverImagePreview("");
+      setCoverImagePreview(existingImageUrl);
+    } else {
+      // Create a preview URL for the new image
+      const previewUrl = URL.createObjectURL(file);
+      setCoverImagePreview(previewUrl);
     }
   };
 
@@ -51,12 +92,27 @@ export default function Editor({ author }: any) {
     try {
       console.log("Geçici resimler Bunny CDN'e yükleniyor...");
 
+      // Resim ID'lerini saklamak için bir Map oluştur
+      let imageIdMapData: Record<string, string> = {};
+      
+      // window._imageIdMap varsa, içeriğini al
+      if (window._imageIdMap && window._imageIdMap.size > 0) {
+        console.log("Resim ID'leri bulundu:", Array.from(window._imageIdMap.entries()));
+        imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
+      }
+
       const updatedContent = await uploadTemporaryImages(
         editorContent,
         (current, total) => {
           console.log(`Resim yükleniyor: ${current}/${total}`);
         }
       );
+
+      // Yükleme sonrası güncel resim ID'lerini al
+      if (window._imageIdMap && window._imageIdMap.size > 0) {
+        console.log("Güncel resim ID'leri:", Array.from(window._imageIdMap.entries()));
+        imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
+      }
 
       const markdownContent = convertJsonToMarkdown(updatedContent);
 
@@ -86,13 +142,29 @@ export default function Editor({ author }: any) {
 
       // FormData oluştur
       const formData = new FormData();
+      formData.append("slug", slug);
       formData.append("title", title);
       formData.append("author.fullname", author.fullname);
       formData.append("author.avatar", author.avatar);
       formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
-      formData.append("categories", selectedCategories.join(","));
+      
+      // Resim ID'lerini JSON olarak ekle
+      if (Object.keys(imageIdMapData).length > 0) {
+        console.log("Resim ID'leri API'ye gönderiliyor:", imageIdMapData);
+        formData.append("imageIdMap", JSON.stringify(imageIdMapData));
+      }
+
+      // Kategorileri ekle
+      selectedCategories.forEach((category) => {
+        formData.append("categories", category);
+      });
+
+      // Mevcut kapak resmi URL'si
+      if (existingImageUrl) {
+        formData.append("existingImageUrl", existingImageUrl);
+      }
 
       // Kapak resmi varsa ekle
       if (coverImage) {
@@ -102,9 +174,6 @@ export default function Editor({ author }: any) {
           coverImage.type,
           coverImage.size
         );
-
-        // Slug oluştur (başlıktan) - utils/slugify.ts kullanarak
-        const slug = slugify(title);
 
         // Dosya uzantısını al
         const fileExtension = coverImage.name.split(".").pop() || "jpg";
@@ -124,13 +193,18 @@ export default function Editor({ author }: any) {
           formData.append("image", `notes/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
+          
+          // Revoke any object URLs to prevent memory leaks
+          if (coverImagePreview && coverImagePreview !== existingImageUrl) {
+            URL.revokeObjectURL(coverImagePreview);
+          }
         } catch (error) {
           console.error("FormData'ya resim ekleme hatası:", error);
         }
       }
 
       // API'ye istek gönder
-      const response = await fetch("/api/create-post", {
+      const response = await fetch("/api/edit-post", {
         method: "POST",
         body: formData,
       });
@@ -138,20 +212,20 @@ export default function Editor({ author }: any) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Kaydetme işlemi başarısız oldu");
+        throw new Error(data.message || "Güncelleme işlemi başarısız oldu");
       }
 
       // Başarılı kaydetme
-      console.log("Post başarıyla kaydedildi");
+      console.log("Post başarıyla güncellendi");
       
       setSaveStatus("success");
       setTimeout(() => {
         setSaveStatus("idle");
-        // Başarılı kaydetme sonrası gönderi sayfasına yönlendir
-        window.location.href = `/posts/${data.slug}`;
+        // Başarılı güncelleme sonrası post sayfasına yönlendir
+        window.location.href = `/posts/${slug}`;
       }, 2000);
     } catch (error) {
-      console.error("Kaydetme hatası:", error);
+      console.error("Güncelleme hatası:", error);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     } finally {
@@ -261,14 +335,31 @@ export default function Editor({ author }: any) {
 
   function processParagraph(node: any): string {
     if (!node.content) return "";
-    return node.content.map(processTextNode).join("");
+    const content = node.content.map(processTextNode).join("");
+    
+    // TextAlign desteği
+    const textAlign = node.attrs?.textAlign;
+    if (textAlign && textAlign !== "left") {
+      return `<p style="text-align:${textAlign}">${content}</p>`;
+    }
+    
+    return content;
   }
 
   function processHeading(node: any): string {
     if (!node.content) return "";
     const level = node.attrs?.level || 1;
-    const prefix = "#".repeat(level) + " ";
-    return prefix + node.content.map(processTextNode).join("");
+    const content = node.content.map(processTextNode).join("");
+    
+    // TextAlign desteği
+    const textAlign = node.attrs?.textAlign;
+    if (textAlign && textAlign !== "left") {
+      const tag = `h${Math.min(level, 4)}`;
+      return `<${tag} style="text-align:${textAlign}">${content}</${tag}>`;
+    }
+    
+    const prefix = "#".repeat(Math.min(level, 4)) + " ";
+    return prefix + content;
   }
 
   function processBulletList(node: any): string {
@@ -334,7 +425,8 @@ export default function Editor({ author }: any) {
       if (src.includes("blob:") || src.includes("#temp-")) {
         console.warn("Geçici resim URL bulundu:", src);
         // Geçici URL'leri işleme - bunlar zaten CDN'e yüklenmiş olmalı
-        // Bu durumda boş bir string döndürüyoruz, çünkü bu resimler uploadTemporaryImages tarafından düzeltilecek
+        // Geçici URL'yi olduğu gibi bırak, uploadTemporaryImages tarafından düzeltilecek
+        // Bu sayede edit-post API'si tarafında da işlenebilir
       }
     } catch (error) {
       console.error("Resim URL işleme hatası:", error);
@@ -362,7 +454,10 @@ export default function Editor({ author }: any) {
       console.error("YouTube URL işleme hatası:", error);
     }
 
+    console.log("Video ID:", videoId);
+
     // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
+    // Öznitelikler arasında boşluk bırak
     return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
   }
 
@@ -393,8 +488,17 @@ export default function Editor({ author }: any) {
               break;
             case "highlight":
               // Markdown'da highlight için standart bir sözdizimi yok, HTML kullanabiliriz
-              const color = mark.attrs?.color || "yellow";
+              const color = mark.attrs?.color || "var(--tt-color-highlight-yellow)";
               text = `<mark style="background-color:${color}">${text}</mark>`;
+              break;
+            case "underline":
+              text = `<u>${text}</u>`;
+              break;
+            case "superscript":
+              text = `<sup>${text}</sup>`;
+              break;
+            case "subscript":
+              text = `<sub>${text}</sub>`;
               break;
           }
         });
@@ -423,6 +527,7 @@ export default function Editor({ author }: any) {
 
   return (
     <div className="editor-container">
+      <h1 className="text-2xl font-bold mb-4 text-center">Gönderi Düzenle</h1>
       <SimpleEditor
         onUpdate={setEditorContent}
         title={title}
@@ -432,6 +537,9 @@ export default function Editor({ author }: any) {
         coverImage={coverImage}
         onCoverImageChange={handleCoverImageChange}
         onCategoriesChange={setSelectedCategories}
+        selectedCategories={selectedCategories}
+        initialContent={initialEditorContent}
+        initialCoverImageUrl={existingImageUrl}
       />
 
       <style>{`
@@ -442,6 +550,7 @@ export default function Editor({ author }: any) {
           display: flex;
           flex-direction: column;
           width: 100%;
+          padding: 20px;
         }
         .editor-header {
           display: flex;

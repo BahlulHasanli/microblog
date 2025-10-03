@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabase } from "@db/supabase";
-import UsernameGenerator from "../../../utils/usernameGenerator ";
-import AvatarManager from "../../../utils/avatarGenerator";
+import UsernameGenerator from "@/utils/usernameGenerator";
+import AvatarManager from "@/utils/avatarGenerator";
 
 export const prerender = false;
 
