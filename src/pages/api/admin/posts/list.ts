@@ -43,6 +43,7 @@ export const GET: APIRoute = async (context) => {
       author_name: post.data.author.name,
       author_avatar: post.data.author.avatar,
       status: post.data.approved ? "approved" : "pending",
+      featured: post.data.featured || false,
       created_at: post.data.pubDate.toISOString(),
     })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 

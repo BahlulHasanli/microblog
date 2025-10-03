@@ -8,6 +8,7 @@ interface Post {
   author_name: string;
   author_avatar: string;
   status: string;
+  featured: boolean;
   created_at: string;
 }
 
@@ -100,6 +101,34 @@ export default function PostsTab() {
 
   const handleEdit = (slug: string) => {
     window.location.href = `/edit-post/${slug}`;
+  };
+
+  const handleFeatured = async (postId: string, featured: boolean) => {
+    const message = featured 
+      ? "Bu postu önə çıxarmaq istədiyinizə əminsiniz?" 
+      : "Bu postu önə çıxarmadan çıxarmaq istədiyinizə əminsiniz?";
+    
+    if (!confirm(message)) return;
+
+    try {
+      const response = await fetch("/api/admin/posts/featured", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId, featured }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(data.message);
+        loadPosts();
+      } else {
+        alert(data.message || "Xəta baş verdi");
+      }
+    } catch (error) {
+      console.error("Featured toggle xətası:", error);
+      alert("Xəta baş verdi");
+    }
   };
 
   return (
@@ -251,7 +280,7 @@ export default function PostsTab() {
                     })}
                   </td>
                   <td className="px-6 py-5 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {post.status === "pending" ? (
                         <button
                           onClick={() => handleApprove(post.id)}
@@ -293,6 +322,29 @@ export default function PostsTab() {
                           Yayımdan çıxard
                         </button>
                       )}
+                      <button
+                        onClick={() => handleFeatured(post.id, !post.featured)}
+                        className={`cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                          post.featured
+                            ? "text-orange-700 bg-orange-50 hover:bg-orange-100"
+                            : "text-purple-700 bg-purple-50 hover:bg-purple-100"
+                        }`}
+                      >
+                        <svg
+                          className="w-3.5 h-3.5"
+                          fill={post.featured ? "currentColor" : "none"}
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                          />
+                        </svg>
+                        {post.featured ? "Önə çıxarılıb" : "Önə çıxart"}
+                      </button>
                       <button
                         onClick={() => handleEdit(post.slug)}
                         className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"

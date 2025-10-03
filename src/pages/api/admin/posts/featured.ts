@@ -11,7 +11,7 @@ export const POST: APIRoute = async (context) => {
       return adminCheck;
     }
 
-    const { postId, approve } = await context.request.json();
+    const { postId, featured } = await context.request.json();
 
     if (!postId) {
       return new Response(
@@ -34,22 +34,26 @@ export const POST: APIRoute = async (context) => {
       const content = await fs.readFile(filePath, "utf-8");
       
       let updatedContent;
-      if (approve === false) {
-        // approved: true-nu approved: false ilə əvəz et
-        updatedContent = content.replace(
-          /approved:\s*true/,
-          "approved: false"
-        );
-        // Yayımdan çıxardıqda featured də false olsun
-        updatedContent = updatedContent.replace(
-          /featured:\s*true/,
-          "featured: false"
-        );
+      
+      // Əgər featured sahəsi varsa, yenilə
+      if (content.includes('featured:')) {
+        if (featured === true) {
+          updatedContent = content.replace(
+            /featured:\s*false/,
+            "featured: true"
+          );
+        } else {
+          updatedContent = content.replace(
+            /featured:\s*true/,
+            "featured: false"
+          );
+        }
       } else {
-        // approved: false-u approved: true ilə əvəz et
+        // Əgər featured sahəsi yoxdursa, əlavə et
+        // approved-dan sonra əlavə edək
         updatedContent = content.replace(
-          /approved:\s*false/,
-          "approved: true"
+          /(approved:\s*(?:true|false))/,
+          `$1\nfeatured: ${featured}`
         );
       }
 
@@ -59,7 +63,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           success: true,
-          message: approve === false ? "Post yayımdan çıxarıldı" : "Post uğurla təsdiq edildi",
+          message: featured ? "Post önə çıxarıldı" : "Post önə çıxarmadan çıxarıldı",
         }),
         {
           status: 200,
@@ -79,7 +83,7 @@ export const POST: APIRoute = async (context) => {
       );
     }
   } catch (error) {
-    console.error("Post təsdiq xətası:", error);
+    console.error("Featured toggle xətası:", error);
     return new Response(
       JSON.stringify({
         success: false,
