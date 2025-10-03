@@ -1,12 +1,5 @@
-import {
-  useState,
-  useRef,
-  ChangeEvent,
-  useEffect,
-  useLayoutEffect,
-} from "react";
+import { useState, useRef, useEffect } from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
-import { categories as CATEGORIES, slugifyCategory } from "@/data/categories";
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { slugify } from "../utils/slugify";
@@ -15,7 +8,6 @@ export default function Editor({ author }: any) {
   const [editorContent, setEditorContent] = useState(null);
   const [title, setTitle] = useState("");
 
-  // Başlık değerini global değişkene ata
   useEffect(() => {
     window._currentEditorTitle = title;
   }, [title]);
@@ -31,10 +23,8 @@ export default function Editor({ author }: any) {
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Kapak resmi değişikliğini izleme
   const handleCoverImageChange = (file: File | null) => {
     setCoverImage(file);
-    // Önizleme artık SimpleEditor içinde yapılıyor
     if (!file) {
       setCoverImagePreview("");
     }
@@ -47,7 +37,7 @@ export default function Editor({ author }: any) {
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
-    
+
     if (!editorContent) {
       console.error("İçerik alanı zorunludur");
       setSaveStatus("error");
@@ -59,10 +49,8 @@ export default function Editor({ author }: any) {
     setSaveStatus("saving");
 
     try {
-      // Geçici resimleri yükle ve içeriği güncelle
       console.log("Geçici resimler Bunny CDN'e yükleniyor...");
 
-      // Yükleme ilerlemesini takip etmek için
       const updatedContent = await uploadTemporaryImages(
         editorContent,
         (current, total) => {
@@ -70,12 +58,8 @@ export default function Editor({ author }: any) {
         }
       );
 
-      // Güncellenmiş içeriği kullan
       const markdownContent = convertJsonToMarkdown(updatedContent);
 
-      // Editör içeriğinden description değerini kontrol et
-      // Eğer description değeri boşsa ve editorContent içinde description düğümü varsa
-      // description değerini editorContent'ten al
       let descriptionValue = description;
       if (
         updatedContent &&
@@ -178,37 +162,41 @@ export default function Editor({ author }: any) {
     }
 
     let markdown = "";
-    
+
     // İlk başlık (title) ve ilk paragraf (description) düğümlerini atla
     // Bunlar zaten frontmatter'da bulunuyor
     let foundHeading = false;
     let foundParagraph = false;
-    
+
     // İçerik sadece başlık ve açıklamadan oluşuyorsa boş bir içerik döndür
     // Bu durumda içerik boş olsa bile kaydetmeye izin ver
     if (json.content.length <= 2) {
       // Başlık ve açıklama varsa boş string döndür
-      const hasHeading = json.content.some((node: any) => node.type === "heading");
-      const hasParagraph = json.content.some((node: any) => node.type === "paragraph");
-      
+      const hasHeading = json.content.some(
+        (node: any) => node.type === "heading"
+      );
+      const hasParagraph = json.content.some(
+        (node: any) => node.type === "paragraph"
+      );
+
       if (hasHeading && hasParagraph) {
         return " "; // Boş olmayan bir string döndür (boşluk karakteri)
       }
     }
-    
+
     json.content.forEach((node: any) => {
       // İlk heading düğümünü atla (başlık)
       if (node.type === "heading" && !foundHeading) {
         foundHeading = true;
         return;
       }
-      
+
       // İlk paragraph düğümünü atla (açıklama)
       if (node.type === "paragraph" && !foundParagraph) {
         foundParagraph = true;
         return;
       }
-      
+
       markdown += processNode(node);
     });
 
@@ -350,12 +338,25 @@ export default function Editor({ author }: any) {
 
   function processYoutubeVideo(node: any): string {
     const src = node.attrs?.src || "";
-    const width = node.attrs?.width || 640;
-    const height = node.attrs?.height || 480;
-    
-    // YouTube videoları için HTML iframe kullanıyoruz
-    // Markdown'da doğrudan iframe desteği olmadığı için HTML kullanmak gerekiyor
-    return `<iframe width="${width}" height="${height}" src="${src}" frameborder="0" allowfullscreen></iframe>`;
+
+    // YouTube URL'sinden video ID'sini çıkar
+    let videoId = "";
+
+    try {
+      if (src.includes("youtube.com/embed/")) {
+        videoId = src.split("youtube.com/embed/")[1].split("?")[0];
+      } else if (src.includes("youtube.com/watch")) {
+        const url = new URL(src);
+        videoId = url.searchParams.get("v") || "";
+      } else if (src.includes("youtu.be/")) {
+        videoId = src.split("youtu.be/")[1].split("?")[0];
+      }
+    } catch (error) {
+      console.error("YouTube URL işleme hatası:", error);
+    }
+
+    // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
+    return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
   }
 
   function processTextNode(node: any): string {

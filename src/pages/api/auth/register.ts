@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
 import { supabase } from "@db/supabase";
+import UsernameGenerator from "../../../utils/usernameGenerator ";
+import AvatarManager from "../../../utils/avatarGenerator";
 
 export const prerender = false;
 
@@ -39,6 +41,68 @@ const checkRateLimit = (ip: string): boolean => {
   return true;
 };
 
+function validateFullName(fullName) {
+  const errors = [];
+
+  // Boş olub-olmadığını yoxla
+  if (!fullName || fullName.trim() === "") {
+    errors.push("Ad və soyad daxil edilməlidir");
+    return { isValid: false, errors };
+  }
+
+  // Təmizlənmiş dəyər
+  const trimmedName = fullName.trim();
+
+  // Minimum uzunluq yoxlaması (ən azı 2 hərf)
+  if (trimmedName.length < 2) {
+    errors.push("Ad və soyad ən azı 2 hərf olmalıdır");
+  }
+
+  // Maksimum uzunluq yoxlaması
+  if (trimmedName.length > 50) {
+    errors.push("Ad və soyad 50 hərfdən çox ola bilməz");
+  }
+
+  // Yalnız hərflər, boşluq və Azərbaycan əlifbası
+  const nameRegex = /^[a-zA-ZçəğıöşüÇƏĞIİÖŞÜ\s]+$/;
+  if (!nameRegex.test(trimmedName)) {
+    errors.push("Ad və soyadda yalnız hərflər istifadə edilə bilər");
+  }
+
+  // Ən azı iki söz olmalıdır (ad və soyad)
+  const words = trimmedName.split(/\s+/).filter((word) => word.length > 0);
+  if (words.length < 2) {
+    errors.push("Həm ad, həm də soyad daxil edilməlidir");
+  }
+
+  // Hər söz ən azı 2 hərf olmalıdır
+  const invalidWords = words.filter((word) => word.length < 2);
+  if (invalidWords.length > 0) {
+    errors.push("Ad və soyadın hər biri ən azı 2 hərf olmalıdır");
+  }
+
+  // Ardıcıl boşluqları yoxla
+  if (trimmedName.includes("  ")) {
+    errors.push("Ardıcıl boşluqlar istifadə edilə bilməz");
+  }
+
+  // Rəqəm yoxlaması
+  if (/\d/.test(trimmedName)) {
+    errors.push("Ad və soyadda rəqəm ola bilməz");
+  }
+
+  // Xüsusi simvollar yoxlaması
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(trimmedName)) {
+    errors.push("Ad və soyadda xüsusi simvollar ola bilməz");
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors: errors,
+    cleanValue: errors.length === 0 ? trimmedName : null,
+  };
+}
+
 export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
   // Check rate limiting
   const clientIP =
@@ -61,12 +125,29 @@ export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
     );
   }
 
-  const { email, password } = await request.json();
+  const { email, password, fullName } = await request.json();
 
   if (!email || !password) {
     return new Response(
       JSON.stringify({
         message: `Email və şifrəni düzgün daxil edin`,
+        status: 400,
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+
+  const fullNameValidation = validateFullName(fullName);
+
+  if (!fullNameValidation.isValid) {
+    return new Response(
+      JSON.stringify({
+        message: fullNameValidation.errors.map((error) => error).join("\n"),
         status: 400,
       }),
       {
@@ -112,25 +193,62 @@ export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
     );
   }
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+  try {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
 
-  if (error) {
-    return new Response(error.message, { status: 500 });
+    if (error) {
+      console.log("error :::>>>>", error);
+      return new Response(
+        JSON.stringify({
+          message:
+            error.message === "User already registered"
+              ? "Bu email artıq istifadə edilib"
+              : error.message,
+          status: 500,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Username generate
+    const generator = new UsernameGenerator();
+    const generateUsername = generator.generateUniqueUsername(fullName);
+
+    // User avatar
+    const avatarManager = new AvatarManager();
+    const userAvatar = avatarManager.selectRandomAvatar();
+
+    const { error: insertError } = await supabase.from("users").insert({
+      email,
+      fullname: fullName,
+      avatar: userAvatar?.url,
+      username: generateUsername.username,
+    });
+
+    if (insertError) {
+      return new Response(
+        JSON.stringify({ message: insertError.message, status: 500 }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ email, message: "Qeydiyyat uğurla tamamlandı" }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    return new Response(JSON.stringify({ message: error, status: 500 }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
-
-  const { error: insertError } = await supabase.from("users").insert({
-    email,
-  });
-
-  if (insertError) {
-    return new Response(insertError.message, { status: 500 });
-  }
-
-  return new Response(
-    JSON.stringify({ email, message: "Qeydiyyat uğurla tamamlandı" }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
 };

@@ -2,37 +2,45 @@
 import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { slugifyCategory } from "../data/categories";
+import Comments from "@/components/comments/Comments.svelte";
+import CommentButton from "@/components/comments/CommentButton.svelte";
 
 const { frontmatter } = Astro.props;
 ---
-
 <BaseLayout>
   <section>
     <div class="py-24">
       <div class="lg:text-center">
         <div class="max-w-xl mx-auto">
           <h1
-            class="text-4xl text-balance font-medium font-display text-base-900"
+            class="text-4xl text-balance font-nouvelr-semibold text-base-900"
           >
             {frontmatter.title}
           </h1>
-          <p class="max-w-2xl mx-auto mt-4 text-zinc-500 text-sm text-balance">
-            <em>{frontmatter.description}</em>
+          <p class="max-w-2xl mx-auto mt-4 text-zinc-500 text-sm font-nouvelr">
+            {frontmatter.description}
           </p>
         </div>
 
-        <div class="flex justify-center items-center flex-col gap-2 my-10">
-          <Image
+        <div class="flex justify-center items-center flex-col gap-2 my-10"> 
+         <div class="relative">
+          <div class="squircle-border -left-[3px] -top-[3.5px]"></div>
+         <div class="squircle-wrapper">
+            <Image
             width={1280}
             height={720}
             src={frontmatter.author.avatar}
             alt={frontmatter.author.name}
             class="squircle !w-[85px] !h-[83px]"
           />
-          <span class="text-md font-medium text-base-700">{frontmatter.author.name}</span>
-          <p class="text-xs text-zinc-400">
-            {frontmatter.pubDate.toString().slice(0, 10)}
-          </p>
+         </div>
+         </div>
+          <div class="mt-3">
+            <span class="text-md font-medium text-base-700">{frontmatter.author.name}</span>
+            <p class="text-xs text-zinc-400">
+              {frontmatter.pubDate.toString().slice(0, 10)}
+            </p>
+          </div>
         </div>
 
         <div class="max-w-6xl mx-auto">
@@ -64,6 +72,45 @@ const { frontmatter } = Astro.props;
       <div class="prose prose-sm max-w-md mt-12 mx-auto">
         <slot />
       </div>
+      
+      <Comments client:load postSlug={frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-')} />
+      <CommentButton client:load />
+      
+      <script is:inline>  
+        function loadYoutubeVideos() {
+          const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
+          
+          youtubeContainers.forEach(container => {
+            if (container.querySelector('iframe')) return;
+            
+            const videoId = container.getAttribute('data-youtube-video');
+            
+            if (videoId) {
+              const iframe = document.createElement('iframe');
+              iframe.src = `https://www.youtube.com/embed/${videoId}`;
+              iframe.width = '100%';
+              iframe.height = '100%'; 
+              iframe.frameBorder = '0';
+              iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+              iframe.allowFullscreen = true;
+              iframe.classList.add('aspect-video');
+              iframe.style.maxWidth = '100%';
+              
+              container.innerHTML = '';
+              container.appendChild(iframe);
+            }
+          });
+        }
+
+        // Sayfa ilk yüklenirken
+        document.addEventListener('DOMContentLoaded', loadYoutubeVideos);
+        
+        // Astro sayfa geçişlerinde
+        document.addEventListener('astro:page-load', loadYoutubeVideos);
+        
+        // Astro içerik güncellendiğinde
+        document.addEventListener('astro:after-swap', loadYoutubeVideos);
+      </script>
     </div>
   </section>
 </BaseLayout>

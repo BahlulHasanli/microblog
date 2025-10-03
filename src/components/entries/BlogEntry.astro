@@ -1,9 +1,11 @@
 ---
 import { Image } from "astro:assets";
-const { title, url, description, pubDate, author, image, categories } = Astro.props;
-import { slugifyCategory } from "../../data/categories";
----
+import { slugifyCategory } from "@/data/categories";
+ 
 
+const { title, url, description, author, image, categories } = Astro.props;
+---
+ 
 <article class="flex flex-col flex-1 h-full group">
   <a href={url} title={title} class="block">
     <div class="block w-full lg:col-span-2">
@@ -20,7 +22,7 @@ import { slugifyCategory } from "../../data/categories";
   <div class="mt-5">
     <div class="flex items-center space-x-1 gap-2 text-xs text-base-500">
       <img src={author.avatar} alt="User" 
-      class="squircle !w-[50px] !h-[48px]" />
+      class="squircle !w-[50px] !h-[50px]" />
       <span class="font-medium">{author.name}</span>
       <span aria-hidden="true">&middot;</span>
       {categories && categories.length > 0 && (

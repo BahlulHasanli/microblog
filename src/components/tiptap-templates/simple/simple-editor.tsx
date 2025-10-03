@@ -110,6 +110,50 @@ const MainToolbarContent = ({
     };
   }, [editor]);
 
+  const MenuBar = ({ editor }: { editor: any }) => {
+    if (!editor) {
+      return null;
+    }
+
+    const addYoutubeVideo = () => {
+      const url = prompt("Enter YouTube URL");
+
+      if (url) {
+        editor.commands.setYoutubeVideo({
+          src: url,
+          width: "100%",
+          height: "260",
+        });
+      }
+    };
+
+    return (
+      <Button
+        onClick={addYoutubeVideo}
+        type="button"
+        data-style="ghost"
+        role="button"
+        tabIndex={-1}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          className="tiptap-button-icon"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
+          />
+        </svg>
+        YouTube
+      </Button>
+    );
+  };
+
   return (
     <>
       <Spacer />
@@ -167,6 +211,12 @@ const MainToolbarContent = ({
 
       <ToolbarGroup>
         <ImageUploadButton text="Şəkil" />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      <ToolbarGroup>
+        <MenuBar editor={editor} />
       </ToolbarGroup>
 
       <Spacer />
@@ -243,55 +293,6 @@ export function SimpleEditor({
   const FixedDocument = Document.extend({
     content: "heading paragraph block*",
   });
-
-  const MenuBar = ({ editor }: { editor: any }) => {
-    const [height, setHeight] = React.useState<any>(480);
-    const [width, setWidth] = React.useState<any>(640);
-
-    if (!editor) {
-      return null;
-    }
-
-    const addYoutubeVideo = () => {
-      const url = prompt("Enter YouTube URL");
-
-      if (url) {
-        editor.commands.setYoutubeVideo({
-          src: url,
-          width: Math.max(320, parseInt(width, 10)) || 640,
-          height: Math.max(180, parseInt(height, 10)) || 480,
-        });
-      }
-    };
-
-    return (
-      <div className="control-group">
-        <div className="button-group">
-          <input
-            id="width"
-            type="number"
-            min="320"
-            max="1024"
-            placeholder="width"
-            value={width}
-            onChange={(event: any) => setWidth(event.target.value)}
-          />
-          <input
-            id="height"
-            type="number"
-            min="180"
-            max="720"
-            placeholder="height"
-            value={height}
-            onChange={(event: any) => setHeight(event.target.value)}
-          />
-          <button id="add" onClick={addYoutubeVideo}>
-            Add YouTube video
-          </button>
-        </div>
-      </div>
-    );
-  };
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -553,7 +554,6 @@ export function SimpleEditor({
           <div className="simple-editor-content">
             {/* Kategoriler Bölümü */}
             <div className="categories-container mt-8 mb-5">
-              <MenuBar editor={editor} />
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((category) => (
                   <button

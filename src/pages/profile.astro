@@ -1,0 +1,64 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileTabs from "@/components/profile/ProfileTabs";
+import { supabase } from "@/db/supabase";
+import { getCollection } from "astro:content";
+
+const isLoggedIn = isAuthenticated(Astro.cookies);
+if (!isLoggedIn) Astro.redirect("/signin");
+
+const authUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
+if (!authUser) {
+  return Astro.redirect("/signin");
+}
+
+const { data: userData, error: userError } = await supabase
+  .from("users") 
+  .select("id, fullname, username, avatar, email")
+  .eq("id", authUser.id)
+  .single();
+
+if (userError) {
+  console.error("Kullanıcı bilgileri alınamadı:", userError);
+  return Astro.redirect("/signin");
+}
+
+const user = userData;
+
+const allPosts = await getCollection("posts");
+
+const posts = allPosts.map(post => {
+  let imageUrl = post.data.image.url.toString();
+  
+  if (!imageUrl.includes('the99.b-cdn.net')) {
+    const fileName = `${post.slug}-cover.jpg`;
+    imageUrl = `https://the99.b-cdn.net/notes/${post.slug}/images/${fileName}`;
+  }
+  
+  return { 
+    id: post.id,
+    title: post.data.title,
+    description: post.data.description,
+    slug: post.slug,
+    image: imageUrl,
+    created_at: post.data.pubDate.toISOString()
+  };
+});
+---
+
+<BaseLayout>
+  <div class="max-w-3xl mx-auto pt-8 pb-16">
+    <ProfileHeader 
+      client:load 
+      user={user} 
+    />
+    
+    <ProfileTabs 
+      client:load 
+      posts={posts || []} 
+      userId={user.id} 
+    />
+  </div>
+</BaseLayout>

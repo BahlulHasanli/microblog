@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({
   if (!checkRateLimit(clientIP)) {
     return new Response(
       JSON.stringify({
-        message: `Bir neçə qeydiyyat istəyi göndərildi. 
+        message: `Bir neçə daxil olma istəyi göndərildi. 
         Zəhmət olmasa 15 dəqqiqə sonra təkrar cəhd edin.`,
         status: 429,
       }),
