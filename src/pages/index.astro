@@ -11,19 +11,18 @@ const { data: userData, error: userError } = await supabase
   .select("id, fullname, username, avatar, email")
   .limit(10); 
 
-
-
 const user = userData;
 
 console.log('user ::>>', user)
 
-// const allPosts = (await getCollection("posts"));
+// Bütün postları al və yalnız təsdiqlənmişləri filtrələ
 const allPosts = await getCollection("posts");
+const approvedPosts = allPosts.filter(post => post.data.approved == true);
 
-console.log('allPosts count:', allPosts.length);
-console.log('allPosts:', allPosts);
+console.log('Bütün postlar:', allPosts.length);
+console.log('Təsdiqlənmiş postlar:', approvedPosts.length);
 
-const posts = allPosts.map(post => {
+const posts = approvedPosts.map(post => {
   let imageUrl = post.data.image.url.toString();
   
   if (!imageUrl.includes('the99.b-cdn.net')) {

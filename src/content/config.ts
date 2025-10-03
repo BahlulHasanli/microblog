@@ -14,6 +14,7 @@ const postsCollection = defineCollection({
       alt: z.string(),
     }),
     categories: z.array(z.string()),
+    approved: z.boolean().default(false),
   }),
 });
 

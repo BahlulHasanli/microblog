@@ -465,6 +465,9 @@ export const POST: APIRoute = async (context) => {
         ? `categories: [${categoriesData.map((category) => `"${category}"`).join(", ")}]`
         : "";
 
+    // Mövcud approved statusunu saxla
+    const approvedStatus = entry.data.approved || false;
+
     const markdown = `---
 pubDate: ${pubDate}
 author: 
@@ -473,6 +476,7 @@ author:
 title: "${title}"
 description: "${description}"
 ${imageSection}${categoriesSection}
+approved: ${approvedStatus}
 ---
 
 ${processedContent}`;

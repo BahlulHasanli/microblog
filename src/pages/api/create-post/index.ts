@@ -211,6 +211,7 @@ author:
 title: "${title}"
 description: "${description}"
 ${imageSection}${categoriesSection}
+approved: false
 ---
 
 ${processedContent}`;
@@ -221,7 +222,7 @@ ${processedContent}`;
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Gönderi başarıyla oluşturuldu",
+        message: "Gönderi başarıyla oluşturuldu və admin təsdiqi gözləyir",
         slug,
       }),
       {

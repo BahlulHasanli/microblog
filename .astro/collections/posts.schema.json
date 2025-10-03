@@ -64,6 +64,10 @@
             "type": "string"
           }
         },
+        "approved": {
+          "type": "boolean",
+          "default": false
+        },
         "$schema": {
           "type": "string"
         }

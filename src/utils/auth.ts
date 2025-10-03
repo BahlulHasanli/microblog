@@ -178,3 +178,81 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
 
   return authResult.user!;
 }
+
+/**
+ * Admin yoxlaması - istifadəçinin admin olub-olmadığını yoxlayır
+ */
+export async function isAdmin(
+  cookies: AstroCookies
+): Promise<boolean> {
+  try {
+    const user = await getUserFromCookies(cookies, () => null);
+    if (!user) return false;
+
+    // Supabase-dən istifadəçi məlumatlarını yoxla
+    const { data, error } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("email", user.email)
+      .single();
+
+    if (error || !data) return false;
+
+    return data.is_admin === true;
+  } catch (error) {
+    console.error("Admin yoxlama xətası:", error);
+    return false;
+  }
+}
+
+/**
+ * Admin endpoint'ləri üçün middleware
+ */
+export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
+  try {
+    // Cookie-dən istifadəçi məlumatlarını al
+    const user = await getUserFromCookies(ctx.cookies, () => null);
+    
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          message: "Giriş tələb olunur",
+          status: 401,
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Admin yoxlaması
+    const adminCheck = await isAdmin(ctx.cookies);
+    if (!adminCheck) {
+      return new Response(
+        JSON.stringify({
+          message: "Bu əməliyyat üçün admin hüququ tələb olunur",
+          status: 403,
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return user;
+  } catch (error) {
+    console.error("requireAdmin xətası:", error);
+    return new Response(
+      JSON.stringify({
+        message: "Autentifikasiya xətası",
+        status: 500,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+}

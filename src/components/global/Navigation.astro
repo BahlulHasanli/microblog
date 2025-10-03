@@ -1,10 +1,27 @@
 ---
 import ProfileDropdown from "./ProfileDropdown";
+import { supabase } from "@/db/supabase";
+import { getUserFromCookies } from "@/utils/auth";
 
 const { isLoggedIn, user } = Astro.props;
 
 // Studio veya edit-post sayfalarında kaydet butonunu göster
 const isStudioRoutePath = Astro.url.pathname === '/studio' || Astro.url.pathname.includes('/edit-post/');
+
+// Admin yoxlaması
+let isAdmin = false;
+if (isLoggedIn && user) {
+  const currentUser = await getUserFromCookies(Astro.cookies, () => null);
+  if (currentUser) {
+    const { data: adminData } = await supabase
+      .from("users")
+      .select("is_admin")
+      .eq("email", currentUser.email)
+      .single();
+    
+    isAdmin = adminData?.is_admin || false;
+  }
+}
 ---
 <div
   x-data="{ open: false }"
@@ -74,6 +91,18 @@ const isStudioRoutePath = Astro.url.pathname === '/studio' || Astro.url.pathname
         </div> 
       ) : (
         <div class="relative z-10 flex items-center gap-3">
+          {isAdmin && (
+            <a
+              href="/admin"
+              class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-900 bg-base-100 hover:bg-base-200 rounded-full transition-colors"
+              title="Admin Panel"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Admin
+            </a>
+          )}
            <ProfileDropdown
               client:only="react"
               isStudioRoutePath={isStudioRoutePath} 

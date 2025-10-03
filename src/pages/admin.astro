@@ -1,0 +1,28 @@
+---
+import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
+import AdminPanel from "@/components/admin/AdminPanel";
+import BaseHead from "@/components/BaseHead.astro";
+
+// Auth yoxlaması
+if (!isAuthenticated(Astro.cookies)) {
+  return Astro.redirect("/signin");
+}
+
+const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+
+// Admin yoxlaması
+const adminCheck = await isAdmin(Astro.cookies);
+if (!adminCheck) {
+  return Astro.redirect("/");
+}
+---
+
+<!DOCTYPE html>
+<html lang="az">
+  <head>
+    <BaseHead title="Admin Panel" />
+  </head>
+  <body class="bg-base-50">
+    <AdminPanel client:load user={user} />
+  </body>
+</html>
