@@ -1,19 +1,24 @@
 ---
 import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
-import AdminPanel from "@/components/admin/AdminPanel";
+import AdminPanel from "@/components/admin/AdminPanel.svelte";
 import BaseHead from "@/components/BaseHead.astro";
 
+const { cookies, redirect } = Astro; 
+
 // Auth yoxlaması
-if (!isAuthenticated(Astro.cookies)) {
-  return Astro.redirect("/signin");
+if (!isAuthenticated(cookies)) {
+  return redirect("/signin");
 }
 
-const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+const user = await getUserFromCookies(cookies, redirect);
 
 // Admin yoxlaması
 const adminCheck = await isAdmin(Astro.cookies);
+
 if (!adminCheck) {
-  return Astro.redirect("/");
+  return new Response(null, {
+    status: 404,
+  }); 
 }
 ---
 

@@ -114,7 +114,12 @@ const {
 <script is:inline nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <script is:inline src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-<ClientRouter />
+<ClientRouter fallback="none" />
+
+<script>
+  import { initNavigationLoader } from '@/scripts/navigationLoader';
+  initNavigationLoader();
+</script>
 
 <style is:global>
   @keyframes bump {

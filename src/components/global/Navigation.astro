@@ -10,6 +10,7 @@ const isStudioRoutePath = Astro.url.pathname === '/studio' || Astro.url.pathname
 
 // Admin yoxlaması
 let isAdmin = false;
+
 if (isLoggedIn && user) {
   const currentUser = await getUserFromCookies(Astro.cookies, () => null);
   if (currentUser) {

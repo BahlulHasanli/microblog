@@ -1,10 +1,9 @@
-import { navigate } from "astro:transitions/client";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { isSaveBtn } from "@/store/buttonStore";
 import { userAvatar } from "@/store/userStore";
 import { useStore } from "@nanostores/react";
-import { Suspense } from "react";
-import { supabase } from "../../db/supabase";
+import { supabase } from "@/db/supabase";
+import { navigate } from "astro:transitions/client";
 
 interface ProfileDropdownProps {
   userImage: string;
@@ -63,13 +62,13 @@ export default function ProfileDropdown({
 
     fetchUserData();
   }, []);
-  
+
   // Listen for avatar updates from userStore
   useEffect(() => {
     if (currentAvatar) {
-      setUserData(prevData => ({
+      setUserData((prevData) => ({
         ...prevData,
-        avatar: currentAvatar
+        avatar: currentAvatar,
       }));
     }
   }, [currentAvatar]);
@@ -186,7 +185,8 @@ export default function ProfileDropdown({
             className="w-full h-full object-cover"
             onError={(e) => {
               // Resim yüklenemezse placeholder göster
-              (e.target as HTMLImageElement).src = "https://via.placeholder.com/150";
+              (e.target as HTMLImageElement).src =
+                "https://via.placeholder.com/150";
             }}
           />
         </div>
@@ -197,8 +197,11 @@ export default function ProfileDropdown({
             className="absolute bg-white/40 overflow-hidden backdrop-blur-xl right-0 mt-2 w-48 rounded-lg shadow-lg py-1  animate-fadeIn"
           >
             <a
-              href="/profile"
-              onClick={(e) => e.stopPropagation()}
+              href="#"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate("/profile");
+              }}
               className="block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
             >
               <div className="flex items-center">

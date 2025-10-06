@@ -3,9 +3,9 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { isAuthenticated } from "@/utils/auth";
 
 // Check if user is already authenticated
-// if (isAuthenticated(Astro.cookies)) {
-//   return Astro.redirect('/');
-// }
+if (isAuthenticated(Astro.cookies)) {
+  return Astro.redirect('/');
+} 
 ---
 
 <BaseLayout>

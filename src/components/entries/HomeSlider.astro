@@ -1,5 +1,6 @@
----
+---
 import { getCollection } from "astro:content";
+import SliderReadMoreBtn from "@/components/ui/SliderReadMoreBtn.svelte";
 
 // Featured postları al
 const allPosts = await getCollection("posts");
@@ -12,19 +13,20 @@ let backgroundImage = "https://images7.alphacoders.com/139/thumb-1920-1396381.jp
 
 if (featuredPost) {
   backgroundImage = featuredPost.data.image.url;
+
   if (!backgroundImage.includes('the99.b-cdn.net')) {
     const fileName = `${featuredPost.slug}-cover.jpg`;
+  
     backgroundImage = `https://the99.b-cdn.net/notes/${featuredPost.slug}/images/${fileName}`;
   }
 }
-
 ---
 
 {featuredPost && (
   <>
     <div class="absolute inset-0 h-[700px] overflow-hidden -z-10">
       <img src={backgroundImage}
-      alt="Background" 
+      alt={featuredPost.data.title} 
       class="w-full h-full object-cover opacity-40" 
       />
       <div class="absolute inset-0 bg-gradient-to-t from-white to-transparent backdrop-blur-xs"></div>
@@ -34,44 +36,46 @@ if (featuredPost) {
     <!-- Right Side -->
     <div class="absolute right-0 top-0 w-1/2 h-full">
         <img src={backgroundImage}
-        alt="Game Scene"
+        alt={featuredPost.data.title}
         class="w-full h-full object-cover object-center" 
         />
     </div> 
   
       <!-- Left Side -->
     <div class="absolute left-0 top-0 w-[855px] h-full z-10">
-        <img src={backgroundImage} 
-        alt="Background"
+        <img src={backgroundImage}  
+        alt={featuredPost.data.title}
         class="size-[750px] object-cover blur-3xl -mt-28 object-center" 
         />
         <div class="absolute inset-0 ml-15 flex flex-col justify-between pt-24 mb-10">
             <div class="text-white flex flex-col gap-1 w-[470px]">
                 <h2 class="text-4xl font-semibold font-display m-0 break-words tracking-wide">
-                  {featuredPost ? featuredPost.data.title : "Yeni çıxan oyunlar 80$ dəyərmi?"}
+                  {featuredPost && featuredPost.data.title}
                 </h2>
                 <p class="text-md font-light opacity-70 mt-5 break-words font-display tracking-wide">
-                  {featuredPost ? featuredPost.data.description : "Bu ilin əvvəlində Nintendo görünməmiş bir addım atdı: O, Switch 2-nin flaqman buraxılış adı olan Mario Kart World-ün qiymətini 79,99 dollar səviyyəsində təyin etdi. Bu, illərdir 69,99 dollar səviyyəsində dayanmış əsas oyunların əsas versiyaları üçün yeni zəmin yaratdı."}
+                  {featuredPost && featuredPost.data.description}
                 </p>
             </div>
   
-            <div class="flex w-[538px] flex-row gap-6 items-center justify-between mt-10">
+            <div class="flex w-[420px] flex-row gap-6 items-center justify-between mt-10">
                <div class="flex flex-row gap-2 items-center">
-                    <img src={featuredPost ? featuredPost.data.author.avatar : "https://miro.medium.com/v2/resize:fill:300:300/1*cqroLdqSWbISklp0mVJuvQ@2x.jpeg"} 
-                    alt={featuredPost ? featuredPost.data.author.name : "User"} 
+                    <img src={featuredPost && featuredPost.data.author.avatar} 
+                    alt={featuredPost && featuredPost.data.author.name} 
                     class="squircle !w-[80px] !h-[78px]" />
                    <div class="flex flex-col ml-2">
                     <span class="text-white/80 font-medium text-[15px]">
-                      {featuredPost ? featuredPost.data.author.name : "Bahlul Hasanli"}
+                      {featuredPost && featuredPost.data.author.name}
                     </span>
                     <p class="text-white/50 font-light text-[11px]">
-                      {featuredPost ? new Date(featuredPost.data.pubDate).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long' }) : "10 saat əvvəl"}
+                      {featuredPost && new Date(featuredPost.data.pubDate).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long' })}
                     </p>
                    </div>
                </div>
+
+               <SliderReadMoreBtn client:idle slug={featuredPost.slug} />
             </div>
         </div>
     </div>
     </div>
   </>
-)}
+)} 

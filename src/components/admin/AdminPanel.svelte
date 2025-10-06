@@ -1,0 +1,295 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import PostsTab from './PostsTab.svelte';
+  import UsersTab from './UsersTab.svelte';
+
+  export let user: any;
+
+  let activeTab: 'posts' | 'users' = 'posts';
+  let stats = {
+    totalPosts: 0,
+    pendingPosts: 0,
+    totalUsers: 0,
+    newUsers: 0,
+  };
+
+  onMount(() => {
+    loadStats();
+  });
+
+  async function loadStats() {
+    try {
+      // Postları yüklə
+      const postsResponse = await fetch("/api/admin/posts/list?status=all");
+      const postsData = await postsResponse.json();
+
+      // İstifadəçiləri yüklə
+      const usersResponse = await fetch("/api/admin/users/list");
+      const usersData = await usersResponse.json();
+
+      if (postsData.success && usersData.success) {
+        const pending = postsData.posts.filter(
+          (p: any) => p.status === "pending"
+        ).length;
+
+        // Son 7 gündə qeydiyyatdan keçmiş istifadəçilər
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const newUsers = usersData.users.filter(
+          (u: any) => new Date(u.created_at) > sevenDaysAgo
+        ).length;
+
+        stats = {
+          totalPosts: postsData.posts.length,
+          pendingPosts: pending,
+          totalUsers: usersData.users.length,
+          newUsers: newUsers,
+        };
+      }
+    } catch (error) {
+      console.error("Stats yüklənərkən xəta:", error);
+    }
+  }
+</script>
+
+<div class="min-h-screen bg-gradient-to-br from-base-50 to-white">
+  <!-- Header -->
+  <header class="bg-white/80 backdrop-blur-sm border-b border-base-200/50 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-slate-900 to-slate-700 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 sm:w-6 sm:h-6 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-nouvelr-bold text-slate-900">
+              Admin Panel
+            </h1>
+            <p class="text-xs text-base-500 hidden sm:block">İdarəetmə paneli</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 sm:gap-6 w-full sm:w-auto">
+          <div class="flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 bg-base-50 rounded-lg flex-1 sm:flex-initial">
+            <img
+              src={user?.avatar}
+              alt={user?.fullname}
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-white"
+            />
+            <div class="flex flex-col min-w-0">
+              <span class="text-xs sm:text-sm font-medium text-slate-900 truncate">
+                {user?.fullname}
+              </span>
+              <span class="text-xs text-base-500">Admin</span>
+            </div>
+          </div>
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 text-sm font-medium text-base-700 hover:text-slate-900 bg-white border border-base-200 rounded-lg hover:bg-base-50 transition-all"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+            <span class="hidden sm:inline">Ana səhifə</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-base-600 mb-1">Ümumi Postlar</p>
+            <p class="text-xl sm:text-2xl font-bold text-slate-900">
+              {stats.totalPosts}
+            </p>
+          </div>
+          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-base-600 mb-1">Gözləyən Postlar</p>
+            <p class="text-xl sm:text-2xl font-bold text-slate-900">
+              {stats.pendingPosts}
+            </p>
+          </div>
+          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-base-600 mb-1">Yeni İstifadəçilər</p>
+            <p class="text-xl sm:text-2xl font-bold text-slate-900">
+              {stats.newUsers}
+            </p>
+            <p class="text-xs text-base-500 mt-1">Son 7 gün</p>
+          </div>
+          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs sm:text-sm text-base-600 mb-1">
+              Ümumi İstifadəçilər
+            </p>
+            <p class="text-xl sm:text-2xl font-bold text-slate-900">
+              {stats.totalUsers}
+            </p>
+          </div>
+          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 sm:w-6 sm:h-6 text-green-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-xl border border-base-100 overflow-hidden">
+      <div class="border-b border-base-100 bg-base-50/50">
+        <nav class="flex px-4 sm:px-6 overflow-x-auto">
+          <button
+            on:click={() => activeTab = 'posts'}
+            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'posts' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+          >
+            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+              <svg
+                class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Postlar
+            </span>
+            {#if activeTab === 'posts'}
+              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+            {/if}
+          </button>
+          <button
+            on:click={() => activeTab = 'users'}
+            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'users' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+          >
+            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+              <svg
+                class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+              İstifadəçilər
+            </span>
+            {#if activeTab === 'users'}
+              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+            {/if}
+          </button>
+        </nav>
+      </div>
+
+      <!-- Tab Content -->
+      <div>
+        {#if activeTab === 'posts'}
+          <PostsTab />
+        {:else}
+          <UsersTab />
+        {/if}
+      </div>
+    </div>
+  </div>
+</div>

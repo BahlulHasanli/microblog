@@ -239,3 +239,66 @@
   vertical-align: sub;
   font-size: 0.75em;
 }
+
+/* Navigation Loader Styles */
+#nav-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#nav-loader.active {
+  opacity: 1;
+}
+
+.nav-loader-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f43f5e 0%, #ec4899 50%, #f43f5e 100%);
+  background-size: 200% 100%;
+  animation: loading-bar 1.5s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
+}
+
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Disable view transitions on mobile for better performance */
+@media (max-width: 768px) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
