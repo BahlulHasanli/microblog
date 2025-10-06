@@ -1,0 +1,384 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+
+  interface Settings {
+    site_title: string;
+    site_description: string;
+    site_keywords: string;
+    og_image: string;
+    twitter_handle: string;
+    google_analytics_id: string;
+    posts_per_page: number;
+    enable_comments: boolean;
+    enable_registration: boolean;
+  }
+
+  let settings: Settings = $state({
+    site_title: '',
+    site_description: '',
+    site_keywords: '',
+    og_image: '',
+    twitter_handle: '',
+    google_analytics_id: '',
+    posts_per_page: 10,
+    enable_comments: true,
+    enable_registration: true,
+  });
+
+  let loading = $state(true);
+  let saving = $state(false);
+
+  onMount(() => {
+    loadSettings();
+  });
+
+  async function loadSettings() {
+    try {
+      loading = true;
+      const response = await fetch("/api/admin/settings/get");
+      const data = await response.json();
+
+      if (data.success && data.settings) {
+        settings = { ...settings, ...data.settings };
+      }
+    } catch (error) {
+      console.error("Nizamlamalar yüklənərkən xəta:", error);
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleSave() {
+    try {
+      saving = true;
+      const response = await fetch("/api/admin/settings/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Nizamlamalar yadda saxlanıldı");
+      } else {
+        alert(data.message || "Xəta baş verdi");
+      }
+    } catch (error) {
+      console.error("Saxlama xətası:", error);
+      alert("Xəta baş verdi");
+    } finally {
+      saving = false;
+    }
+  }
+</script>
+
+<div class="p-4 sm:p-6 lg:p-8">
+  {#if loading}
+    <div class="flex items-center justify-center py-16">
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm text-base-600">Yüklənir...</p>
+      </div>
+    </div>
+  {:else}
+  <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+    <div class="space-y-4 sm:space-y-6">
+      <!-- SEO Bölməsi -->
+      <div class="bg-white rounded-xl border border-base-100 p-6 sm:p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 text-blue-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-nouvelr-bold text-slate-900">
+              SEO Nizamlamaları
+            </h2>
+            <p class="text-xs sm:text-sm text-base-500 mt-0.5">
+              Axtarış motorları üçün optimallaşdırma
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label for="site_title" class="block text-sm font-medium text-base-700 mb-2">
+              Sayt Başlığı
+            </label>
+            <input
+              type="text"
+              id="site_title"
+              bind:value={settings.site_title}
+              placeholder="Məsələn: Mənim Blogum"
+              class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+            />
+          </div>
+
+          <div>
+            <label for="site_description" class="block text-sm font-medium text-base-700 mb-2">
+              Sayt Təsviri
+            </label>
+            <textarea
+              id="site_description"
+              bind:value={settings.site_description}
+              rows="3"
+              placeholder="Saytınızın qısa təsviri..."
+              class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all resize-none"
+            ></textarea>
+            <p class="text-xs text-base-500 mt-1.5">
+              Axtarış nəticələrində göstəriləcək
+            </p>
+          </div>
+
+          <div>
+            <label for="site_keywords" class="block text-sm font-medium text-base-700 mb-2">
+              Açar Sözlər
+            </label>
+            <input
+              type="text"
+              id="site_keywords"
+              bind:value={settings.site_keywords}
+              placeholder="blog, texnologiya, proqramlaşdırma"
+              class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+            />
+            <p class="text-xs text-base-500 mt-1.5">
+              Vergüllə ayırın
+            </p>
+          </div>
+
+          <div>
+            <label for="og_image" class="block text-sm font-medium text-base-700 mb-2">
+              Sosial Media Şəkli (OG Image)
+            </label>
+            <input
+              type="url"
+              id="og_image"
+              bind:value={settings.og_image}
+              placeholder="https://example.com/image.jpg"
+              class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+            />
+            <p class="text-xs text-base-500 mt-1.5">
+              Facebook, Twitter və s. paylaşımlarda göstəriləcək
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sosial Media Bölməsi -->
+      <div class="bg-white rounded-xl border border-base-100 p-6 sm:p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 text-purple-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-nouvelr-bold text-slate-900">
+              Sosial Media
+            </h2>
+            <p class="text-xs sm:text-sm text-base-500 mt-0.5">
+              Sosial media inteqrasiyaları
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label for="twitter_handle" class="block text-sm font-medium text-base-700 mb-2">
+              Twitter İstifadəçi Adı
+            </label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-base-500">
+                @
+              </span>
+              <input
+                type="text"
+                id="twitter_handle"
+                bind:value={settings.twitter_handle}
+                placeholder="username"
+                class="block w-full border border-base-300 rounded-lg pl-8 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+    <div class="space-y-4 sm:space-y-6">
+        <!-- Ümumi Nizamlamalar -->
+      <div class="bg-white rounded-xl border border-base-100 p-6 sm:p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+            <svg
+              class="w-5 h-5 text-orange-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-nouvelr-bold text-slate-900">
+              Ümumi Nizamlamalar
+            </h2>
+            <p class="text-xs sm:text-sm text-base-500 mt-0.5">
+              Sayt funksiyaları
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label for="posts_per_page" class="block text-sm font-medium text-base-700 mb-2">
+              Səhifə başına post sayı
+            </label>
+            <input
+              type="number"
+              id="posts_per_page"
+              bind:value={settings.posts_per_page}
+              min="1"
+              max="50"
+              class="block w-full sm:w-48 border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+            />
+          </div>
+
+          <div class="pt-2">
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                bind:checked={settings.enable_comments}
+                class="w-5 h-5 text-slate-900 border-base-300 rounded focus:ring-slate-900 cursor-pointer"
+              />
+              <div>
+                <span class="text-sm font-medium text-slate-900 group-hover:text-slate-700">
+                  Şərhləri aktiv et
+                </span>
+                <p class="text-xs text-base-500">
+                  İstifadəçilər postlara şərh yaza bilərlər
+                </p>
+              </div>
+            </label>
+          </div>
+
+          <div class="pt-2">
+            <label class="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                bind:checked={settings.enable_registration}
+                class="w-5 h-5 text-slate-900 border-base-300 rounded focus:ring-slate-900 cursor-pointer"
+              />
+              <div>
+                <span class="text-sm font-medium text-slate-900 group-hover:text-slate-700">
+                  Qeydiyyatı aktiv et
+                </span>
+                <p class="text-xs text-base-500">
+                  Yeni istifadəçilər qeydiyyatdan keçə bilərlər
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+            <!-- Analitika Bölməsi -->
+            <div class="bg-white rounded-xl border border-base-100 p-6 sm:p-8">
+              <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <svg
+                    class="w-5 h-5 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-lg sm:text-xl font-nouvelr-bold text-slate-900">
+                    Analitika
+                  </h2>
+                  <p class="text-xs sm:text-sm text-base-500 mt-0.5">
+                    Ziyarətçi statistikası
+                  </p>
+                </div>
+              </div>
+      
+              <div class="space-y-5">
+                <div>
+                  <label for="google_analytics_id" class="block text-sm font-medium text-base-700 mb-2">
+                    Google Analytics ID
+                  </label>
+                  <input
+                    type="text"
+                    id="google_analytics_id"
+                    bind:value={settings.google_analytics_id}
+                    placeholder="G-XXXXXXXXXX"
+                    class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+    </div>
+  </div>
+
+  <!-- Saxla Düyməsi -->
+  <div class="mt-6 flex justify-end">
+    <button
+      onclick={handleSave}
+      disabled={saving}
+      class="inline-flex cursor-pointer text-[13px] items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {#if saving}
+        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        Saxlanılır...
+      {:else}
+
+        Dəyişiklikləri Saxla
+      {/if}
+    </button>
+  </div>
+
+  {/if}
+</div>

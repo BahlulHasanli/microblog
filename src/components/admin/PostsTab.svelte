@@ -135,7 +135,7 @@
   }
 </script>
 
-<div class="p-4 sm:p-6 lg:p-8">
+<div class="p-4 lg:p-6">
   <!-- Filter -->
   <div class="mb-6 sm:mb-8 flex flex-wrap gap-2">
     <button
