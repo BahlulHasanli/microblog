@@ -36,14 +36,20 @@ export const POST: APIRoute = async (context) => {
     const description = formData.get("description")?.toString() || "";
     const content = formData.get("content")?.toString() || "";
     // Kategorileri al ve virgülle ayrılmış stringleri ayır
-    const categoriesRaw = formData.getAll("categories").map((c) => c.toString());
-    
+    const categoriesRaw = formData
+      .getAll("categories")
+      .map((c) => c.toString());
+
     // Virgülle ayrılmış kategorileri ayır ve tekrar eden kategorileri kaldır
-    const categoriesData = [...new Set(
-      categoriesRaw.flatMap(category => 
-        category.includes(',') ? category.split(',').map(c => c.trim()) : [category.trim()]
-      )
-    )].filter(Boolean);
+    const categoriesData = [
+      ...new Set(
+        categoriesRaw.flatMap((category) =>
+          category.includes(",")
+            ? category.split(",").map((c) => c.trim())
+            : [category.trim()]
+        )
+      ),
+    ].filter(Boolean);
     // Resim URL'si ve alt metni için varsayılan değerler
     const imageAltFromForm = formData.get("imageAlt")?.toString();
 
@@ -212,6 +218,7 @@ title: "${title}"
 description: "${description}"
 ${imageSection}${categoriesSection}
 approved: false
+featured: false
 ---
 
 ${processedContent}`;

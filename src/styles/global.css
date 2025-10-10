@@ -46,7 +46,7 @@
   --astro-code-token-string-expression: #2522fc;
   --astro-code-token-punctuation: #ffffff;
   --astro-code-token-link: #ffffff;
-  
+
   /* TipTap Editor highlight colors */
   --tt-color-highlight-red: #ffc9c9;
   --tt-color-highlight-orange: #ffe4cc;
@@ -96,7 +96,7 @@
 .squircle-border:after {
   position: absolute;
   content: "";
-  --squircle-smooth: 0.3;
+  --squircle-smooth: 0.4;
   --squircle-radius: 200px;
   mask-image: paint(squircle);
 }
@@ -151,7 +151,7 @@
   width: 200px;
   height: 200px;
   background: linear-gradient(45deg, #8d85ff, #ff87e3);
-  --squircle-smooth: 0.3;
+  --squircle-smooth: 0.4;
   --squircle-radius: 200px;
   mask-image: paint(squircle);
 }
@@ -262,7 +262,6 @@
   background: linear-gradient(90deg, #f43f5e 0%, #ec4899 50%, #f43f5e 100%);
   background-size: 200% 100%;
   animation: loading-bar 1.5s ease-in-out infinite;
-  box-shadow: 0 0 10px rgba(244, 63, 94, 0.5);
 }
 
 @keyframes loading-bar {
@@ -295,7 +294,7 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {

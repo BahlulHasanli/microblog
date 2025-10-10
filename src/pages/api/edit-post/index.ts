@@ -95,19 +95,21 @@ export const POST: APIRoute = async (context) => {
     const pubDate = new Date().toISOString().split("T")[0];
 
     // BunnyCDN məlumatları
-    const bunnyApiKey = "6e7c0a7f-0e8b-4b8c-8f4d-a3571a42cb984dce9b81d75e2c8c52634043";
+    const bunnyApiKey = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
     const storageZoneName = "the99-storage";
     const hostname = "storage.bunnycdn.com";
 
-    // Əgər slug dəyişibsə, BunnyCDN-də folder-i yenidən adlandırmalıyıq
-    if (oldSlug !== newSlug) {
+    // Slug dəyişibsə folder əməliyyatları
+    let shouldMoveFolder = oldSlug !== newSlug;
+    let oldFolderImages: any[] = [];
+    
+    if (shouldMoveFolder) {
       console.log(`Slug dəyişdi: ${oldSlug} -> ${newSlug}`);
       
       try {
-        const oldFolder = `notes/${oldSlug}`;
-        const newFolder = `notes/${newSlug}`;
+        const oldFolder = `notes/${oldSlug}/images`;
         
-        // Köhnə folder-in mövcudluğunu yoxla
+        // Köhnə folder-dəki şəkilləri al
         const checkOldFolderResponse = await fetch(
           `https://${hostname}/${storageZoneName}/${oldFolder}/`,
           {
@@ -120,144 +122,13 @@ export const POST: APIRoute = async (context) => {
         );
         
         if (checkOldFolderResponse.ok) {
-          console.log(`Köhnə folder tapıldı: ${oldFolder}`);
-          
-          // Köhnə folder-dəki bütün faylları al
-          const oldFiles = await checkOldFolderResponse.json();
-          
-          // Yeni folder yarat
-          const createNewFolderResponse = await fetch(
-            `https://${hostname}/${storageZoneName}/${newFolder}/images/`,
-            {
-              method: "PUT",
-              headers: {
-                AccessKey: bunnyApiKey,
-              },
-            }
-          );
-          
-          if (createNewFolderResponse.ok || createNewFolderResponse.status === 201) {
-            console.log(`Yeni folder yaradıldı: ${newFolder}/images`);
-            
-            // images folder-indəki faylları köçür
-            const imagesFolder = oldFiles.find((f: any) => f.ObjectName === "images" && f.IsDirectory);
-            
-            if (imagesFolder) {
-              // images folder-inin içindəki faylları al
-              const getImagesResponse = await fetch(
-                `https://${hostname}/${storageZoneName}/${oldFolder}/images/`,
-                {
-                  method: "GET",
-                  headers: {
-                    AccessKey: bunnyApiKey,
-                    Accept: "application/json",
-                  },
-                }
-              );
-              
-              if (getImagesResponse.ok) {
-                const imageFiles = await getImagesResponse.json();
-                
-                // Hər bir faylı yeni folder-ə köçür
-                for (const file of imageFiles) {
-                  if (!file.IsDirectory) {
-                    try {
-                      // Faylı yüklə
-                      const downloadResponse = await fetch(
-                        `https://${hostname}/${storageZoneName}/${oldFolder}/images/${file.ObjectName}`,
-                        {
-                          method: "GET",
-                          headers: {
-                            AccessKey: bunnyApiKey,
-                          },
-                        }
-                      );
-                      
-                      if (downloadResponse.ok) {
-                        const fileBuffer = await downloadResponse.arrayBuffer();
-                        
-                        // Fayl adını yenilə (əgər slug ilə başlayırsa)
-                        let newFileName = file.ObjectName;
-                        if (file.ObjectName.startsWith(oldSlug)) {
-                          newFileName = file.ObjectName.replace(oldSlug, newSlug);
-                        }
-                        
-                        // Yeni folder-ə yüklə
-                        const uploadResponse = await fetch(
-                          `https://${hostname}/${storageZoneName}/${newFolder}/images/${newFileName}`,
-                          {
-                            method: "PUT",
-                            headers: {
-                              AccessKey: bunnyApiKey,
-                              "Content-Type": "application/octet-stream",
-                            },
-                            body: fileBuffer,
-                          }
-                        );
-                        
-                        if (uploadResponse.ok) {
-                          console.log(`Fayl köçürüldü: ${file.ObjectName} -> ${newFileName}`);
-                        } else {
-                          console.error(`Fayl köçürülə bilmədi: ${file.ObjectName}`);
-                        }
-                      }
-                    } catch (fileError) {
-                      console.error(`Fayl köçürmə xətası: ${file.ObjectName}`, fileError);
-                    }
-                  }
-                }
-                
-                // Köhnə folder-i sil
-                try {
-                  // Əvvəlcə images folder-indəki faylları sil
-                  for (const file of imageFiles) {
-                    if (!file.IsDirectory) {
-                      await fetch(
-                        `https://${hostname}/${storageZoneName}/${oldFolder}/images/${file.ObjectName}`,
-                        {
-                          method: "DELETE",
-                          headers: {
-                            AccessKey: bunnyApiKey,
-                          },
-                        }
-                      );
-                    }
-                  }
-                  
-                  // images folder-i sil
-                  await fetch(
-                    `https://${hostname}/${storageZoneName}/${oldFolder}/images/`,
-                    {
-                      method: "DELETE",
-                      headers: {
-                        AccessKey: bunnyApiKey,
-                      },
-                    }
-                  );
-                  
-                  // Ana folder-i sil
-                  await fetch(
-                    `https://${hostname}/${storageZoneName}/${oldFolder}/`,
-                    {
-                      method: "DELETE",
-                      headers: {
-                        AccessKey: bunnyApiKey,
-                      },
-                    }
-                  );
-                  
-                  console.log(`Köhnə folder silindi: ${oldFolder}`);
-                } catch (deleteError) {
-                  console.error(`Köhnə folder silinə bilmədi: ${oldFolder}`, deleteError);
-                }
-              }
-            }
-          }
+          oldFolderImages = await checkOldFolderResponse.json();
+          console.log(`Köhnə folder-də ${oldFolderImages.length} fayl tapıldı`);
         } else {
           console.log(`Köhnə folder tapılmadı: ${oldFolder}`);
         }
-      } catch (folderMoveError) {
-        console.error("Folder köçürmə xətası:", folderMoveError);
+      } catch (error) {
+        console.error("Köhnə folder yoxlanılarkən xəta:", error);
       }
     }
 
@@ -272,8 +143,14 @@ export const POST: APIRoute = async (context) => {
     
     // Əgər slug dəyişibsə və mövcud cover image varsa, URL-i yenilə
     if (oldSlug !== newSlug && coverImageUrl && coverImageUrl.includes(oldSlug)) {
+      // Folder path-i yenilə
       coverImageUrl = coverImageUrl.replace(`notes/${oldSlug}/`, `notes/${newSlug}/`);
-      console.log(`Cover image URL yeniləndi: ${coverImageUrl}`);
+      
+      // Cover image adını yenilə (məsələn: gta6-cover.jpeg -> gta7-cover.jpeg)
+      const coverPattern = new RegExp(`/${oldSlug}-cover\\.(jpg|jpeg|png|gif|webp)`, 'i');
+      coverImageUrl = coverImageUrl.replace(coverPattern, `/${newSlug}-cover.$1`);
+      
+      console.log(`Cover image URL və adı yeniləndi: ${coverImageUrl}`);
     }
     if (uploadedImage) {
       try {
@@ -381,16 +258,17 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
-    // Mevcut içerikteki resimleri kontrol et ve silinenleri tespit et
+    // Editorda silinən şəkilləri BunnyCDN-dən sil
+    const deletedImageUrls: string[] = [];
+    
     try {
-      // Mevcut gönderiyi oku (köhnə slug ilə)
+      // Köhnə post məzmununu oxu
       const fileName = `${oldSlug}.mdx`;
       const filePath = path.join(process.cwd(), "src/content/posts", fileName);
       const existingContent = await fs.readFile(filePath, "utf-8");
 
-      // Mevcut içerikteki tüm resimleri bul
-      const existingImageRegex =
-        /!\[.*?\]\((https:\/\/the99\.b-cdn\.net\/notes\/.*?)\)/g;
+      // Köhnə məzmundakı şəkilləri tap
+      const existingImageRegex = /!\[.*?\]\((https:\/\/the99\.b-cdn\.net\/notes\/.*?)\)/g;
       const existingImages = [];
       let match;
 
@@ -398,33 +276,30 @@ export const POST: APIRoute = async (context) => {
         existingImages.push(match[1]);
       }
 
-      // Yeni içerikteki resimleri bul
-      const newImageRegex =
-        /!\[.*?\]\((https:\/\/the99\.b-cdn\.net\/notes\/.*?)\)/g;
+      // Yeni məzmundakı şəkilləri tap (slug dəyişibsə URL-lər artıq yenilənib)
+      const newImageRegex = /!\[.*?\]\((https:\/\/the99\.b-cdn\.net\/notes\/.*?)\)/g;
       const newImages = [];
 
       while ((match = newImageRegex.exec(content)) !== null) {
-        newImages.push(match[1]);
+        // Əgər slug dəyişibsə, yeni URL-ləri köhnə slug ilə müqayisə etmək üçün geri çevir
+        let imageUrl = match[1];
+        if (shouldMoveFolder && imageUrl.includes(newSlug)) {
+          imageUrl = imageUrl.replace(`notes/${newSlug}/`, `notes/${oldSlug}/`);
+        }
+        newImages.push(imageUrl);
       }
 
-      // Silinmiş resimleri bul
+      // Editorda silinən şəkilləri tap
       const deletedImages = existingImages.filter(
         (img) => !newImages.includes(img)
       );
 
-      // Silinmiş resimleri BunnyCDN'den kaldır
+      // Silinən şəkilləri BunnyCDN-dən sil
       for (const imageUrl of deletedImages) {
         try {
-          // URL'den dosya yolunu çıkar
           const cdnPrefix = "https://the99.b-cdn.net/";
           const filePath = imageUrl.replace(cdnPrefix, "");
 
-          // BunnyCDN API bilgileri
-          const bunnyApiKey = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
-          const storageZoneName = "the99-storage";
-          const hostname = "storage.bunnycdn.com";
-
-          // Dosyayı sil
           const response = await fetch(
             `https://${hostname}/${storageZoneName}/${filePath}`,
             {
@@ -436,19 +311,17 @@ export const POST: APIRoute = async (context) => {
           );
 
           if (response.ok) {
-            console.log(`Resim başarıyla silindi: ${imageUrl}`);
+            console.log(`Editorda silinən şəkil BunnyCDN-dən silindi: ${imageUrl}`);
+            deletedImageUrls.push(imageUrl);
           } else {
-            console.error(
-              `Resim silinirken hata oluştu: ${imageUrl}`,
-              await response.text()
-            );
+            console.error(`Şəkil silinərkən xəta: ${imageUrl}`, await response.text());
           }
         } catch (error) {
-          console.error(`Resim silinirken hata oluştu: ${imageUrl}`, error);
+          console.error(`Şəkil silinərkən xəta: ${imageUrl}`, error);
         }
       }
     } catch (error) {
-      console.error("Resim silme işlemi sırasında hata oluştu:", error);
+      console.error("Şəkil silmə əməliyyatında xəta:", error);
     }
 
     // İçerikteki geçici resimleri CDN URL'leriyle değiştir
@@ -456,10 +329,20 @@ export const POST: APIRoute = async (context) => {
     
     // Əgər slug dəyişibsə, içərikdəki köhnə slug-lı URL-ləri yeni slug ilə əvəz et
     if (oldSlug !== newSlug) {
+      // Folder path-i yenilə
       const oldUrlPattern = new RegExp(`https://the99\\.b-cdn\\.net/notes/${oldSlug}/`, 'g');
       const newUrlPrefix = `https://the99.b-cdn.net/notes/${newSlug}/`;
       processedContent = processedContent.replace(oldUrlPattern, newUrlPrefix);
-      console.log(`İçərikdəki URL-lər yeniləndi: ${oldSlug} -> ${newSlug}`);
+      
+      // Şəkil adlarını yenilə (məsələn: gta6-1.jpeg -> gta7-1.jpeg)
+      const oldSlugPattern = new RegExp(`/${oldSlug}-(\\d+)\\.(jpg|jpeg|png|gif|webp)`, 'gi');
+      processedContent = processedContent.replace(oldSlugPattern, `/${newSlug}-$1.$2`);
+      
+      // Cover image adını da yenilə (məsələn: gta6-cover.jpeg -> gta7-cover.jpeg)
+      const oldCoverPattern = new RegExp(`/${oldSlug}-cover\\.(jpg|jpeg|png|gif|webp)`, 'gi');
+      processedContent = processedContent.replace(oldCoverPattern, `/${newSlug}-cover.$1`);
+      
+      console.log(`İçərikdəki URL-lər və şəkil adları yeniləndi: ${oldSlug} -> ${newSlug}`);
     }
     
     console.log("Orijinal içerik:", processedContent);
@@ -640,11 +523,12 @@ export const POST: APIRoute = async (context) => {
 
     const categoriesSection =
       categoriesData.length > 0
-        ? `categories: [${categoriesData.map((category) => `"${category}"`).join(", ")}]`
+        ? `categories: [${categoriesData.map((category) => `"${category}"`).join(", ")}]\n`
         : "";
 
-    // Mövcud approved statusunu saxla
+    // Mövcud approved və featured statusunu saxla
     const approvedStatus = entry.data.approved || false;
+    const featuredStatus = entry.data.featured || false;
 
     const markdown = `---
 pubDate: ${pubDate}
@@ -653,26 +537,164 @@ author:
   avatar: "${authorAvatar}"
 title: "${title}"
 description: "${description}"
-${imageSection}${categoriesSection}
-approved: ${approvedStatus}
+${imageSection}${categoriesSection}approved: ${approvedStatus}
+featured: ${featuredStatus}
 ---
 
 ${processedContent}`;
 
-    // Yeni dosyayı yaz
-    await fs.writeFile(newFilePath, markdown, "utf-8");
+    // Əvvəlcə köhnə faylı yenilə (slug dəyişməsə və ya dəyişsə)
+    await fs.writeFile(oldFilePath, markdown, "utf-8");
+    console.log(`Fayl yeniləndi: ${oldFileName}`);
     
-    // Əgər slug dəyişibsə, köhnə faylı sil
+    // Əgər slug dəyişibsə, yeni fayl da yarat
     if (oldSlug !== newSlug) {
+      await fs.writeFile(newFilePath, markdown, "utf-8");
+      console.log(`Yeni fayl yaradıldı: ${newFileName}`);
+    }
+    
+    // Əgər slug dəyişibsə, folder əməliyyatlarını tamamla
+    if (shouldMoveFolder) {
       try {
-        await fs.unlink(oldFilePath);
-        console.log(`Köhnə fayl silindi: ${oldFileName}`);
-      } catch (unlinkError) {
-        console.error(`Köhnə fayl silinə bilmədi: ${oldFileName}`, unlinkError);
+        const oldFolder = `notes/${oldSlug}/images`;
+        const newFolder = `notes/${newSlug}/images`;
+        
+        // Yeni folder yarat
+        const createFolderResponse = await fetch(
+          `https://${hostname}/${storageZoneName}/${newFolder}/`,
+          {
+            method: "PUT",
+            headers: {
+              AccessKey: bunnyApiKey,
+            },
+          }
+        );
+        
+        if (createFolderResponse.ok || createFolderResponse.status === 201) {
+          console.log(`Yeni folder yaradıldı: ${newFolder}`);
+          
+          // Köhnə folder-dəki şəkilləri yeni folder-ə köçür (yalnız köhnə folder varsa)
+          if (oldFolderImages.length > 0) {
+            for (const file of oldFolderImages) {
+              if (!file.IsDirectory) {
+                const oldImageUrl = `https://the99.b-cdn.net/${oldFolder}/${file.ObjectName}`;
+                
+                // Əgər bu şəkil editorda silinməyibsə, köçür
+                if (!deletedImageUrls.includes(oldImageUrl)) {
+                  try {
+                    // Faylı yüklə
+                    const downloadResponse = await fetch(
+                      `https://${hostname}/${storageZoneName}/${oldFolder}/${file.ObjectName}`,
+                      {
+                        method: "GET",
+                        headers: {
+                          AccessKey: bunnyApiKey,
+                        },
+                      }
+                    );
+                    
+                    if (downloadResponse.ok) {
+                      const fileBuffer = await downloadResponse.arrayBuffer();
+                      
+                      // Fayl adını yenilə (slug-number.ext və slug-cover.ext formatında)
+                      let newFileName = file.ObjectName;
+                      
+                      // slug-1.jpeg, slug-2.png formatı
+                      const numberPattern = new RegExp(`^${oldSlug}-(\\d+)\\.(jpg|jpeg|png|gif|webp)$`, 'i');
+                      if (numberPattern.test(file.ObjectName)) {
+                        newFileName = file.ObjectName.replace(new RegExp(`^${oldSlug}-`, 'i'), `${newSlug}-`);
+                      }
+                      
+                      // slug-cover.jpeg formatı
+                      const coverPattern = new RegExp(`^${oldSlug}-cover\\.(jpg|jpeg|png|gif|webp)$`, 'i');
+                      if (coverPattern.test(file.ObjectName)) {
+                        newFileName = file.ObjectName.replace(new RegExp(`^${oldSlug}-cover`, 'i'), `${newSlug}-cover`);
+                      }
+                      
+                      // Yeni folder-ə yüklə
+                      const uploadResponse = await fetch(
+                        `https://${hostname}/${storageZoneName}/${newFolder}/${newFileName}`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            AccessKey: bunnyApiKey,
+                            "Content-Type": "application/octet-stream",
+                          },
+                          body: fileBuffer,
+                        }
+                      );
+                      
+                      if (uploadResponse.ok) {
+                        console.log(`Şəkil köçürüldü: ${file.ObjectName} -> ${newFileName}`);
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Şəkil köçürülə bilmədi: ${file.ObjectName}`, error);
+                  }
+                }
+              }
+            }
+          }
+          
+          // Köhnə folder-i tamamilə sil (həmişə)
+          try {
+            // Əvvəlcə folder-dəki bütün faylları sil
+            if (oldFolderImages.length > 0) {
+              for (const file of oldFolderImages) {
+                if (!file.IsDirectory) {
+                  await fetch(
+                    `https://${hostname}/${storageZoneName}/${oldFolder}/${file.ObjectName}`,
+                    {
+                      method: "DELETE",
+                      headers: {
+                        AccessKey: bunnyApiKey,
+                      },
+                    }
+                  );
+                }
+              }
+            }
+            
+            // images folder-i sil
+            const deleteImagesResponse = await fetch(
+              `https://${hostname}/${storageZoneName}/${oldFolder}/`,
+              {
+                method: "DELETE",
+                headers: {
+                  AccessKey: bunnyApiKey,
+                },
+              }
+            );
+            
+            if (deleteImagesResponse.ok || deleteImagesResponse.status === 404) {
+              console.log(`images folder silindi: ${oldFolder}`);
+            }
+            
+            // Ana folder-i sil
+            const deleteParentResponse = await fetch(
+              `https://${hostname}/${storageZoneName}/notes/${oldSlug}/`,
+              {
+                method: "DELETE",
+                headers: {
+                  AccessKey: bunnyApiKey,
+                },
+              }
+            );
+            
+            if (deleteParentResponse.ok || deleteParentResponse.status === 404) {
+              console.log(`Köhnə parent folder silindi: notes/${oldSlug}`);
+            }
+          } catch (deleteError) {
+            console.error(`Köhnə folder silinərkən xəta:`, deleteError);
+          }
+        }
+      } catch (error) {
+        console.error("Folder köçürmə əməliyyatında xəta:", error);
       }
     }
 
-    return new Response(
+    // Response göndər (köhnə faylı hələ silmə)
+    const response = new Response(
       JSON.stringify({
         success: true,
         message: "Gönderi başarıyla güncellendi",
@@ -685,6 +707,21 @@ ${processedContent}`;
         headers: { "Content-Type": "application/json" },
       }
     );
+
+    // Response göndərildikdən sonra köhnə faylı sil (async)
+    // Daha uzun gözlə ki, istifadəçi yeni səhifəyə keçsin
+    if (oldSlug !== newSlug) {
+      setTimeout(async () => {
+        try {
+          await fs.unlink(oldFilePath);
+          console.log(`Köhnə .mdx faylı silindi: ${oldFileName}`);
+        } catch (unlinkError) {
+          console.error(`Köhnə .mdx faylı silinə bilmədi: ${oldFileName}`, unlinkError);
+        }
+      }, 15000); // 15 saniyə sonra sil
+    }
+
+    return response;
   } catch (error) {
     console.error("Post güncelleme hatası:", error);
 

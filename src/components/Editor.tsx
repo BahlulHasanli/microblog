@@ -92,7 +92,10 @@ export default function Editor({ author }: any) {
       formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
-      formData.append("categories", selectedCategories.join(","));
+      // Kategorileri ayrı-ayrı əlavə et
+      selectedCategories.forEach((category) => {
+        formData.append("categories", category);
+      });
 
       // Kapak resmi varsa ekle
       if (coverImage) {

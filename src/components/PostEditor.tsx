@@ -34,31 +34,33 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     post.categories || []
   );
-  
+
   // Markdown içeriğini JSON'a dönüştür
   const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
-  
+  const [isContentProcessed, setIsContentProcessed] = useState(false);
+
   // Store artıq lazım deyil
 
   useEffect(() => {
     window._currentEditorTitle = title;
   }, [title]);
 
-  // Markdown içeriğini işle
+  // Markdown içeriğini yalnız bir dəfə işlə
   useEffect(() => {
-    if (content) {
+    if (content && !isContentProcessed) {
       try {
         // Markdown içeriğini JSON'a dönüştür
         const processedContent = markdownToTiptap(content, title, description);
 
         // İçeriği ayarla
         setInitialEditorContent(processedContent);
+        setIsContentProcessed(true);
         console.log("Markdown içeriği başarıyla işlendi", processedContent);
       } catch (error) {
         console.error("Markdown içeriği işlenirken hata oluştu:", error);
       }
     }
-  }, [content, title, description]);
+  }, [content, title, description, isContentProcessed]);
 
   const handleCoverImageChange = (file: File | null) => {
     setCoverImage(file);
@@ -94,10 +96,13 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
       // Resim ID'lerini saklamak için bir Map oluştur
       let imageIdMapData: Record<string, string> = {};
-      
+
       // window._imageIdMap varsa, içeriğini al
       if (window._imageIdMap && window._imageIdMap.size > 0) {
-        console.log("Resim ID'leri bulundu:", Array.from(window._imageIdMap.entries()));
+        console.log(
+          "Resim ID'leri bulundu:",
+          Array.from(window._imageIdMap.entries())
+        );
         imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
       }
 
@@ -110,7 +115,10 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
       // Yükleme sonrası güncel resim ID'lerini al
       if (window._imageIdMap && window._imageIdMap.size > 0) {
-        console.log("Güncel resim ID'leri:", Array.from(window._imageIdMap.entries()));
+        console.log(
+          "Güncel resim ID'leri:",
+          Array.from(window._imageIdMap.entries())
+        );
         imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
       }
 
@@ -149,7 +157,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
       formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
-      
+
       // Resim ID'lerini JSON olarak ekle
       if (Object.keys(imageIdMapData).length > 0) {
         console.log("Resim ID'leri API'ye gönderiliyor:", imageIdMapData);
@@ -193,7 +201,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
           formData.append("image", `notes/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
-          
+
           // Revoke any object URLs to prevent memory leaks
           if (coverImagePreview && coverImagePreview !== existingImageUrl) {
             URL.revokeObjectURL(coverImagePreview);
@@ -216,14 +224,16 @@ export default function PostEditor({ post, content, slug, author }: any) {
       }
 
       // Başarılı kaydetme
-      console.log("Post başarıyla güncellendi");
-      
+      console.log("Post başarıyla güncellendi", data);
+
       setSaveStatus("success");
-      setTimeout(() => {
-        setSaveStatus("idle");
-        // Başarılı güncelleme sonrası post sayfasına yönlendir
-        window.location.href = `/posts/${slug}`;
-      }, 2000);
+
+      // Başarılı güncelleme sonrası post sayfasına yönlendir
+      // Əgər slug dəyişibsə, yeni slug-a yönləndir
+      const finalSlug = data.slug || slug;
+
+      // Dərhal redirect et
+      window.location.href = `/posts/${finalSlug}`;
     } catch (error) {
       console.error("Güncelleme hatası:", error);
       setSaveStatus("error");
@@ -336,13 +346,13 @@ export default function PostEditor({ post, content, slug, author }: any) {
   function processParagraph(node: any): string {
     if (!node.content) return "";
     const content = node.content.map(processTextNode).join("");
-    
+
     // TextAlign desteği
     const textAlign = node.attrs?.textAlign;
     if (textAlign && textAlign !== "left") {
       return `<p style="text-align:${textAlign}">${content}</p>`;
     }
-    
+
     return content;
   }
 
@@ -350,14 +360,14 @@ export default function PostEditor({ post, content, slug, author }: any) {
     if (!node.content) return "";
     const level = node.attrs?.level || 1;
     const content = node.content.map(processTextNode).join("");
-    
+
     // TextAlign desteği
     const textAlign = node.attrs?.textAlign;
     if (textAlign && textAlign !== "left") {
       const tag = `h${Math.min(level, 4)}`;
       return `<${tag} style="text-align:${textAlign}">${content}</${tag}>`;
     }
-    
+
     const prefix = "#".repeat(Math.min(level, 4)) + " ";
     return prefix + content;
   }
@@ -488,7 +498,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
               break;
             case "highlight":
               // Markdown'da highlight için standart bir sözdizimi yok, HTML kullanabiliriz
-              const color = mark.attrs?.color || "var(--tt-color-highlight-yellow)";
+              const color =
+                mark.attrs?.color || "var(--tt-color-highlight-yellow)";
               text = `<mark style="background-color:${color}">${text}</mark>`;
               break;
             case "underline":

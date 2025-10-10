@@ -21,8 +21,12 @@ const { title, url, description, author, image, categories } = Astro.props;
 
   <div class="mt-5">
     <div class="flex items-center space-x-1 gap-2 text-xs text-base-500">
-      <img src={author.avatar} alt="User" 
-      class="squircle !w-[50px] !h-[50px]" />
+      <div class="overflow-hidden !size-14 squircle cursor-pointer">
+      <img src={author.avatar}
+          alt="User"
+          class="w-full h-full object-cover"
+      />
+      </div>
       <span class="font-medium">{author.name}</span>
       <span aria-hidden="true">&middot;</span>
       {categories && categories.length > 0 && (

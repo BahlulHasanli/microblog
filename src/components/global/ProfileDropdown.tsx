@@ -4,6 +4,7 @@ import { userAvatar } from "@/store/userStore";
 import { useStore } from "@nanostores/react";
 import { supabase } from "@/db/supabase";
 import { navigate } from "astro:transitions/client";
+import { slugifyCategory } from "@/data/categories";
 
 interface ProfileDropdownProps {
   userImage: string;
@@ -130,7 +131,14 @@ export default function ProfileDropdown({
     <>
       {isStudioRoutePath && isSaveBtnState.isView && (
         <button
-          onClick={isSaveBtnState.handleSave}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            isSaveBtnState.handleSave();
+
+            // navigate(`/posts/${slugifyCategory(isSaveBtnState.title)}`);
+          }}
           disabled={
             isSaveBtnState.isSaving ||
             !isSaveBtnState.editorContent ||

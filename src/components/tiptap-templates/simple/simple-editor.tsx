@@ -467,18 +467,21 @@ export function SimpleEditor({
     };
   }, [editor, onTitleChange, onDescriptionChange, title, description]);
   
-  // initialContent değiştiğinde editör içeriğini güncelle
+  // initialContent yalnız ilk dəfə set olunmalıdır
+  const [isInitialContentSet, setIsInitialContentSet] = React.useState(false);
+  
   React.useEffect(() => {
-    if (!editor || !initialContent) return;
+    if (!editor || !initialContent || isInitialContentSet) return;
     
-    // Editör içeriğini güncelle
+    // Editör içeriğini yalnız bir dəfə güncelle
     try {
       editor.commands.setContent(initialContent);
-      console.log("Editör içeriği güncellendi", initialContent);
+      setIsInitialContentSet(true);
+      console.log("Editör içeriği ilk dəfə set olundu", initialContent);
     } catch (error) {
       console.error("Editör içeriği güncellenirken hata oluştu:", error);
     }
-  }, [editor, initialContent]);
+  }, [editor, initialContent, isInitialContentSet]);
 
   React.useEffect(() => {
     if (!isMobile && mobileView !== "main") {
