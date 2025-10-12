@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
-import { getCollection } from "astro:content";
+import { supabase } from "@/db/supabase";
 import { categories } from "@/data/categories";
 
 export const prerender = false;
@@ -16,15 +16,36 @@ if (!category) {
   });
 }
 
-const allPosts = await getCollection("posts");
+// Supabase-dən kateqoriyaya görə postları al
+const { data: postsData, error } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("approved", true)
+  .contains("categories", [category.name])
+  .order("pub_date", { ascending: false });
 
-const categoryPosts = allPosts.filter((post) => 
-  post.data.categories && post.data.categories.includes(slug)
-);
+if (error) {
+  console.error('Kateqoriya postları yüklənərkən xəta:', error);
+}
 
-const sortedPosts = categoryPosts.sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+// Postları formatla
+const sortedPosts = (postsData || []).map(post => ({
+  slug: post.slug,
+  data: {
+    title: post.title,
+    description: post.description,
+    pubDate: new Date(post.pub_date),
+    image: {
+      url: post.image_url || '',
+      alt: post.image_alt || post.title
+    },
+    author: {
+      name: post.author_name,
+      avatar: post.author_avatar || ''
+    },
+    categories: post.categories || []
+  }
+}));
 ---
 
 <BaseLayout title={`${category.name} Kategorisi - Mikroblog`}>

@@ -1,19 +1,47 @@
 ---
-import { getEntry } from "astro:content";
+import { supabase } from "@/db/supabase";
 import MarkdownPostLayout from "../../layouts/BlogLayout.astro";
+import { marked } from "marked";
 
 export const prerender = false;
 
 const { slug } = Astro.params;
-const entry = await getEntry("posts", slug);
- 
-if (!entry) {
+
+// Supabase-dən postu al
+const { data: post, error } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("slug", slug)
+  .single();
+
+if (error || !post) {
+  console.error('Post tapılmadı:', error);
   return new Response(null, { status: 404 });
 }
 
-const { Content } = await entry.render();
+// Markdown-ı HTML-ə çevir
+// Əvvəlcə escape edilmiş \n simvollarını real yeni sətir simvolları ilə əvəz et
+const cleanContent = post.content.replace(/\\n/g, '\n');
+const htmlContent = marked(cleanContent);
+
+// Frontmatter formatında məlumat hazırla
+const frontmatter = {
+  title: post.title,
+  description: post.description,
+  pubDate: new Date(post.pub_date),
+  image: {
+    url: post.image_url || '',
+    alt: post.image_alt || post.title
+  },
+  author: {
+    name: post.author_name,
+    avatar: post.author_avatar || ''
+  },
+  categories: post.categories || [],
+  tags: post.tags || []
+};
 ---
 
-<MarkdownPostLayout frontmatter={entry.data}>
-  <Content />
+<MarkdownPostLayout frontmatter={frontmatter}>
+  <article set:html={htmlContent} />
 </MarkdownPostLayout>

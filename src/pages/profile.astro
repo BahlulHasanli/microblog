@@ -4,7 +4,6 @@ import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import { supabase } from "@/db/supabase";
-import { getCollection } from "astro:content";
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 if (!isLoggedIn) Astro.redirect("/signin");
@@ -27,25 +26,24 @@ if (userError) {
 
 const user = userData;
 
-const allPosts = await getCollection("posts");
+// Supabase-dən postları al
+const { data: postsData, error: postsError } = await supabase
+  .from("posts")
+  .select("*")
+  .order("pub_date", { ascending: false });
 
-const posts = allPosts.map(post => {
-  let imageUrl = post.data.image.url.toString();
-  
-  if (!imageUrl.includes('the99.b-cdn.net')) {
-    const fileName = `${post.slug}-cover.jpg`;
-    imageUrl = `https://the99.b-cdn.net/notes/${post.slug}/images/${fileName}`;
-  }
-  
-  return { 
-    id: post.id,
-    title: post.data.title,
-    description: post.data.description,
-    slug: post.slug,
-    image: imageUrl,
-    created_at: post.data.pubDate.toISOString()
-  };
-});
+if (postsError) {
+  console.error('Postlar yüklənərkən xəta:', postsError);
+}
+
+const posts = (postsData || []).map(post => ({
+  id: post.id,
+  title: post.title,
+  description: post.description,
+  slug: post.slug,
+  image: post.image_url || '',
+  created_at: new Date(post.pub_date).toISOString()
+}));
 ---
 
 <BaseLayout>

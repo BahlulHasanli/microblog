@@ -1,16 +1,14 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PostEditor from '../../components/PostEditor';
-import { getEntry } from "astro:content";
+import { supabase } from "@/db/supabase";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
 
 export const prerender = false;
 
 const { slug } = Astro.params;
 
-// Kullanıcı giriş yapmış mı kontrol et
+// İstifadəçi giriş edibmi yoxla
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
 if (!isLoggedIn) {
@@ -23,35 +21,42 @@ if (!user) {
   return Astro.redirect("/signin");
 }
 
-// Post verisini getir
-const entry = await getEntry("posts", slug);
+// Supabase-dən postu al
+const { data: post, error } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("slug", slug)
+  .single();
 
-if (!entry) {
+if (error || !post) {
+  console.error('Post tapılmadı:', error);
   return new Response(null, { status: 404 });
 }
 
-// Orijinal markdown dosyasını oku
-const fileName = `${slug}.mdx`;
-const filePath = path.join(process.cwd(), "src/content/posts", fileName);
-let rawContent = "";
-
-try {
-  const fileContent = await fs.readFile(filePath, "utf-8");
-  
-  // Frontmatter kısmını ayır
-  const frontmatterEnd = fileContent.indexOf("---", 3) + 3;
-  
-  // İçerik kısmını al (frontmatter sonrası)
-  rawContent = fileContent.substring(frontmatterEnd).trim();
-} catch (error) {
-  console.error("Dosya okuma hatası:", error);
-}
+// Post məlumatlarını formatla
+const postData = {
+  title: post.title,
+  description: post.description,
+  pubDate: new Date(post.pub_date),
+  image: {
+    url: post.image_url || '',
+    alt: post.image_alt || post.title
+  },
+  author: {
+    name: post.author_name,
+    avatar: post.author_avatar || ''
+  },
+  categories: post.categories || [],
+  tags: post.tags || [],
+  approved: post.approved,
+  featured: post.featured
+};
 ---
 
-<BaseLayout title={`${entry.data.title} Düzenle`}>
+<BaseLayout title={`${post.title} Düzenle`}>
   <PostEditor 
-    post={entry.data} 
-    content={rawContent} 
+    post={postData} 
+    content={post.content} 
     slug={slug} 
     author={user} 
     client:visible 

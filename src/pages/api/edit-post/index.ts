@@ -1,10 +1,7 @@
 import type { APIRoute } from "astro";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { requireAuth } from "../../../utils/auth";
-import { getEntry } from "astro:content";
 import { slugify } from "../../../utils/slugify";
-import { categories as CATEGORIES } from "../../../data/categories";
+import { supabase } from "../../../db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -76,9 +73,14 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Mevcut gönderiyi kontrol et
-    const entry = await getEntry("posts", oldSlug);
-    if (!entry) {
+    // Supabase-dən mövcud postu yoxla
+    const { data: existingPost, error: fetchError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("slug", oldSlug)
+      .single();
+
+    if (fetchError || !existingPost) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -92,7 +94,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Orijinal yayın tarihini koru
-    const pubDate = new Date().toISOString().split("T")[0];
+    const pubDate = existingPost.pub_date;
 
     // BunnyCDN məlumatları
     const bunnyApiKey = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
@@ -131,12 +133,6 @@ export const POST: APIRoute = async (context) => {
         console.error("Köhnə folder yoxlanılarkən xəta:", error);
       }
     }
-
-    // Dosya yolunu oluştur
-    const oldFileName = `${oldSlug}.mdx`;
-    const oldFilePath = path.join(process.cwd(), "src/content/posts", oldFileName);
-    const newFileName = `${newSlug}.mdx`;
-    const newFilePath = path.join(process.cwd(), "src/content/posts", newFileName);
 
     // Eğer yüklenen bir resim varsa, Bunny CDN'e yükle
     let coverImageUrl = existingImageUrl;
@@ -262,10 +258,8 @@ export const POST: APIRoute = async (context) => {
     const deletedImageUrls: string[] = [];
     
     try {
-      // Köhnə post məzmununu oxu
-      const fileName = `${oldSlug}.mdx`;
-      const filePath = path.join(process.cwd(), "src/content/posts", fileName);
-      const existingContent = await fs.readFile(filePath, "utf-8");
+      // Köhnə post məzmununu Supabase-dən al
+      const existingContent = existingPost.content;
 
       // Köhnə məzmundakı şəkilləri tap
       const existingImageRegex = /!\[.*?\]\((https:\/\/the99\.b-cdn\.net\/notes\/.*?)\)/g;
@@ -527,37 +521,58 @@ export const POST: APIRoute = async (context) => {
         : "";
 
     // Mövcud approved və featured statusunu saxla
-    const approvedStatus = entry.data.approved || false;
-    const featuredStatus = entry.data.featured || false;
+    const approvedStatus = existingPost.approved || false;
+    const featuredStatus = existingPost.featured || false;
 
-    const markdown = `---
-pubDate: ${pubDate}
-author: 
-  name: "${authorFullname}"
-  avatar: "${authorAvatar}"
-title: "${title}"
-description: "${description}"
-${imageSection}${categoriesSection}approved: ${approvedStatus}
-featured: ${featuredStatus}
----
+    // Supabase-də postu yenilə
+    const { data: updatedPost, error: updateError } = await supabase
+      .from("posts")
+      .update({
+        slug: newSlug,
+        title,
+        description,
+        content: processedContent,
+        pub_date: pubDate,
+        image_url: coverImageUrl || existingPost.image_url,
+        image_alt: imageAlt || title,
+        author_name: authorFullname,
+        author_avatar: authorAvatar,
+        categories: categoriesData,
+        approved: approvedStatus,
+        featured: featuredStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq("slug", oldSlug)
+      .select()
+      .single();
 
-${processedContent}`;
-
-    // Əvvəlcə köhnə faylı yenilə (slug dəyişməsə və ya dəyişsə)
-    await fs.writeFile(oldFilePath, markdown, "utf-8");
-    console.log(`Fayl yeniləndi: ${oldFileName}`);
-    
-    // Əgər slug dəyişibsə, yeni fayl da yarat
-    if (oldSlug !== newSlug) {
-      await fs.writeFile(newFilePath, markdown, "utf-8");
-      console.log(`Yeni fayl yaradıldı: ${newFileName}`);
+    if (updateError) {
+      console.error("Supabase update xətası:", updateError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Post yenilənərkən xəta baş verdi: " + updateError.message,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
+
+    console.log(`Post yeniləndi: ${newSlug}`);
     
     // Əgər slug dəyişibsə, folder əməliyyatlarını tamamla
     if (shouldMoveFolder) {
       try {
         const oldFolder = `notes/${oldSlug}/images`;
         const newFolder = `notes/${newSlug}/images`;
+        
+        console.log(`=== FOLDER KÖÇÜRMƏ BAŞLADI ===`);
+        console.log(`Köhnə folder: ${oldFolder}`);
+        console.log(`Yeni folder: ${newFolder}`);
+        console.log(`Köhnə folder-də fayl sayı: ${oldFolderImages.length}`);
+        console.log(`Silinən şəkillər: ${deletedImageUrls.length}`);
         
         // Yeni folder yarat
         const createFolderResponse = await fetch(
@@ -571,16 +586,21 @@ ${processedContent}`;
         );
         
         if (createFolderResponse.ok || createFolderResponse.status === 201) {
-          console.log(`Yeni folder yaradıldı: ${newFolder}`);
+          console.log(`✓ Yeni folder yaradıldı: ${newFolder}`);
           
           // Köhnə folder-dəki şəkilləri yeni folder-ə köçür (yalnız köhnə folder varsa)
           if (oldFolderImages.length > 0) {
+            console.log(`Köhnə folder-dəki ${oldFolderImages.length} faylı köçürməyə başlayırıq...`);
             for (const file of oldFolderImages) {
               if (!file.IsDirectory) {
                 const oldImageUrl = `https://the99.b-cdn.net/${oldFolder}/${file.ObjectName}`;
                 
                 // Əgər bu şəkil editorda silinməyibsə, köçür
+                console.log(`Fayl yoxlanılır: ${file.ObjectName}, URL: ${oldImageUrl}`);
+                console.log(`Silinən şəkillərdə varmı? ${deletedImageUrls.includes(oldImageUrl)}`);
+                
                 if (!deletedImageUrls.includes(oldImageUrl)) {
+                  console.log(`→ ${file.ObjectName} köçürülür...`);
                   try {
                     // Faylı yüklə
                     const downloadResponse = await fetch(
@@ -611,6 +631,8 @@ ${processedContent}`;
                         newFileName = file.ObjectName.replace(new RegExp(`^${oldSlug}-cover`, 'i'), `${newSlug}-cover`);
                       }
                       
+                      console.log(`  Yeni ad: ${newFileName}`);
+                      
                       // Yeni folder-ə yüklə
                       const uploadResponse = await fetch(
                         `https://${hostname}/${storageZoneName}/${newFolder}/${newFileName}`,
@@ -625,12 +647,18 @@ ${processedContent}`;
                       );
                       
                       if (uploadResponse.ok) {
-                        console.log(`Şəkil köçürüldü: ${file.ObjectName} -> ${newFileName}`);
+                        console.log(`  ✓ Şəkil köçürüldü: ${file.ObjectName} -> ${newFileName}`);
+                      } else {
+                        console.error(`  ✗ Yükləmə xətası: ${uploadResponse.status}`);
                       }
+                    } else {
+                      console.error(`  ✗ Yükləmə xətası: ${downloadResponse.status}`);
                     }
                   } catch (error) {
-                    console.error(`Şəkil köçürülə bilmədi: ${file.ObjectName}`, error);
+                    console.error(`  ✗ Şəkil köçürülə bilmədi: ${file.ObjectName}`, error);
                   }
+                } else {
+                  console.log(`→ ${file.ObjectName} silinib, köçürülməyəcək`);
                 }
               }
             }
@@ -693,35 +721,21 @@ ${processedContent}`;
       }
     }
 
-    // Response göndər (köhnə faylı hələ silmə)
-    const response = new Response(
+    // Response göndər
+    return new Response(
       JSON.stringify({
         success: true,
         message: "Gönderi başarıyla güncellendi",
         slug: newSlug,
         oldSlug: oldSlug,
         slugChanged: oldSlug !== newSlug,
+        post: updatedPost
       }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }
     );
-
-    // Response göndərildikdən sonra köhnə faylı sil (async)
-    // Daha uzun gözlə ki, istifadəçi yeni səhifəyə keçsin
-    if (oldSlug !== newSlug) {
-      setTimeout(async () => {
-        try {
-          await fs.unlink(oldFilePath);
-          console.log(`Köhnə .mdx faylı silindi: ${oldFileName}`);
-        } catch (unlinkError) {
-          console.error(`Köhnə .mdx faylı silinə bilmədi: ${oldFileName}`, unlinkError);
-        }
-      }, 15000); // 15 saniyə sonra sil
-    }
-
-    return response;
   } catch (error) {
     console.error("Post güncelleme hatası:", error);
 

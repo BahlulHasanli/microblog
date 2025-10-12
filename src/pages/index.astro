@@ -1,60 +1,55 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
-import { getCollection } from "astro:content";
 import Slider from "@/components/entries/HomeSlider.astro";
 import { categories, slugifyCategory } from "@/data/categories";
 import { supabase } from "@/db/supabase";
 
+// Supabase-dən postları al
+const { data: postsData, error: postsError } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("approved", true)
+  .order("pub_date", { ascending: false });
+
+if (postsError) {
+  console.error('Postlar yüklənərkən xəta:', postsError);
+}
+
+// İstifadəçi məlumatlarını al
 const { data: userData, error: userError } = await supabase
   .from("users") 
   .select("id, fullname, username, avatar, email")
   .limit(10); 
 
-const user = userData;
+console.log('Postlar:', postsData?.length || 0);
+console.log('İstifadəçilər:', userData?.length || 0);
 
-console.log('user ::>>', user)
-
-// Bütün postları al və yalnız təsdiqlənmişləri filtrələ
-const allPosts = await getCollection("posts");
-const approvedPosts = allPosts.filter(post => post.data.approved == true);
-
-console.log('Bütün postlar:', allPosts.length);
-console.log('Təsdiqlənmiş postlar:', approvedPosts.length);
-
-const posts = approvedPosts.map(post => {
-  let imageUrl = post.data.image.url.toString();
-  
-  if (!imageUrl.includes('the99.b-cdn.net')) {
-    const fileName = `${post.slug}-cover.jpg`;
-    imageUrl = `https://the99.b-cdn.net/notes/${post.slug}/images/${fileName}`;
-  }
-
-  // Yazarın güncel bilgilerini Supabase'den alınan kullanıcılar arasından bulalım
-  const currentAuthorData = userData?.find(u => u.fullname === post.data.author.name);
-  
-  // Eğer yazar bulunduysa, güncel avatar bilgisini kullanalım
-  const updatedAuthor = currentAuthorData 
-    ? { 
-        ...post.data.author, 
-        avatar: currentAuthorData.avatar // Güncel avatar bilgisini kullan
-      } 
-    : post.data.author; // Yazar bulunamazsa mevcut bilgileri kullan
+// Postları formatla
+const posts = (postsData || []).map(post => {
+  // Müəllifin güncel məlumatlarını tap
+  const currentAuthorData = userData?.find(u => u.fullname === post.author_name);
   
   return {
-    ...post,
+    slug: post.slug,
     data: {
-      ...post.data,
+      title: post.title,
+      description: post.description,
+      pubDate: new Date(post.pub_date),
       image: {
-        ...post.data.image,
-        url: imageUrl
+        url: post.image_url || '',
+        alt: post.image_alt || post.title
       },
-      author: updatedAuthor
+      author: {
+        name: post.author_name,
+        avatar: currentAuthorData?.avatar || post.author_avatar || ''
+      },
+      categories: post.categories || [],
+      approved: post.approved,
+      featured: post.featured
     }
   };
-}).sort(
-  (a: any, b: any) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-)
+});
 ---
 
 <BaseLayout>

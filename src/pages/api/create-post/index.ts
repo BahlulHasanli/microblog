@@ -1,9 +1,7 @@
 import type { APIRoute } from "astro";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
 import { requireAuth } from "../../../utils/auth";
 import { slugify } from "../../../utils/slugify";
-import { categories as CATEGORIES } from "../../../data/categories";
+import { supabase } from "../../../db/supabase";
 
 // Global resim sayacı tanımı
 declare global {
@@ -76,12 +74,10 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Tarih oluştur
-    const pubDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD formatı
+    const pubDate = new Date().toISOString();
 
-    // Dosya adını oluştur
+    // Slug oluştur
     const slug = slugify(title);
-    const fileName = `${slug}.mdx`;
-    const filePath = path.join(process.cwd(), "src/content/posts", fileName);
 
     // Eğer yüklenen bir resim varsa, Bunny CDN'e yükle
     let coverImageUrl = "";
@@ -193,44 +189,47 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
-    // Markdown içeriği oluştur
-    let imageSection = "";
-    if (uploadedImage && coverImageUrl) {
-      imageSection = `image:
-  url: "${coverImageUrl}"
-  alt: "${imageAlt || title}"
-`;
+    // Supabase-ə post əlavə et
+    const { data: newPost, error: insertError } = await supabase
+      .from("posts")
+      .insert({
+        slug,
+        title,
+        description,
+        content: processedContent,
+        pub_date: pubDate,
+        image_url: coverImageUrl || null,
+        image_alt: imageAlt || title,
+        author_name: authorFullname,
+        author_avatar: authorAvatar,
+        categories: categoriesData,
+        approved: false,
+        featured: false,
+        tags: []
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Supabase insert xətası:", insertError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Post əlavə edilərkən xəta baş verdi: " + insertError.message,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
-
-    const categoriesSection =
-      categoriesData.length > 0
-        ? `categories: [${categoriesData
-            .map((category) => `"${category}"`)
-            .join(", ")}]`
-        : "";
-
-    const markdown = `---
-pubDate: ${pubDate}
-author: 
-  name: "${authorFullname}"
-  avatar: "${authorAvatar}"
-title: "${title}"
-description: "${description}"
-${imageSection}${categoriesSection}
-approved: false
-featured: false
----
-
-${processedContent}`;
-
-    // Dosyayı oluştur
-    await fs.writeFile(filePath, markdown, "utf-8");
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Gönderi başarıyla oluşturuldu və admin təsdiqi gözləyir",
         slug,
+        post: newPost
       }),
       {
         status: 200,

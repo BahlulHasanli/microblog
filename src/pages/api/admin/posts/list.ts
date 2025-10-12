@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireAdmin } from "@/utils/auth";
-import { getCollection } from "astro:content";
+import { supabase } from "@/db/supabase";
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -20,32 +20,37 @@ export const GET: APIRoute = async (context) => {
     const filter = url.searchParams.get("status") || "all";
     console.log("Filter:", filter);
 
-    // Bütün postları al
-    const allPosts = await getCollection("posts");
-    console.log("Bütün postlar:", allPosts.length);
+    // Supabase-dən postları al
+    let query = supabase.from("posts").select("*").order("pub_date", { ascending: false });
 
     // Filtrələ
-    let posts = allPosts;
     if (filter === "pending") {
-      posts = allPosts.filter(post => post.data.approved === false);
+      query = query.eq("approved", false);
     } else if (filter === "approved") {
-      posts = allPosts.filter(post => post.data.approved === true);
+      query = query.eq("approved", true);
     }
 
-    console.log("Filtrlənmiş postlar:", posts.length);
+    const { data: posts, error } = await query;
+
+    if (error) {
+      console.error("Supabase xətası:", error);
+      throw error;
+    }
+
+    console.log("Postlar alındı:", posts?.length || 0);
 
     // Response formatına çevir
-    const formattedPosts = posts.map(post => ({
-      id: post.slug,
+    const formattedPosts = (posts || []).map(post => ({
+      id: post.id,
       slug: post.slug,
-      title: post.data.title,
-      description: post.data.description,
-      author_name: post.data.author.name,
-      author_avatar: post.data.author.avatar,
-      status: post.data.approved ? "approved" : "pending",
-      featured: post.data.featured || false,
-      created_at: post.data.pubDate.toISOString(),
-    })).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      title: post.title,
+      description: post.description,
+      author_name: post.author_name,
+      author_avatar: post.author_avatar,
+      status: post.approved ? "approved" : "pending",
+      featured: post.featured || false,
+      created_at: new Date(post.pub_date).toISOString(),
+    }));
 
     console.log("Response göndərilir:", formattedPosts.length, "post");
 

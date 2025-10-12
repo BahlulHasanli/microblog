@@ -1,25 +1,42 @@
 ---
-import { getCollection } from "astro:content";
+import { supabase } from "@/db/supabase";
 import SliderReadMoreBtn from "@/components/ui/SliderReadMoreBtn.svelte";
 
-// Featured postları al
-const allPosts = await getCollection("posts");
-const featuredPosts = allPosts.filter(post => post.data.featured === true && post.data.approved === true);
+// Supabase-dən featured postları al
+const { data: featuredPostsData, error } = await supabase
+  .from("posts")
+  .select("*")
+  .eq("featured", true)
+  .eq("approved", true)
+  .order("pub_date", { ascending: false })
+  .limit(1);
 
-// İlk featured postu götür və ya default göstər
-const featuredPost = featuredPosts.length > 0 ? featuredPosts[0] : null;
-
-let backgroundImage = "https://images7.alphacoders.com/139/thumb-1920-1396381.jpg";
-
-if (featuredPost) {
-  backgroundImage = featuredPost.data.image.url;
-
-  if (!backgroundImage.includes('the99.b-cdn.net')) {
-    const fileName = `${featuredPost.slug}-cover.jpg`;
-  
-    backgroundImage = `https://the99.b-cdn.net/notes/${featuredPost.slug}/images/${fileName}`;
-  }
+if (error) {
+  console.error('Featured postlar yüklənərkən xəta:', error);
 }
+
+// İlk featured postu formatla
+const featuredPostData = featuredPostsData && featuredPostsData.length > 0 ? featuredPostsData[0] : null;
+
+const featuredPost = featuredPostData ? {
+  slug: featuredPostData.slug,
+  data: {
+    title: featuredPostData.title,
+    description: featuredPostData.description,
+    pubDate: new Date(featuredPostData.pub_date),
+    image: {
+      url: featuredPostData.image_url || "https://images7.alphacoders.com/139/thumb-1920-1396381.jpg",
+      alt: featuredPostData.image_alt || featuredPostData.title
+    },
+    author: {
+      name: featuredPostData.author_name,
+      avatar: featuredPostData.author_avatar || ''
+    },
+    featured: featuredPostData.featured
+  }
+} : null;
+
+const backgroundImage = featuredPost?.data.image.url || "https://images7.alphacoders.com/139/thumb-1920-1396381.jpg";
 ---
 
 {featuredPost && (

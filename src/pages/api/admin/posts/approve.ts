@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireAdmin } from "@/utils/auth";
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
+import { supabase } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -26,51 +25,30 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // MDX faylını oxu
-    const fileName = `${postId}.mdx`;
-    const filePath = path.join(process.cwd(), "src/content/posts", fileName);
+    // Supabase-də postu yenilə
+    const updateData: any = {
+      approved: approve !== false,
+      updated_at: new Date().toISOString()
+    };
 
-    try {
-      const content = await fs.readFile(filePath, "utf-8");
-      
-      let updatedContent;
-      if (approve === false) {
-        // approved: true-nu approved: false ilə əvəz et
-        updatedContent = content.replace(
-          /approved:\s*true/,
-          "approved: false"
-        );
-        // Yayımdan çıxardıqda featured də false olsun
-        updatedContent = updatedContent.replace(
-          /featured:\s*true/,
-          "featured: false"
-        );
-      } else {
-        // approved: false-u approved: true ilə əvəz et
-        updatedContent = content.replace(
-          /approved:\s*false/,
-          "approved: true"
-        );
-      }
+    // Yayımdan çıxardıqda featured də false olsun
+    if (approve === false) {
+      updateData.featured = false;
+    }
 
-      // Faylı yenilə
-      await fs.writeFile(filePath, updatedContent, "utf-8");
+    const { data, error } = await supabase
+      .from("posts")
+      .update(updateData)
+      .eq("slug", postId)
+      .select()
+      .single();
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: approve === false ? "Post yayımdan çıxarıldı" : "Post uğurla təsdiq edildi",
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    } catch (fileError) {
+    if (error) {
+      console.error("Supabase update xətası:", error);
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Post faylı tapılmadı",
+          message: "Post tapılmadı və ya yenilənə bilmədi",
         }),
         {
           status: 404,
@@ -78,6 +56,18 @@ export const POST: APIRoute = async (context) => {
         }
       );
     }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: approve === false ? "Post yayımdan çıxarıldı" : "Post uğurla təsdiq edildi",
+        post: data
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   } catch (error) {
     console.error("Post təsdiq xətası:", error);
     return new Response(
