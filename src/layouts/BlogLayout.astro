@@ -5,6 +5,7 @@ import { categories as CATEGORIES } from "../data/categories";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import { formatSimpleDate } from "@/utils/date";
 
 const { frontmatter } = Astro.props;
 
@@ -47,7 +48,7 @@ if (isLoggedIn) {
           <div class="mt-3">
             <span class="text-md font-medium text-base-700">{frontmatter.author.name}</span>
             <p class="text-xs text-zinc-400">
-              {frontmatter.pubDate.toString().slice(0, 10)}
+              {formatSimpleDate(frontmatter.pubDate)}
             </p>
           </div>
         </div>

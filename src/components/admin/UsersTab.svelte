@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { formatFullDate } from '@/utils/date';
+  import ConfirmModal from './ConfirmModal.svelte';
+  import AlertModal from './AlertModal.svelte';
 
   interface User {
     id: string;
@@ -14,6 +17,23 @@
   let users: User[] = $state([]);
   let loading = $state(true);
   let editingUser: User | null = $state(null);
+
+  // Modal state
+  let confirmModal = $state({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Təsdiq et',
+    variant: 'primary' as 'danger' | 'success' | 'warning' | 'primary',
+    onConfirm: () => {}
+  });
+
+  let alertModal = $state({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info' as 'success' | 'error' | 'info' | 'warning'
+  });
 
   onMount(() => {
     loadUsers();
@@ -35,28 +55,44 @@
     }
   }
 
+  function showAlert(message: string, variant: 'success' | 'error' | 'info' | 'warning' = 'info', title?: string) {
+    alertModal = {
+      isOpen: true,
+      title: title || '',
+      message,
+      variant
+    };
+  }
+
   async function handleDelete(userId: string) {
-    if (!confirm("Bu istifadəçini silmək istədiyinizə əminsiniz?")) return;
+    confirmModal = {
+      isOpen: true,
+      title: 'İstifadəçi silinməsi',
+      message: "Bu istifadəçini silmək istədiyinizə əminsiniz? Bu əməliyyat geri alına bilməz.",
+      confirmText: 'Sil',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch("/api/admin/users/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId }),
+          });
 
-    try {
-      const response = await fetch("/api/admin/users/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
+          const data = await response.json();
 
-      const data = await response.json();
-
-      if (data.success) {
-        alert("İstifadəçi silindi");
-        loadUsers();
-      } else {
-        alert(data.message || "Xəta baş verdi");
+          if (data.success) {
+            showAlert("İstifadəçi uğurla silindi", 'success', 'Uğurlu');
+            loadUsers();
+          } else {
+            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+          }
+        } catch (error) {
+          console.error("Silmə xətası:", error);
+          showAlert("Xəta baş verdi", 'error', 'Xəta');
+        }
       }
-    } catch (error) {
-      console.error("Silmə xətası:", error);
-      alert("Xəta baş verdi");
-    }
+    };
   }
 
   async function handleUpdate() {
@@ -78,15 +114,15 @@
       const data = await response.json();
 
       if (data.success) {
-        alert("İstifadəçi yeniləndi");
+        showAlert("İstifadəçi məlumatları uğurla yeniləndi", 'success', 'Uğurlu');
         editingUser = null;
         loadUsers();
       } else {
-        alert(data.message || "Xəta baş verdi");
+        showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
       }
     } catch (error) {
       console.error("Yeniləmə xətası:", error);
-      alert("Xəta baş verdi");
+      showAlert("Xəta baş verdi", 'error', 'Xəta');
     }
   }
 </script>
@@ -200,11 +236,7 @@
                 </div>
               </td>
               <td class="hidden xl:table-cell px-4 sm:px-6 py-4 sm:py-5 whitespace-nowrap text-xs text-base-500">
-                {new Date(user.created_at).toLocaleDateString("az-AZ", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
+                {formatFullDate(user.created_at)}
               </td>
               <td class="px-4 sm:px-6 py-4 sm:py-5">
                 <div class="flex flex-row flex-wrap items-center gap-2">
@@ -378,3 +410,22 @@
     </div>
   {/if}
 </div>
+
+<!-- Modals -->
+<ConfirmModal
+  bind:isOpen={confirmModal.isOpen}
+  title={confirmModal.title}
+  message={confirmModal.message}
+  confirmText={confirmModal.confirmText}
+  confirmVariant={confirmModal.variant}
+  onConfirm={confirmModal.onConfirm}
+  onCancel={() => {}}
+/>
+
+<AlertModal
+  bind:isOpen={alertModal.isOpen}
+  title={alertModal.title}
+  message={alertModal.message}
+  variant={alertModal.variant}
+  onClose={() => {}}
+/>

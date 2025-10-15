@@ -1,6 +1,7 @@
 ---
 import { supabase } from "@/db/supabase";
 import SliderReadMoreBtn from "@/components/ui/SliderReadMoreBtn.svelte";
+import { formatShortDate, formatSimpleDate } from "@/utils/date";
 
 // Supabase-dən featured postları al
 const { data: featuredPostsData, error } = await supabase
@@ -84,9 +85,9 @@ const backgroundImage = featuredPost?.data.image.url || "https://images7.alphaco
                       {featuredPost && featuredPost.data.author.name}
                     </span>
                     <p class="text-white/50 font-light text-[11px]">
-                      {featuredPost && new Date(featuredPost.data.pubDate).toLocaleDateString('az-AZ', { day: 'numeric', month: 'long' })}
+                      {featuredPost && formatSimpleDate(featuredPost.data.pubDate)}
                     </p>
-                   </div>
+                   </div> 
                </div>
 
                <SliderReadMoreBtn client:idle slug={featuredPost.slug} />

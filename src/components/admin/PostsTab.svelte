@@ -1,5 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { formatFullDate } from '@/utils/date';
+  import ConfirmModal from './ConfirmModal.svelte';
+  import AlertModal from './AlertModal.svelte';
 
   interface Post {
     id: string;
@@ -20,6 +23,23 @@
   let posts: Post[] = $state([]);
   let loading = $state(true);
   let filter: 'all' | 'pending' | 'approved' = $state('all');
+
+  // Modal state
+  let confirmModal = $state({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Təsdiq et',
+    variant: 'primary' as 'danger' | 'success' | 'warning' | 'primary',
+    onConfirm: () => {}
+  });
+
+  let alertModal = $state({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info' as 'success' | 'error' | 'info' | 'warning'
+  });
 
   // Filter dəyişəndə avtomatik yenidən yüklə
   $effect(() => {
@@ -50,56 +70,77 @@
     }
   }
 
+  function showAlert(message: string, variant: 'success' | 'error' | 'info' | 'warning' = 'info', title?: string) {
+    alertModal = {
+      isOpen: true,
+      title: title || '',
+      message,
+      variant
+    };
+  }
+
   async function handleApprove(postId: string, approve: boolean = true) {
-    const message = approve 
-      ? "Bu postu təsdiq etmək istədiyinizə əminsiniz?" 
-      : "Bu postu yayımdan çıxarmaq istədiyinizə əminsiniz?";
-    
-    if (!confirm(message)) return;
+    confirmModal = {
+      isOpen: true,
+      title: approve ? 'Post təsdiqi' : 'Yayımdan çıxarma',
+      message: approve 
+        ? "Bu postu təsdiq etmək istədiyinizə əminsiniz?" 
+        : "Bu postu yayımdan çıxarmaq istədiyinizə əminsiniz?",
+      confirmText: approve ? 'Təsdiq et' : 'Yayımdan çıxart',
+      variant: approve ? 'success' : 'warning',
+      onConfirm: async () => {
+        try {
+          const response = await fetch("/api/admin/posts/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId, approve }),
+          });
 
-    try {
-      const response = await fetch("/api/admin/posts/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, approve }),
-      });
+          const data = await response.json();
 
-      const data = await response.json();
-
-      if (data.success) {
-        alert(data.message);
-        loadPosts();
-      } else {
-        alert(data.message || "Xəta baş verdi");
+          if (data.success) {
+            showAlert(data.message, 'success', 'Uğurlu');
+            loadPosts();
+          } else {
+            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+          }
+        } catch (error) {
+          console.error("Təsdiq xətası:", error);
+          showAlert("Xəta baş verdi", 'error', 'Xəta');
+        }
       }
-    } catch (error) {
-      console.error("Təsdiq xətası:", error);
-      alert("Xəta baş verdi");
-    }
+    };
   }
 
   async function handleDelete(postId: string, slug: string) {
-    if (!confirm("Bu postu silmək istədiyinizə əminsiniz?")) return;
+    confirmModal = {
+      isOpen: true,
+      title: 'Post silinməsi',
+      message: "Bu postu silmək istədiyinizə əminsiniz? Bu əməliyyat geri alına bilməz.",
+      confirmText: 'Sil',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const response = await fetch("/api/admin/posts/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId, slug }),
+          });
+     
+          const data = await response.json();
 
-    try {
-      const response = await fetch("/api/admin/posts/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, slug }),
-      });
- 
-      const data = await response.json();
-
-      if (data.success) {
-        alert("Post silindi");
-        loadPosts();
-      } else {
-        alert(data.message || "Xəta baş verdi");
+          if (data.success) {
+            showAlert("Post uğurla silindi", 'success', 'Uğurlu');
+            loadPosts();
+          } else {
+            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+          }
+        } catch (error) {
+          console.error("Silmə xətası:", error);
+          showAlert("Xəta baş verdi", 'error', 'Xəta');
+        }
       }
-    } catch (error) {
-      console.error("Silmə xətası:", error);
-      alert("Xəta baş verdi");
-    }
+    };
   }
 
   function handleEdit(slug: string) {
@@ -107,31 +148,36 @@
   }
 
   async function handleFeatured(postId: string, featured: boolean) {
-    const message = featured 
-      ? "Bu postu önə çıxarmaq istədiyinizə əminsiniz?" 
-      : "Bu postu önə çıxarmadan çıxarmaq istədiyinizə əminsiniz?";
-    
-    if (!confirm(message)) return;
+    confirmModal = {
+      isOpen: true,
+      title: featured ? 'Önə çıxarma' : 'Önə çıxarmadan çıxarma',
+      message: featured 
+        ? "Bu postu önə çıxarmaq istədiyinizə əminsiniz?" 
+        : "Bu postu önə çıxarmadan çıxarmaq istədiyinizə əminsiniz?",
+      confirmText: featured ? 'Önə çıxart' : 'Çıxart',
+      variant: 'primary',
+      onConfirm: async () => {
+        try {
+          const response = await fetch("/api/admin/posts/featured", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ postId, featured }),
+          });
 
-    try {
-      const response = await fetch("/api/admin/posts/featured", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId, featured }),
-      });
+          const data = await response.json();
 
-      const data = await response.json();
-
-      if (data.success) {
-        alert(data.message);
-        loadPosts();
-      } else {
-        alert(data.message || "Xəta baş verdi");
+          if (data.success) {
+            showAlert(data.message, 'success', 'Uğurlu');
+            loadPosts();
+          } else {
+            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+          }
+        } catch (error) {
+          console.error("Featured toggle xətası:", error);
+          showAlert("Xəta baş verdi", 'error', 'Xəta');
+        }
       }
-    } catch (error) {
-      console.error("Featured toggle xətası:", error);
-      alert("Xəta baş verdi");
-    }
+    };
   }
 </script>
 
@@ -267,11 +313,7 @@
                 </div>
               </td>
               <td class="hidden lg:table-cell px-4 sm:px-6 py-4 sm:py-5 whitespace-nowrap text-xs text-base-500">
-                {new Date(post.created_at).toLocaleDateString("az-AZ", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
+                {formatFullDate(post.created_at)}
               </td>
               <td class="px-4 sm:px-6 py-4 sm:py-5">
                 <div class="flex flex-row flex-wrap items-center gap-2">
@@ -383,3 +425,22 @@
     </div>
   {/if}
 </div>
+
+<!-- Modals -->
+<ConfirmModal
+  bind:isOpen={confirmModal.isOpen}
+  title={confirmModal.title}
+  message={confirmModal.message}
+  confirmText={confirmModal.confirmText}
+  confirmVariant={confirmModal.variant}
+  onConfirm={confirmModal.onConfirm}
+  onCancel={() => {}}
+/>
+
+<AlertModal
+  bind:isOpen={alertModal.isOpen}
+  title={alertModal.title}
+  message={alertModal.message}
+  variant={alertModal.variant}
+  onClose={() => {}}
+/>

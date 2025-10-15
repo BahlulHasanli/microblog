@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import moment from 'moment';
   import PostsTab from './PostsTab.svelte';
   import UsersTab from './UsersTab.svelte';
   import SettingsTab from './SettingsTab.svelte';
@@ -34,10 +35,9 @@
         ).length;
 
         // Son 7 gündə qeydiyyatdan keçmiş istifadəçilər
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgo = moment().subtract(7, 'days');
         const newUsers = usersData.users.filter(
-          (u: any) => new Date(u.created_at) > sevenDaysAgo
+          (u: any) => moment(u.created_at).isAfter(sevenDaysAgo)
         ).length;
 
         stats = {

@@ -4,6 +4,7 @@ import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import { supabase } from "@/db/supabase";
+import { formatISO } from "@/utils/date";
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 if (!isLoggedIn) Astro.redirect("/signin");
@@ -42,7 +43,7 @@ const posts = (postsData || []).map(post => ({
   description: post.description,
   slug: post.slug,
   image: post.image_url || '',
-  created_at: new Date(post.pub_date).toISOString()
+  created_at: formatISO(post.pub_date)
 }));
 ---
 

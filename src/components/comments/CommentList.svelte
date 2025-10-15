@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { formatDate as formatDateUtil } from '@/utils/date';
   import { supabase } from '@/db/supabase';
   import CommentForm from './CommentForm.svelte';
 
@@ -34,14 +35,7 @@
   }
 
   function formatDate(dateString: string) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('az-AZ', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateUtil(dateString, 'D MMMM YYYY, HH:mm');
   }
 
   async function fetchComments() {

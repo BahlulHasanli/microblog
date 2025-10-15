@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import AlertModal from './AlertModal.svelte';
 
   interface Settings {
     site_title: string;
@@ -28,6 +29,14 @@
   let loading = $state(true);
   let saving = $state(false);
 
+  // Modal state
+  let alertModal = $state({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info' as 'success' | 'error' | 'info' | 'warning'
+  });
+
   onMount(() => {
     loadSettings();
   });
@@ -48,6 +57,15 @@
     }
   }
 
+  function showAlert(message: string, variant: 'success' | 'error' | 'info' | 'warning' = 'info', title?: string) {
+    alertModal = {
+      isOpen: true,
+      title: title || '',
+      message,
+      variant
+    };
+  }
+
   async function handleSave() {
     try {
       saving = true;
@@ -60,13 +78,13 @@
       const data = await response.json();
 
       if (data.success) {
-        alert("Nizamlamalar yadda saxlanıldı");
+        showAlert("Nizamlamalar uğurla yadda saxlanıldı", 'success', 'Uğurlu');
       } else {
-        alert(data.message || "Xəta baş verdi");
+        showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
       }
     } catch (error) {
       console.error("Saxlama xətası:", error);
-      alert("Xəta baş verdi");
+      showAlert("Xəta baş verdi", 'error', 'Xəta');
     } finally {
       saving = false;
     }
@@ -382,3 +400,12 @@
 
   {/if}
 </div>
+
+<!-- Modal -->
+<AlertModal
+  bind:isOpen={alertModal.isOpen}
+  title={alertModal.title}
+  message={alertModal.message}
+  variant={alertModal.variant}
+  onClose={() => {}}
+/>
