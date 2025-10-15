@@ -1,3 +1,4 @@
+import { formatSimpleDate } from "@/utils/date";
 import { formatDistanceToNow } from "date-fns";
 import { tr } from "date-fns/locale";
 
@@ -15,39 +16,53 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const formattedDate = formatDistanceToNow(new Date(post.created_at), {
-    addSuffix: true,
-    locale: tr,
-  });
-
   return (
-    <article className="flex flex-col flex-1 h-full group">
-      <a href={`/posts/${post.slug}`} title={post.title} className="block">
-        <div className="block w-full">
+    <article className="flex flex-col h-full group">
+      <a
+        href={`/posts/${post.slug}`}
+        title={post.title}
+        className="block overflow-hidden rounded-xl border border-base-200 hover:border-base-300 transition-colors"
+      >
+        <div className="relative w-full aspect-[4/3] overflow-hidden bg-base-100">
           <img
             src={post.image}
             alt={post.title}
-            className="object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
+            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
           />
         </div>
       </a>
 
-      <div className="mt-5">
-        <div className="flex items-center space-x-1 gap-2 text-xs text-base-500">
-          {/* Profil sayfasında yazar bilgisi olmadığı için tarih gösteriyoruz */}
-          <span className="font-medium">{formattedDate}</span>
+      <div className="mt-4">
+        <div className="flex items-center gap-2 text-xs text-base-500 mb-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="size-3.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+            />
+          </svg>
+          <span className="font-medium">
+            {formatSimpleDate(post.created_at)}
+          </span>
         </div>
 
-        <h3 className="mt-4 text-base text-base-900 text-balance">
+        <h3 className="text-lg font-semibold text-base-900 text-balance mb-2 leading-snug">
           <a
-            href={`/notes/${post.slug}`}
-            className="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy"
+            href={`/posts/${post.slug}`}
+            className="hover:text-rose-600 transition-colors"
           >
             {post.title}
           </a>
         </h3>
 
-        <p className="mt-1 text-sm text-base-500 line-clamp-2">
+        <p className="text-sm text-base-600 line-clamp-2 leading-relaxed">
           {post.description}
         </p>
       </div>

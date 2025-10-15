@@ -86,20 +86,21 @@ export default function ProfileEditModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 relative animate-fadeIn">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
+      <div className="bg-white rounded-2xl max-w-md w-full p-8 relative shadow-2xl animate-slideUp">
         {/* Kapat butonu */}
         <button
           onClick={onClose}
-          className="absolute top-4 cursor-pointer right-4 text-base-500 hover:text-base-900"
+          className="absolute top-6 cursor-pointer right-6 text-base-400 hover:text-base-900 transition-colors p-1 hover:bg-base-100 rounded-lg"
+          aria-label="Bağla"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={1.5}
+            strokeWidth={2}
             stroke="currentColor"
-            className="size-6"
+            className="size-5"
           >
             <path
               strokeLinecap="round"
@@ -109,24 +110,52 @@ export default function ProfileEditModal({
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold text-base-900 mb-6">Profi düzəliş</h2>
+        <h2 className="text-2xl font-bold text-base-900 mb-8">Profili redaktə et</h2>
 
         {success ? (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
-            Profiliniz uğurla yeniləndi!
+          <div className="bg-green-50 border border-green-200 text-green-700 px-5 py-4 rounded-xl mb-6 flex items-center gap-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="size-5 flex-shrink-0"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            <span className="font-medium">Profiliniz uğurla yeniləndi!</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-                {error}
+              <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl mb-6 flex items-center gap-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="size-5 flex-shrink-0"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z"
+                  />
+                </svg>
+                <span className="font-medium">{error}</span>
               </div>
             )}
 
-            <div className="mb-4">
+            <div className="mb-5">
               <label
                 htmlFor="fullname"
-                className="block text-sm font-medium text-base-700 mb-1"
+                className="block text-sm font-semibold text-base-900 mb-2"
               >
                 Ad Soyad
               </label>
@@ -136,20 +165,21 @@ export default function ProfileEditModal({
                 name="fullname"
                 value={formData.fullname}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all"
+                placeholder="Adınızı daxil edin"
                 required
               />
             </div>
 
-            <div className="mb-6">
+            <div className="mb-8">
               <label
                 htmlFor="username"
-                className="block text-sm font-medium text-base-700 mb-1"
+                className="block text-sm font-semibold text-base-900 mb-2"
               >
                 İstifadəçi adı
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-base-500">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-base-500 font-medium">
                   @
                 </span>
                 <input
@@ -158,7 +188,8 @@ export default function ProfileEditModal({
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full pl-8 pr-3 py-2 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  className="w-full pl-9 pr-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all"
+                  placeholder="istifadechi_adi"
                   required
                 />
               </div>
@@ -169,14 +200,14 @@ export default function ProfileEditModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 cursor-pointer border border-base-300 rounded-lg text-base-700 hover:bg-base-50"
+                className="px-5 py-2.5 cursor-pointer border border-base-300 rounded-xl text-base-700 font-medium hover:bg-base-50 hover:border-base-400 transition-all"
               >
                 Ləğv et
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 cursor-pointer bg-rose-500 text-white rounded-lg hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 cursor-pointer bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
               >
                 {loading ? "Yenilənir..." : "Yadda saxla"}
               </button>
