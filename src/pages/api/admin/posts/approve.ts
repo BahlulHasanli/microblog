@@ -39,7 +39,7 @@ export const POST: APIRoute = async (context) => {
     const { data, error } = await supabase
       .from("posts")
       .update(updateData)
-      .eq("slug", postId)
+      .eq("id", postId)
       .select()
       .single();
 

@@ -25,6 +25,14 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
+    // Əgər post önə çıxarılırsa, əvvəlcə bütün digər postların featured-ini false et
+    if (featured === true) {
+      await supabase
+        .from("posts")
+        .update({ featured: false })
+        .neq("id", postId);
+    }
+
     // Supabase-də postu yenilə
     const { data, error } = await supabase
       .from("posts")
@@ -32,7 +40,7 @@ export const POST: APIRoute = async (context) => {
         featured: featured === true,
         updated_at: new Date().toISOString()
       })
-      .eq("slug", postId)
+      .eq("id", postId)
       .select()
       .single();
 
