@@ -431,20 +431,46 @@ export const POST: APIRoute = async (context) => {
     
     // Əgər slug dəyişibsə, içərikdəki köhnə slug-lı URL-ləri yeni slug ilə əvəz et
     if (oldSlug !== newSlug) {
-      // Folder path-i yenilə
-      const oldUrlPattern = new RegExp(`https://the99\\.b-cdn\\.net/notes/${oldSlug}/`, 'g');
-      const newUrlPrefix = `https://the99.b-cdn.net/notes/${newSlug}/`;
-      processedContent = processedContent.replace(oldUrlPattern, newUrlPrefix);
+      console.log(`\n=== MƏZMUNDA URL YENİLƏMƏ ===`);
+      console.log(`Köhnə slug: ${oldSlug}`);
+      console.log(`Yeni slug: ${newSlug}`);
       
-      // Şəkil adlarını yenilə (məsələn: gta6-1.jpeg -> gta7-1.jpeg)
-      const oldSlugPattern = new RegExp(`/${oldSlug}-(\\d+)\\.(jpg|jpeg|png|gif|webp)`, 'gi');
-      processedContent = processedContent.replace(oldSlugPattern, `/${newSlug}-$1.$2`);
+      // Köhnə URL pattern: https://the99.b-cdn.net/notes/oldSlug/
+      const oldUrlBase = `https://the99.b-cdn.net/notes/${oldSlug}/`;
+      const newUrlBase = `https://the99.b-cdn.net/notes/${newSlug}/`;
       
-      // Cover image adını da yenilə (məsələn: gta6-cover.jpeg -> gta7-cover.jpeg)
-      const oldCoverPattern = new RegExp(`/${oldSlug}-cover\\.(jpg|jpeg|png|gif|webp)`, 'gi');
-      processedContent = processedContent.replace(oldCoverPattern, `/${newSlug}-cover.$1`);
+      console.log(`Köhnə URL bazası: ${oldUrlBase}`);
+      console.log(`Yeni URL bazası: ${newUrlBase}`);
       
-      console.log(`İçərikdəki URL-lər və şəkil adları yeniləndi: ${oldSlug} -> ${newSlug}`);
+      // Bütün köhnə URL-ləri yeni URL ilə əvəz et
+      const urlCount = (processedContent.match(new RegExp(oldUrlBase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+      console.log(`Məzmunda ${urlCount} köhnə URL tapıldı`);
+      
+      if (urlCount > 0) {
+        // 1. Folder path-ini dəyiş (notes/oldSlug/ -> notes/newSlug/)
+        processedContent = processedContent.replaceAll(oldUrlBase, newUrlBase);
+        console.log(`✅ Folder path dəyişdirildi`);
+        
+        // 2. Şəkil adlarını dəyiş
+        // Bütün fayl adlarında oldSlug-u newSlug ilə əvəz et
+        // Format: oldSlug-XXXXXX.ext -> newSlug-XXXXXX.ext
+        // Nümunə: ererererer-52320b87.png -> opopopopopo-52320b87.png
+        
+        // Escape special regex characters in oldSlug
+        const escapedOldSlug = oldSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
+        // Pattern: oldSlug-[hər hansı simvollar].[uzantı]
+        const imagePattern = new RegExp(`${escapedOldSlug}-([a-zA-Z0-9]+)\\.(jpg|jpeg|png|gif|webp|svg)`, 'gi');
+        
+        const imageMatches = processedContent.match(imagePattern);
+        console.log(`Tapılan şəkil adları:`, imageMatches);
+        
+        processedContent = processedContent.replace(imagePattern, `${newSlug}-$1.$2`);
+        
+        console.log(`✅ Məzmunda URL-lər və şəkil adları yeniləndi`);
+      } else {
+        console.log(`ℹ️ Məzmunda köhnə URL tapılmadı`);
+      }
     }
     
     console.log("Orijinal içerik:", processedContent);
