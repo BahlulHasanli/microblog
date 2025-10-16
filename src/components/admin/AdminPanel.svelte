@@ -4,10 +4,11 @@
   import PostsTab from './PostsTab.svelte';
   import UsersTab from './UsersTab.svelte';
   import SettingsTab from './SettingsTab.svelte';
+  import CommentsTab from './CommentsTab.svelte';
 
   export let user: any;
 
-  let activeTab: 'posts' | 'users' | 'settings' = 'posts';
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' = 'posts';
   let stats = {
     totalPosts: 0,
     pendingPosts: 0,
@@ -281,6 +282,30 @@
             {/if}
           </button>
           <button
+            on:click={() => activeTab = 'comments'}
+            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'comments' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+          >
+            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+              <svg
+                class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              Şərhlər
+            </span>
+            {#if activeTab === 'comments'}
+              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+            {/if}
+          </button>
+          <button
             on:click={() => activeTab = 'settings'}
             class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'settings' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
           >
@@ -319,6 +344,8 @@
           <PostsTab />
         {:else if activeTab === 'users'}
           <UsersTab />
+        {:else if activeTab === 'comments'}
+          <CommentsTab />
         {:else}
           <SettingsTab />
         {/if}
