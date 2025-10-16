@@ -1,0 +1,99 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { supabase } from '@/db/supabase';
+import CommentDetail from '@/components/comments/CommentDetail.svelte';
+import { getUserFromCookies } from '@/utils/auth';
+
+const { postSlug, commentId } = Astro.params;
+
+// Fetch the main comment
+const { data: comment, error: commentError } = await supabase
+  .from('comments')
+  .select(`
+    *,
+    users:user_id (avatar, fullname)
+  `)
+  .eq('id', commentId)
+  .eq('post_slug', postSlug)
+  .single();
+
+if (commentError || !comment) {
+  return Astro.redirect('/404');
+}
+
+// Fetch replies to this comment
+const { data: replies, error: repliesError } = await supabase
+  .from('comments')
+  .select('*')
+  .eq('parent_id', commentId)
+  .order('created_at', { ascending: true });
+
+// Fetch post info
+const { data: posts } = await supabase
+  .from('posts')
+  .select('title, description, image_url, image_alt, categories')
+  .eq('slug', postSlug)
+  .single();
+
+const processedComment = {
+  ...comment,
+  user_avatar: comment.users?.avatar || null,
+  user_fullname: comment.users?.fullname || comment.user_name
+};
+
+// Get reply counts and user info for each reply
+const processedReplies = await Promise.all(
+  (replies || []).map(async (reply) => {
+    // Get reply count
+    const { count } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('parent_id', reply.id);
+
+    // Get user info
+    const { data: userData } = await supabase
+      .from('users')
+      .select('avatar, fullname')
+      .eq('id', reply.user_id)
+      .single();
+
+    return {
+      ...reply,
+      user_avatar: userData?.avatar || null,
+      user_fullname: userData?.fullname || reply.user_name,
+      reply_count: count || 0
+    };
+  })
+);
+
+// Check if user is logged in
+const userData = await getUserFromCookies(Astro.cookies, Astro.redirect);
+const user = userData ? {
+  id: userData.id,
+  email: userData.email,
+  name: userData.name || userData.email.split('@')[0],
+  fullname: userData.fullname || userData.name || userData.email.split('@')[0]
+} : null;
+
+// Determine back URL - if this comment has a parent, go to parent comment page, otherwise go to post
+const backUrl = processedComment.parent_id 
+  ? `/posts/comment/${postSlug}/${processedComment.parent_id}`
+  : `/posts/${postSlug}`;
+---
+
+<BaseLayout title={`Şərh - ${posts?.title || 'Post'}`}>
+  <CommentDetail 
+    client:load
+    postSlug={postSlug}
+    commentId={commentId}
+    initialComment={processedComment}
+    initialReplies={processedReplies}
+    initialUser={user}
+    backUrl={backUrl}
+    postTitle={posts?.title}
+    postDescription={posts?.description}
+    postImage={posts?.image_url}
+    postImageAlt={posts?.image_alt}
+    postCategories={posts?.categories}
+  />
+</BaseLayout>

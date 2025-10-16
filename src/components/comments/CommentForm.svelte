@@ -42,7 +42,11 @@
       if (supabaseError) throw supabaseError;
       
       content = '';
-      if (onCommentAdded) onCommentAdded();
+      
+      // Call callback if exists
+      if (onCommentAdded) {
+        onCommentAdded();
+      }
     } catch (err) {
       console.error('Error submitting comment:', err);
       error = 'Şərhiniz göndərilmədi. Xəta baş verdi!';

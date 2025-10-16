@@ -3,6 +3,7 @@
   import { formatDate as formatDateUtil } from '@/utils/date';
   import { supabase } from '@/db/supabase';
   import CommentForm from './CommentForm.svelte';
+  import { navigate } from "astro:transitions/client";
 
   let {postSlug, user} = $props();
 
@@ -18,21 +19,15 @@
     user_name: string;
     user_fullname?: string;
     user_avatar?: string;
+    reply_count?: number;
   }
 
   let comments: Comment[] = $state([]);
   let loading = $state(true);
   let error = $state('');
-  let replyingTo: number | null = $state(null);
-  let expandedComments: Set<number> = $state(new Set());
 
-  // Group comments by parent_id
+  // Only show parent comments (no parent_id)
   const parentComments = $derived(comments.filter(comment => comment.parent_id === null));
-  const childComments = $derived(comments.filter(comment => comment.parent_id !== null));
-
-  function getChildComments(parentId: number) {
-    return childComments.filter(comment => comment.parent_id === parentId);
-  }
 
   function formatDate(dateString: string) {
     return formatDateUtil(dateString, 'D MMMM YYYY, HH:mm');
@@ -42,7 +37,7 @@
     loading = true;
 
     try {
-      // Fetch comments with join to get user avatars and fullname
+      // Fetch only parent comments
       const { data, error: supabaseError } = await supabase
         .from('comments')
         .select(`
@@ -50,18 +45,29 @@
           users:user_id (avatar, fullname)
         `)
         .eq('post_slug', postSlug)
+        .is('parent_id', null)
         .order('created_at', { ascending: false });
 
       if (supabaseError) throw supabaseError;
 
-      // Process comments to include user avatars and fullname
-      const processedComments = data?.map(comment => ({
-        ...comment,
-        user_avatar: comment.users?.avatar || null,
-        user_fullname: comment.users?.fullname || comment.user_name
-      })) || [];
+      // Get reply counts for each comment
+      const commentsWithCounts = await Promise.all(
+        (data || []).map(async (comment) => {
+          const { count } = await supabase
+            .from('comments')
+            .select('*', { count: 'exact', head: true })
+            .eq('parent_id', comment.id);
 
-      comments = processedComments;
+          return {
+            ...comment,
+            user_avatar: comment.users?.avatar || null,
+            user_fullname: comment.users?.fullname || comment.user_name,
+            reply_count: count || 0
+          };
+        })
+      );
+
+      comments = commentsWithCounts;
     } catch (err) {
       console.error('Error fetching comments:', err);
       error = 'Şərhlər yüklənərkən xəta baş verdi';
@@ -70,22 +76,8 @@
     }
   }
 
-  function toggleReply(commentId: number) {
-    replyingTo = replyingTo === commentId ? null : commentId;
-  }
-
-  function toggleReplies(commentId: number) {
-    if (expandedComments.has(commentId)) {
-      expandedComments.delete(commentId);
-    } else {
-      expandedComments.add(commentId);
-    }
-    expandedComments = new Set(expandedComments); // Trigger reactivity
-  }
-
-  function handleCommentAdded() {
-    fetchComments();
-    replyingTo = null;
+  function navigateToComment(commentId: number) {
+    navigate(`/posts/comment/${postSlug}/${commentId}`);
   }
 
   onMount(() => {
@@ -110,24 +102,24 @@
   {:else}
     <div class="border-t border-zinc-100 pt-2">
       {#each parentComments as comment (comment.id)}
-        <div class="mt-6 py-3">
-          <div class="flex items-start gap-3">
+        <button
+          type="button"
+          onclick={() => navigateToComment(comment.id)}
+          class="w-full text-left mt-6 py-3 hover:bg-zinc-50 rounded-lg transition-colors cursor-pointer"
+        >
+          <div class="flex items-start gap-3 p-5">
             <div class="flex-shrink-0">
-              <div class="relative">
-                <div>
-                  {#if comment.user_avatar}
-                    <img
-                      src={comment.user_avatar}
-                      alt={comment.user_name}
-                      class="squircle !w-[36px] !h-[36px] object-cover"
-                    />
-                  {:else}
-                    <div class="squircle !w-[36px] !h-[36px] flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold">
-                      {comment.user_name.charAt(0).toUpperCase()}
-                    </div>
-                  {/if}
+              {#if comment.user_avatar}
+                <img
+                  src={comment.user_avatar}
+                  alt={comment.user_name}
+                  class="w-[36px] h-[36px] rounded-xl object-cover"
+                />
+              {:else}
+                <div class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold">
+                  {comment.user_name.charAt(0).toUpperCase()}
                 </div>
-              </div>
+              {/if}
             </div>
             <div class="flex-grow">
               <div class="flex justify-between items-start">
@@ -137,114 +129,19 @@
                 </div>
                 <span class="text-xs text-zinc-400 font-nouvelr">{formatDate(comment.created_at)}</span>
               </div>
-              <p class="mt-2 text-base-700 font-nouvelr">{comment.content}</p>
+              <p class="mt-2 text-base-700 font-display text-[14px] line-clamp-3">{comment.content}</p>
               
-              <div class="mt-3 flex gap-4">
-                {#if user}
-                  <button 
-                    type="button"
-                    onclick={() => toggleReply(comment.id)}
-                    class="cursor-pointer font-medium text-xs font-display text-base-700 hover:text-rose-600"
-                  >
-                    {replyingTo === comment.id ? 'Ləğv et' : 'Cavab ver'}
-                  </button>
-                {/if}
-                
-                {#if getChildComments(comment.id).length > 0}
-                  <button 
-                    type="button"
-                    onclick={() => toggleReplies(comment.id)}
-                    class="cursor-pointer font-medium text-xs font-display text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                  >
-                    {#if expandedComments.has(comment.id)}
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
-                      </svg>
-                      Cavabları gizlət
-                    {:else}
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                      </svg>
-                      {getChildComments(comment.id).length} cavabı göstər
-                    {/if}
-                  </button>
-                {/if}
-              </div>
-              
-              {#if replyingTo === comment.id}
-                <div class="mt-4">
-                  <CommentForm 
-                    {postSlug} 
-                    {user} 
-                    parentId={comment.id}
-                    onCommentAdded={handleCommentAdded}
-                  />
-                </div>
-              {/if}
-              
-              {#if getChildComments(comment.id).length > 0 && expandedComments.has(comment.id)}
-                <div class="mt-4">
-                  {#each getChildComments(comment.id) as reply (reply.id)}
-                    <div class="ml-6 mt-4 pl-4 border-l border-zinc-100 py-3">
-                      <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0">
-                          <div class="relative">
-                            <div>
-                              {#if reply.user_avatar}
-                                <img
-                                  src={reply.user_avatar}
-                                  alt={reply.user_name}
-                                  class="squircle !w-[36px] !h-[36px] object-cover"
-                                />
-                              {:else}
-                                <div class="squircle !w-[36px] !h-[36px] flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold">
-                                  {reply.user_name.charAt(0).toUpperCase()}
-                                </div>
-                              {/if}
-                            </div>
-                          </div>
-                        </div>
-                        <div class="flex-grow">
-                          <div class="flex justify-between items-start">
-                            <div>
-                              <h4 class="font-nouvelr-semibold text-base-800">{reply.user_fullname || reply.user_name}</h4>
-                              <p class="text-xs text-zinc-500 font-nouvelr">@{reply.user_name}</p>
-                            </div>
-                            <span class="text-xs text-zinc-400 font-nouvelr">{formatDate(reply.created_at)}</span>
-                          </div>
-                          <p class="mt-2 text-base-700 font-nouvelr">{reply.content}</p>
-                          
-                          {#if user}
-                            <div class="mt-3 flex gap-2">
-                              <button 
-                                type="button"
-                                onclick={() => toggleReply(reply.id)}
-                                class="cursor-pointer text-xs font-nouvelr text-base-700 hover:text-rose-600"
-                              >
-                                {replyingTo === reply.id ? 'Ləğv et' : 'Cavab ver'}
-                              </button>
-                            </div>
-                          {/if}
-                          
-                          {#if replyingTo === reply.id}
-                            <div class="mt-4">
-                              <CommentForm 
-                                {postSlug} 
-                                {user} 
-                                parentId={reply.id}
-                                onCommentAdded={handleCommentAdded}
-                              />
-                            </div>
-                          {/if}
-                        </div>
-                      </div>
-                    </div>
-                  {/each}
+              {#if comment.reply_count && comment.reply_count > 0}
+                <div class="mt-3 flex items-center gap-1 text-xs text-blue-600 font-nouvelr">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+                  </svg>
+                  {comment.reply_count} cavab
                 </div>
               {/if}
             </div>
           </div>
-        </div>
+        </button>
       {/each}
     </div>
   {/if}
