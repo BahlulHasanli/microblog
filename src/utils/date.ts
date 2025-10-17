@@ -48,6 +48,7 @@ export function formatISO(date: string | Date): string {
  */
 export function formatSimpleDate(date: string | Date): string {
   return moment(date)
+    .locale("az")
     .format("MMM D, YYYY")
     .toLowerCase()
     .replace(/^./, (firstChar) => firstChar.toUpperCase());

@@ -14,6 +14,9 @@
     pendingPosts: 0,
     totalUsers: 0,
     newUsers: 0,
+    totalComments: 0,
+    parentComments: 0,
+    replyComments: 0,
   };
 
   onMount(() => {
@@ -30,7 +33,11 @@
       const usersResponse = await fetch("/api/admin/users/list");
       const usersData = await usersResponse.json();
 
-      if (postsData.success && usersData.success) {
+      // Şərhləri yüklə
+      const commentsResponse = await fetch("/api/admin/comments/list");
+      const commentsData = await commentsResponse.json();
+
+      if (postsData.success && usersData.success && commentsData.success) {
         const pending = postsData.posts.filter(
           (p: any) => p.status === "pending"
         ).length;
@@ -41,11 +48,22 @@
           (u: any) => moment(u.created_at).isAfter(sevenDaysAgo)
         ).length;
 
+        // Şərh statistikaları
+        const parentComments = commentsData.comments.filter(
+          (c: any) => c.parent_id === null
+        ).length;
+        const replyComments = commentsData.comments.filter(
+          (c: any) => c.parent_id !== null
+        ).length;
+
         stats = {
           totalPosts: postsData.posts.length,
           pendingPosts: pending,
           totalUsers: usersData.users.length,
           newUsers: newUsers,
+          totalComments: commentsData.comments.length,
+          parentComments: parentComments,
+          replyComments: replyComments,
         };
       }
     } catch (error) {
@@ -123,107 +141,69 @@
   <!-- Main Content -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
     <!-- Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs sm:text-sm text-base-600 mb-1">Ümumi Postlar</p>
-            <p class="text-xl sm:text-2xl font-bold text-slate-900">
-              {stats.totalPosts}
-            </p>
-          </div>
-          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-5 h-5 sm:w-6 sm:h-6 text-blue-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <!-- Postlar Bloku -->
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
+          </div>
+          <h3 class="text-sm font-semibold text-slate-900">Postlar</h3>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-600">Ümumi</span>
+            <span class="text-xl font-medium text-slate-900">{stats.totalPosts}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-600">Gözləyən</span>
+            <span class="text-xl font-medium text-slate-900">{stats.pendingPosts}</span>
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs sm:text-sm text-base-600 mb-1">Gözləyən Postlar</p>
-            <p class="text-xl sm:text-2xl font-bold text-slate-900">
-              {stats.pendingPosts}
-            </p>
-          </div>
-          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
+
+      <!-- İstifadəçilər Bloku -->
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
+          </div>
+          <h3 class="text-sm font-semibold text-slate-900">İstifadəçilər</h3>
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-600">Ümumi</span>
+            <span class="text-xl font-medium text-slate-900">{stats.totalUsers}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-600">Yeni (7 gün)</span>
+            <span class="text-xl font-medium text-slate-900">{stats.newUsers}</span>
           </div>
         </div>
       </div>
-      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs sm:text-sm text-base-600 mb-1">Yeni İstifadəçilər</p>
-            <p class="text-xl sm:text-2xl font-bold text-slate-900">
-              {stats.newUsers}
-            </p>
-            <p class="text-xs text-base-500 mt-1">Son 7 gün</p>
-          </div>
-          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width={2}
-                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-              />
+
+      <!-- Şərhlər Bloku -->
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
+          <h3 class="text-sm font-semibold text-slate-900">Şərhlər</h3>
         </div>
-      </div>
-      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 transition-all">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs sm:text-sm text-base-600 mb-1">
-              Ümumi İstifadəçilər
-            </p>
-            <p class="text-xl sm:text-2xl font-bold text-slate-900">
-              {stats.totalUsers}
-            </p>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-600">Ümumi</span>
+            <span class="text-xl font-medium text-slate-900">{stats.totalComments}</span>
           </div>
-          <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-50 rounded-lg flex items-center justify-center">
-            <svg
-              class="w-5 h-5 sm:w-6 sm:h-6 text-green-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
+          <div class="flex items-center justify-between">
+            <span class="text-sm text-base-600">Əsas / Cavab</span>
+            <span class="text-xl font-medium text-slate-900">{stats.parentComments} / {stats.replyComments}</span>
           </div>
         </div>
       </div>

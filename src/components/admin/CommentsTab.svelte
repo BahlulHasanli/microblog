@@ -58,16 +58,32 @@
     }
   }
 
+  function getAllReplies(parentId: number): Comment[] {
+    // Birbaşa cavabları tap
+    const directReplies = comments.filter(c => c.parent_id === parentId);
+    
+    // Hər cavab üçün onun alt-cavablarını da tap (rekursiv)
+    const allReplies: Comment[] = [];
+    for (const reply of directReplies) {
+      allReplies.push(reply);
+      // Alt-cavabları da əlavə et
+      const subReplies = getAllReplies(reply.id);
+      allReplies.push(...subReplies);
+    }
+    
+    return allReplies;
+  }
+
   function applyFilters() {
     // Əsas şərhləri ayır
     const parentComments = comments.filter(c => c.parent_id === null);
     
-    // Hər əsas şərh üçün cavabları əlavə et
+    // Hər əsas şərh üçün bütün cavabları (və sub-cavabları) əlavə et
     let grouped: GroupedComment[] = parentComments.map(parent => {
-      const replies = comments.filter(c => c.parent_id === parent.id);
+      const allReplies = getAllReplies(parent.id);
       return {
         ...parent,
-        replies: replies.length > 0 ? replies : undefined
+        replies: allReplies.length > 0 ? allReplies : undefined
       };
     });
 
@@ -83,6 +99,8 @@
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
+      const newExpanded = new Set<number>();
+      
       grouped = grouped.filter(g => {
         // Əsas şərhdə axtar
         const parentMatch = 
@@ -91,15 +109,22 @@
           g.user_email.toLowerCase().includes(query) ||
           g.post_slug.toLowerCase().includes(query);
         
-        // Cavablarda axtar
+        // Cavablarda axtar (indi bütün sub-cavablarda da axtarır)
         const replyMatch = g.replies?.some(r =>
           r.content.toLowerCase().includes(query) ||
           r.user_name.toLowerCase().includes(query) ||
           r.user_email.toLowerCase().includes(query)
         );
 
+        // Əgər cavabda tapılıbsa, əsas şərhi aç
+        if (replyMatch && !parentMatch) {
+          newExpanded.add(g.id);
+        }
+
         return parentMatch || replyMatch;
       });
+      
+      expandedComments = newExpanded;
     }
 
     filteredComments = grouped;
@@ -158,6 +183,14 @@
     return text.substring(0, maxLength) + '...';
   }
 
+  function highlightText(text: string): string {
+    if (!searchQuery.trim()) return text;
+    
+    const query = searchQuery.trim();
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark class="bg-yellow-200 px-0.5 rounded">$1</mark>');
+  }
+
   function toggleComment(commentId: number) {
     const newExpanded = new Set(expandedComments);
     if (newExpanded.has(commentId)) {
@@ -180,7 +213,7 @@
       <h2 class="text-xl font-nouvelr-bold text-slate-900">Şərhlər</h2>
       <button
         onclick={loadComments}
-        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+        class="inline-flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
       >
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -196,37 +229,17 @@
           type="text"
           bind:value={searchQuery}
           placeholder="Şərh, istifadəçi və ya post axtar..."
-          class="w-full px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+          class="w-full px-3 py-2 text-sm border border-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
         />
       </div>
       <select
         bind:value={filterType}
-        class="px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+        class="px-3 cursor-pointer py-2 w-[100px] text-sm border border-base-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
       >
-        <option value="all">Bütün şərhlər</option>
-        <option value="parent">Əsas şərhlər</option>
-        <option value="replies">Cavablar</option>
+        <option value="all">Bütün</option>
+        <option value="parent">Əsas</option>
+        <option value="replies">Cavab</option>
       </select>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-    <div class="bg-blue-50 rounded-lg p-4">
-      <p class="text-sm text-blue-600 mb-1">Ümumi Şərhlər</p>
-      <p class="text-2xl font-bold text-blue-900">{comments.length}</p>
-    </div>
-    <div class="bg-green-50 rounded-lg p-4">
-      <p class="text-sm text-green-600 mb-1">Əsas Şərhlər</p>
-      <p class="text-2xl font-bold text-green-900">
-        {comments.filter(c => c.parent_id === null).length}
-      </p>
-    </div>
-    <div class="bg-purple-50 rounded-lg p-4">
-      <p class="text-sm text-purple-600 mb-1">Cavablar</p>
-      <p class="text-2xl font-bold text-purple-900">
-        {comments.filter(c => c.parent_id !== null).length}
-      </p>
     </div>
   </div>
 
@@ -284,12 +297,15 @@
           <tbody class="bg-white divide-y divide-base-200">
             {#each filteredComments as comment (comment.id)}
               <!-- Əsas şərh -->
-              <tr class="hover:bg-base-50 transition-colors bg-green-50/30">
+              <tr 
+                class="hover:bg-base-50 transition-colors bg-green-50/30 {comment.replies && comment.replies.length > 0 ? 'cursor-pointer' : ''}"
+                onclick={() => comment.replies && comment.replies.length > 0 && toggleComment(comment.id)}
+              >
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     {#if comment.replies && comment.replies.length > 0}
                       <button
-                        onclick={() => toggleComment(comment.id)}
+                        onclick={(e) => { e.stopPropagation(); toggleComment(comment.id); }}
                         class="mr-2 p-1 hover:bg-base-200 rounded transition-colors"
                         title={isExpanded(comment.id) ? 'Bağla' : 'Aç'}
                       >
@@ -328,7 +344,7 @@
                 </td>
                 <td class="px-6 py-4">
                   <p class="text-sm text-base-900 max-w-md">
-                    {truncateText(comment.content)}
+                    {@html highlightText(truncateText(comment.content))}
                   </p>
                   {#if comment.replies && comment.replies.length > 0}
                     <span class="inline-flex items-center gap-1 mt-2 text-xs text-purple-600 font-medium">
@@ -343,6 +359,7 @@
                   <a
                     href={`/posts/${comment.post_slug}`}
                     target="_blank"
+                    onclick={(e) => e.stopPropagation()}
                     class="text-sm text-blue-600 hover:text-blue-800 hover:underline"
                   >
                     {comment.post_slug}
@@ -361,6 +378,7 @@
                     <a
                       href={`/posts/comment/${comment.post_slug}/${comment.id}`}
                       target="_blank"
+                      onclick={(e) => e.stopPropagation()}
                       class="text-blue-600 hover:text-blue-900"
                       title="Bax"
                     >
@@ -370,7 +388,7 @@
                       </svg>
                     </a>
                     <button
-                      onclick={() => confirmDelete(comment)}
+                      onclick={(e) => { e.stopPropagation(); confirmDelete(comment); }}
                       class="text-red-600 hover:text-red-900"
                       title="Sil"
                     >
@@ -416,7 +434,7 @@
                     </td>
                     <td class="px-6 py-4">
                       <p class="text-sm text-base-700 max-w-md pl-6">
-                        {truncateText(reply.content)}
+                        {@html highlightText(truncateText(reply.content))}
                       </p>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -466,25 +484,24 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-{#if showDeleteModal && selectedComment}
-  <ConfirmModal
-    title="Şərhi sil"
-    message="Bu şərhi silmək istədiyinizdən əminsiniz? Bu əməliyyat geri alına bilməz."
-    confirmText="Sil"
-    cancelText="Ləğv et"
-    onConfirm={handleDelete}
-    onCancel={() => {
-      showDeleteModal = false;
-      selectedComment = null;
-    }}
-  />
-{/if}
+<ConfirmModal
+  bind:isOpen={showDeleteModal}
+  title="Şərhi sil"
+  message="Bu şərhi silmək istədiyinizdən əminsiniz? Bu əməliyyat geri alına bilməz."
+  confirmText="Sil"
+  cancelText="Ləğv et"
+  confirmVariant="danger"
+  onConfirm={handleDelete}
+  onCancel={() => {
+    showDeleteModal = false;
+    selectedComment = null;
+  }}
+/>
 
 <!-- Alert Modal -->
-{#if showAlertModal}
-  <AlertModal
-    message={alertMessage}
-    type={alertType}
-    onClose={() => showAlertModal = false}
-  />
-{/if}
+<AlertModal
+  bind:isOpen={showAlertModal}
+  message={alertMessage}
+  variant={alertType}
+  onClose={() => showAlertModal = false}
+/>

@@ -19,6 +19,13 @@ if (error || !post) {
   return new Response(null, { status: 404 });
 }
 
+// Müəllifin güncel avatar məlumatlarını al
+const { data: authorData } = await supabase
+  .from("users")
+  .select("avatar")
+  .eq("fullname", post.author_name)
+  .single();
+
 // Markdown-ı HTML-ə çevir
 // Əvvəlcə escape edilmiş \n simvollarını real yeni sətir simvolları ilə əvəz et
 const cleanContent = post.content.replace(/\\n/g, '\n');
@@ -35,7 +42,7 @@ const frontmatter = {
   },
   author: {
     name: post.author_name,
-    avatar: post.author_avatar || ''
+    avatar: authorData?.avatar || post.author_avatar || ''
   },
   categories: post.categories || [],
   tags: post.tags || []

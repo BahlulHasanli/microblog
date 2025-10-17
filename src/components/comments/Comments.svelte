@@ -21,8 +21,8 @@
           user = {
             id: userData.user.id,
             email: userData.user.email,
-            name: userData.user.name || userData.user.email.split('@')[0],
-            fullname: userData.user.fullname || userData.user.name || userData.user.email.split('@')[0]
+            name: userData.user.name,
+            fullname: userData.user.fullname
           };
         }
       }
