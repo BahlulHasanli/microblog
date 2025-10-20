@@ -162,18 +162,18 @@
       </div>
     </div> 
   </div>
-
+  
+  {#if user}
   <!-- Reply Form -->
-  <div class="mt-6 border-b border-zinc-100 pb-6">
-    {#if user}
-      <CommentForm 
-        {postSlug} 
-        {user}
-        parentId={parseInt(commentId)}
-        onCommentAdded={handleCommentAdded}
-      />
-    {/if}
-  </div>
+    <div class="mt-6 border-b border-zinc-100 pb-6">
+        <CommentForm 
+          {postSlug} 
+          {user}
+          parentId={parseInt(commentId)}
+          onCommentAdded={handleCommentAdded}
+        />
+    </div>
+  {/if}
 
   <!-- Replies -->
   {#if replies.length > 0}
