@@ -103,7 +103,7 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
       const cookieHeader = ctx.request.headers.get("cookie");
       if (cookieHeader) {
         const cookies = cookieHeader.split(";").map((c) => c.trim());
-        const accessCookie = cookies.find((c) => c.startsWith("access-token="));
+        const accessCookie = cookies.find((c) => c.startsWith("sb-access-token="));
         if (accessCookie) {
           token = accessCookie.split("=")[1];
         }
@@ -161,12 +161,28 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
  * Qorunan endpoint'lər üçün middleware
  */
 export async function requireAuth(ctx: APIContext): Promise<Response | any> {
-  const authResult = await verifyAccessToken(ctx);
+  try {
+    const user = await getUserFromCookies(ctx.cookies, () => null);
 
-  if (!authResult.success) {
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          message: "Giriş tələb olunur",
+          status: 401,
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return user;
+  } catch (error) {
+    console.error("requireAuth xətası:", error);
     return new Response(
       JSON.stringify({
-        message: authResult.error || "Giriş tələb olunur",
+        message: "Autentifikasiya xətası",
         status: 401,
       }),
       {
@@ -175,8 +191,6 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
       }
     );
   }
-
-  return authResult.user!;
 }
 
 /**

@@ -12,17 +12,9 @@ export const POST: APIRoute = async (context) => {
   try {
     // Kimlik doğrulama kontrolü
     const user = await requireAuth(context);
-    if (!user) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Bu işlem için giriş yapmanız gerekiyor",
-        }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+
+    if (user instanceof Response) {
+      return user;
     }
 
     // Form verilerini al
@@ -88,7 +80,7 @@ export const POST: APIRoute = async (context) => {
         const imageFileName = `${slug}-cover.${fileExtension}`;
 
         // Bunny CDN klasör yapısı - içerik resimleriyle aynı klasörü kullan
-        const folder = `notes/${slug}/images`;
+        const folder = `posts/${slug}/images`;
 
         console.log("Bunny CDN klasör yapısı:", folder);
         console.log("Resim dosya adı:", imageFileName);
@@ -176,7 +168,7 @@ export const POST: APIRoute = async (context) => {
 
         // Resim adını oluştur: slug-1.png formatında (tiptap-utils.ts ile tutarlı)
         const imageFileName = `${slug}-${global._imageCounters[slug]}.${fileExtension}`;
-        const cdnUrl = `https://the99.b-cdn.net/notes/${slug}/images/${imageFileName}`;
+        const cdnUrl = `https://the99.b-cdn.net/posts/${slug}/images/${imageFileName}`;
 
         // İçerikteki URL'yi değiştir
         processedContent = processedContent.replace(blobUrl, cdnUrl);
@@ -198,14 +190,12 @@ export const POST: APIRoute = async (context) => {
         description,
         content: processedContent,
         pub_date: pubDate,
+        author_email: user.email,
         image_url: coverImageUrl || null,
         image_alt: imageAlt || title,
-        author_name: authorFullname,
-        author_avatar: authorAvatar,
         categories: categoriesData,
         approved: false,
         featured: false,
-        tags: []
       })
       .select()
       .single();
@@ -215,7 +205,8 @@ export const POST: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Post əlavə edilərkən xəta baş verdi: " + insertError.message,
+          message:
+            "Post əlavə edilərkən xəta baş verdi: " + insertError.message,
         }),
         {
           status: 500,
@@ -229,7 +220,7 @@ export const POST: APIRoute = async (context) => {
         success: true,
         message: "Gönderi başarıyla oluşturuldu və admin təsdiqi gözləyir",
         slug,
-        post: newPost
+        post: newPost,
       }),
       {
         status: 200,

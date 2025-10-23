@@ -1,9 +1,19 @@
 ---
 import { Image } from "astro:assets";
 import { categories as CATEGORIES } from "@/data/categories";
+import { supabase } from "@/db/supabase";
  
 
-const { title, url, description, author, image, categories } = Astro.props;
+const { title, url, description, image, categories } = Astro.props;
+
+
+const { data } = await supabase
+  .from('posts') 
+  .select(`
+    *,
+    users:author_email (avatar, fullname)
+  `).single()
+
 ---
  
 <article class="flex flex-col flex-1 h-full group">
@@ -22,12 +32,12 @@ const { title, url, description, author, image, categories } = Astro.props;
   <div class="mt-5">
     <div class="flex items-center space-x-1 gap-2 text-xs text-base-500">
       <div class="overflow-hidden !size-14 squircle cursor-pointer">
-      <img src={author.avatar}
+      <img src={data.users.avatar}
           alt="User"
           class="w-full h-full object-cover"
       />
       </div>
-      <span class="font-medium">{author.name}</span>
+      <span class="font-medium">{data.users.fullname}</span>
       <span aria-hidden="true">&middot;</span>
       {categories && categories.length > 0 && (
         <span class="flex flex-wrap gap-2">
@@ -45,11 +55,11 @@ const { title, url, description, author, image, categories } = Astro.props;
         </span>
       )}
     </div>
-    
-
 
     <h3 class="mt-4 text-base text-base-900 text-balance">
-      <a href={url} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">{title}</a>
+      <a href={url} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">
+        {title}
+      </a>
     </h3>
 
     <p class="mt-1 text-sm text-base-500 line-clamp-2">{description}</p>

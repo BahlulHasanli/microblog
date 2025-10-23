@@ -12,7 +12,6 @@ if (!isLoggedIn) {
 
 const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
 
-console.log('User', user)
 
 if (!user) return Astro.redirect("/");
 ---

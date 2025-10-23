@@ -152,9 +152,6 @@ export default function PostEditor({ post, content, slug, author }: any) {
       const formData = new FormData();
       formData.append("slug", slug);
       formData.append("title", title);
-      formData.append("author.fullname", author.fullname);
-      formData.append("author.avatar", author.avatar);
-      formData.append("author.username", author.username);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
 

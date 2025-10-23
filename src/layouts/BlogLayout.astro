@@ -6,6 +6,7 @@ import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
+import { supabase } from "@/db/supabase";
 
 const { frontmatter } = Astro.props;
 
@@ -16,6 +17,14 @@ let currentUser = null;
 if (isLoggedIn) {
   currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
 }
+
+const { data } = await supabase
+  .from('posts') 
+  .select(`
+    *,
+    users:author_email (avatar, fullname)
+  `).single()
+
 ---
 <BaseLayout>
   <section>
@@ -39,14 +48,14 @@ if (isLoggedIn) {
             <Image
             width={1280}
             height={720}
-            src={frontmatter.author.avatar}
-            alt={frontmatter.author.name}
+            src={data.users.avatar}
+            alt={data.users.fullname}
             class="squircle !w-[85px] !h-[83px]"
           />
          </div>
          </div>
           <div class="mt-3">
-            <span class="text-md font-medium text-base-700">{frontmatter.author.name}</span>
+            <span class="text-md font-medium text-base-700">{data.users.fullname}</span>
             <p class="text-xs text-zinc-400">
               {formatSimpleDate(frontmatter.pubDate)}
             </p>

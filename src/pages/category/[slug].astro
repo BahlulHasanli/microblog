@@ -40,10 +40,6 @@ const sortedPosts = (postsData || []).map(post => ({
       url: post.image_url || '',
       alt: post.image_alt || post.title
     },
-    author: {
-      name: post.author_name,
-      avatar: post.author_avatar || ''
-    },
     categories: post.categories || []
   }
 }));
@@ -77,7 +73,6 @@ const sortedPosts = (postsData || []).map(post => ({
               alt={post.data.title}
               categories={post.data.categories}
               title={post.data.title}
-              author={post.data.author}
               image={post.data.image.url}
               description={post.data.description}
               pubDate={formatSimpleDate(post.data.pubDate)}

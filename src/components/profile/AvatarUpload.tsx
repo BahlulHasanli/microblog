@@ -123,31 +123,34 @@ export default function AvatarUpload({
   const deleteOldAvatar = async (oldAvatarUrl: string) => {
     try {
       // Eğer avatar URL'si BunnyCDN'de değilse silme
-      if (!oldAvatarUrl || !oldAvatarUrl.includes('b-cdn.net')) {
-        console.log('Silinecek eski avatar yok');
+      if (!oldAvatarUrl || !oldAvatarUrl.includes("b-cdn.net")) {
+        console.log("Silinecek eski avatar yok");
         return true;
       }
-      
+
       // Varsayılan avatarları (noavatar klasöründeki) silme
       if (isDefaultAvatar(oldAvatarUrl)) {
-        console.log('Varsayılan avatar silinmeyecek:', oldAvatarUrl);
+        console.log("Varsayılan avatar silinmeyecek:", oldAvatarUrl);
         return true;
       }
 
       // Avatar yolunu URL'den çıkar
       const avatarPath = extractAvatarPathFromUrl(oldAvatarUrl);
       if (!avatarPath) {
-        console.log('Avatar yolu çıkarılamadı veya varsayılan avatar:', oldAvatarUrl);
+        console.log(
+          "Avatar yolu çıkarılamadı veya varsayılan avatar:",
+          oldAvatarUrl
+        );
         return true; // Varsayılan avatar veya geçersiz yol için başarılı dön
       }
 
-      console.log('Eski avatar siliniyor:', avatarPath);
-      
+      console.log("Eski avatar siliniyor:", avatarPath);
+
       // BunnyCDN silme API'sini çağır
-      const deleteResponse = await fetch('/api/bunny-delete', {
-        method: 'POST',
+      const deleteResponse = await fetch("/api/bunny-delete", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           filePath: avatarPath,
@@ -156,15 +159,15 @@ export default function AvatarUpload({
 
       if (!deleteResponse.ok) {
         const errorData = await deleteResponse.json();
-        console.error('Avatar silme hatası:', errorData);
+        console.error("Avatar silme hatası:", errorData);
         return false;
       }
 
       const deleteResult = await deleteResponse.json();
-      console.log('Avatar silme sonucu:', deleteResult);
+      console.log("Avatar silme sonucu:", deleteResult);
       return deleteResult.success;
     } catch (error) {
-      console.error('Avatar silme işlemi sırasında hata:', error);
+      console.error("Avatar silme işlemi sırasında hata:", error);
       return false;
     }
   };
@@ -179,7 +182,7 @@ export default function AvatarUpload({
       if (user.avatar) {
         await deleteOldAvatar(user.avatar);
       }
-      
+
       // Kullanıcı bilgilerini güncelle
       const { data, error } = await supabase
         .from("users")
@@ -218,10 +221,10 @@ export default function AvatarUpload({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-md w-full p-6 relative animate-fadeIn">
-        {/* Kapat butonu */}
+        {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-base-500 hover:text-base-900"
+          className="absolute top-4 cursor-pointer right-4 text-base-400 hover:text-base-900 transition-colors p-1 hover:bg-base-100 rounded-lg"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -229,7 +232,7 @@ export default function AvatarUpload({
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="size-6"
+            className="size-5"
           >
             <path
               strokeLinecap="round"
@@ -239,7 +242,7 @@ export default function AvatarUpload({
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold text-base-900 mb-6">
+        <h2 className="text-xl font-bold text-base-800 mb-6">
           Profil şəkli yüklə
         </h2>
 
@@ -247,7 +250,7 @@ export default function AvatarUpload({
         <div className="flex border-b border-base-200 mb-6">
           <button
             onClick={() => setActiveTab("default")}
-            className={`px-4 py-2 font-medium ${
+            className={`px-4 py-2 font-medium cursor-pointer ${
               activeTab === "default"
                 ? "text-rose-500 border-b-2 border-rose-500"
                 : "text-base-600"
@@ -257,7 +260,7 @@ export default function AvatarUpload({
           </button>
           <button
             onClick={() => setActiveTab("upload")}
-            className={`px-4 py-2 font-medium ${
+            className={`px-4 py-2 font-medium cursor-pointer ${
               activeTab === "upload"
                 ? "text-rose-500 border-b-2 border-rose-500"
                 : "text-base-600"
@@ -307,14 +310,14 @@ export default function AvatarUpload({
                       />
                     ) : (
                       <img
-                        src={user.avatar || "https://via.placeholder.com/150"}
+                        src={user.avatar}
                         alt={user.fullname}
                         className="w-full h-full object-cover"
                       />
                     )}
                   </div>
 
-                  <label className="cursor-pointer py-2 px-4 bg-base-100 hover:bg-base-200 text-base-700 rounded-lg transition-colors">
+                  <label className="cursor-pointer text py-2 px-4 bg-base-100 hover:bg-base-200 text-base-700 rounded-lg transition-colors">
                     Şəkil seç
                     <input
                       type="file"
@@ -335,7 +338,7 @@ export default function AvatarUpload({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-base-300 rounded-lg text-base-700 hover:bg-base-50"
+                className="px-4 py-2 border text-sm cursor-pointer border-base-200 rounded-lg text-base-700 hover:bg-base-50"
               >
                 Ləğv et
               </button>
@@ -345,7 +348,7 @@ export default function AvatarUpload({
                   loading ||
                   (activeTab === "upload" ? !preview : !selectedDefaultAvatar)
                 }
-                className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm cursor-pointer bg-base-900 text-white rounded-lg hover:bg-base-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Yüklənir..." : "Yadda saxla"}
               </button>

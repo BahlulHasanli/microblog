@@ -16,19 +16,8 @@ if (postsError) {
   console.error('Postlar yüklənərkən xəta:', postsError);
 }
 
-// İstifadəçi məlumatlarını al
-const { data: userData, error: userError } = await supabase
-  .from("users") 
-  .select("id, fullname, username, avatar, email")
-  .limit(10); 
-
-console.log('Postlar:', postsData?.length || 0);
-console.log('İstifadəçilər:', userData?.length || 0);
-
 // Postları formatla
 const posts = (postsData || []).map(post => {
-  // Müəllifin güncel məlumatlarını tap
-  const currentAuthorData = userData?.find(u => u.fullname === post.author_name);
   
   return {
     slug: post.slug,
@@ -39,10 +28,6 @@ const posts = (postsData || []).map(post => {
       image: {
         url: post.image_url || '',
         alt: post.image_alt || post.title
-      },
-      author: {
-        name: post.author_name,
-        avatar: currentAuthorData?.avatar || post.author_avatar || ''
       },
       categories: post.categories || [],
       approved: post.approved,
@@ -91,7 +76,6 @@ const posts = (postsData || []).map(post => {
                   alt={post.data.title}
                   categories={post.data.categories}
                   title={post.data.title}
-                  author={post.data.author}
                   image={post.data.image.url}
                   description={post.data.description}
                   pubDate={post.data.pubDate.toString()}

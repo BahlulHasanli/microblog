@@ -42,12 +42,7 @@ const postData = {
     url: post.image_url || '',
     alt: post.image_alt || post.title
   },
-  author: {
-    name: post.author_name,
-    avatar: post.author_avatar || ''
-  },
   categories: post.categories || [],
-  tags: post.tags || [],
   approved: post.approved,
   featured: post.featured
 };
