@@ -38,13 +38,13 @@ export function markdownToTiptap(
 
   // HTML elementlerini tek satıra birleştir
   let processedMarkdown = markdown;
-  
+
   // <div> etiketlerini tek satıra birleştir
   processedMarkdown = processedMarkdown.replace(
     /<div([\s\S]*?)<\/div>/g,
     (match) => match.replace(/\s+/g, " ")
   );
-  
+
   // Markdown içeriğini satırlara ayır
   const lines = processedMarkdown.split("\n");
   let currentParagraph: TiptapNode | null = null;
@@ -91,13 +91,15 @@ export function markdownToTiptap(
     }
 
     // HTML styled heading veya paragraph kontrolü
-    const htmlStyleMatch = line.match(/^<(h[1-4]|p)\s+style="text-align:(left|center|right|justify)">(.+)<\/\1>$/);
+    const htmlStyleMatch = line.match(
+      /^<(h[1-4]|p)\s+style="text-align:(left|center|right|justify)">(.+)<\/\1>$/
+    );
     if (htmlStyleMatch) {
       const tag = htmlStyleMatch[1];
       const textAlign = htmlStyleMatch[2];
       const content = htmlStyleMatch[3];
-      
-      if (tag.startsWith('h')) {
+
+      if (tag.startsWith("h")) {
         const level = parseInt(tag.substring(1));
         document.content.push({
           type: "heading",
@@ -118,10 +120,10 @@ export function markdownToTiptap(
     if (line.startsWith("# ")) {
       // Başlık içeriğini al
       const headingContent = line.substring(2);
-      
+
       // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
       const processedContent = processInlineMarkdown(headingContent);
-      
+
       document.content.push({
         type: "heading",
         attrs: { level: 1 },
@@ -133,10 +135,10 @@ export function markdownToTiptap(
     if (line.startsWith("## ")) {
       // Başlık içeriğini al
       const headingContent = line.substring(3);
-      
+
       // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
       const processedContent = processInlineMarkdown(headingContent);
-      
+
       document.content.push({
         type: "heading",
         attrs: { level: 2 },
@@ -148,10 +150,10 @@ export function markdownToTiptap(
     if (line.startsWith("### ")) {
       // Başlık içeriğini al
       const headingContent = line.substring(4);
-      
+
       // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
       const processedContent = processInlineMarkdown(headingContent);
-      
+
       document.content.push({
         type: "heading",
         attrs: { level: 3 },
@@ -163,10 +165,10 @@ export function markdownToTiptap(
     if (line.startsWith("#### ")) {
       // Başlık içeriğini al
       const headingContent = line.substring(5);
-      
+
       // Başlık içeriğinde vurgu işaretleri (bold, italic) olup olmadığını kontrol et
       const processedContent = processInlineMarkdown(headingContent);
-      
+
       document.content.push({
         type: "heading",
         attrs: { level: 4 },
@@ -187,15 +189,31 @@ export function markdownToTiptap(
       continue;
     }
 
+    // Rating komponenti
+    if (line.includes("<Rating")) {
+      const scoreMatch = line.match(/score="([^"]+)"/);
+
+      if (scoreMatch && scoreMatch[1]) {
+        const score = parseFloat(scoreMatch[1]);
+        console.log("Bulunan Rating score:", score);
+
+        document.content.push({
+          type: "rating",
+          attrs: { score },
+        });
+        continue;
+      }
+    }
+
     // YouTube videoları - tam olarak istenen formatta kontrol et
-    if (line.includes('data-youtube-video')) {
+    if (line.includes("data-youtube-video")) {
       // Video ID'yi çıkar - önce boşluklu format için kontrol et
-      const videoIdMatch = line.match(/data-youtube-video="([^"]+)"/); 
-      
+      const videoIdMatch = line.match(/data-youtube-video="([^"]+)"/);
+
       if (videoIdMatch && videoIdMatch[1]) {
         const videoId = videoIdMatch[1];
         console.log("Bulunan YouTube video ID:", videoId);
-        
+
         document.content.push({
           type: "youtube",
           attrs: { src: `https://www.youtube.com/embed/${videoId}` },
@@ -203,21 +221,23 @@ export function markdownToTiptap(
         continue;
       }
     }
-    
+
     // YouTube videoları için alternatif format kontrolü
     if (/<div[^>]*data-youtube-video/.test(line)) {
       const multiLineContent = lines.slice(i, i + 5).join(" ");
-      const videoIdMatch = multiLineContent.match(/data-youtube-video="([^"]+)"/); 
-      
+      const videoIdMatch = multiLineContent.match(
+        /data-youtube-video="([^"]+)"/
+      );
+
       if (videoIdMatch && videoIdMatch[1]) {
         const videoId = videoIdMatch[1];
         console.log("Alternatif yolla bulunan YouTube video ID:", videoId);
-        
+
         document.content.push({
           type: "youtube",
           attrs: { src: `https://www.youtube.com/embed/${videoId}` },
         });
-        
+
         // Birkaç satırı atlayarak ilerle
         while (i < lines.length && !lines[i].includes("</div>")) {
           i++;
@@ -230,7 +250,7 @@ export function markdownToTiptap(
     if (line.startsWith("> ")) {
       const quoteText = line.substring(2);
       const lastNode = document.content[document.content.length - 1];
-      
+
       // Eğer önceki düğüm bir blockquote ise, ona ekle
       if (lastNode?.type === "blockquote") {
         // Boş satır ise yeni paragraf ekle
@@ -242,7 +262,10 @@ export function markdownToTiptap(
         } else {
           // Son paragrafı bul veya yeni paragraf oluştur
           const lastQuoteNode = lastNode.content?.[lastNode.content.length - 1];
-          if (lastQuoteNode?.type === "paragraph" && lastQuoteNode.content?.length === 0) {
+          if (
+            lastQuoteNode?.type === "paragraph" &&
+            lastQuoteNode.content?.length === 0
+          ) {
             // Boş paragrafa metin ekle
             lastQuoteNode.content = processInlineMarkdown(quoteText);
           } else {
@@ -273,7 +296,7 @@ export function markdownToTiptap(
     if (taskItemMatch) {
       const checked = taskItemMatch[1].toLowerCase() === "x";
       const taskText = taskItemMatch[2];
-      
+
       const lastNode = document.content[document.content.length - 1];
       if (lastNode?.type !== "taskList") {
         document.content.push({
@@ -416,7 +439,10 @@ function processInlineMarkdown(text: string): TiptapNode[] {
 
   while (i < text.length) {
     // Hem kalın hem italik metin (***text***)
-    if (text.substring(i, i + 3) === "***" && text.indexOf("***", i + 3) !== -1) {
+    if (
+      text.substring(i, i + 3) === "***" &&
+      text.indexOf("***", i + 3) !== -1
+    ) {
       if (currentText) {
         nodes.push({ type: "text", text: currentText });
         currentText = "";
@@ -432,7 +458,7 @@ function processInlineMarkdown(text: string): TiptapNode[] {
       i = endBoldItalic + 3;
       continue;
     }
-    
+
     // Kalın metin
     if (text.substring(i, i + 2) === "**" && text.indexOf("**", i + 2) !== -1) {
       if (currentText) {
@@ -496,11 +522,11 @@ function processInlineMarkdown(text: string): TiptapNode[] {
 
       const endUnderline = text.indexOf("</u>", i);
       const underlineText = text.substring(i + 3, endUnderline);
-      
+
       // İç içe markdown işaretlerini işle
       const innerNodes = processInlineMarkdown(underlineText);
-      
-      innerNodes.forEach(node => {
+
+      innerNodes.forEach((node) => {
         if (node.type === "text") {
           const existingMarks = node.marks || [];
           nodes.push({
@@ -515,7 +541,10 @@ function processInlineMarkdown(text: string): TiptapNode[] {
     }
 
     // Superscript (HTML <sup> tag)
-    if (text.substring(i, i + 5) === "<sup>" && text.indexOf("</sup>", i) !== -1) {
+    if (
+      text.substring(i, i + 5) === "<sup>" &&
+      text.indexOf("</sup>", i) !== -1
+    ) {
       if (currentText) {
         nodes.push({ type: "text", text: currentText });
         currentText = "";
@@ -533,7 +562,10 @@ function processInlineMarkdown(text: string): TiptapNode[] {
     }
 
     // Subscript (HTML <sub> tag)
-    if (text.substring(i, i + 5) === "<sub>" && text.indexOf("</sub>", i) !== -1) {
+    if (
+      text.substring(i, i + 5) === "<sub>" &&
+      text.indexOf("</sub>", i) !== -1
+    ) {
       if (currentText) {
         nodes.push({ type: "text", text: currentText });
         currentText = "";
@@ -594,7 +626,10 @@ function processInlineMarkdown(text: string): TiptapNode[] {
     }
 
     // Highlight (mark elementi)
-    if (text.substring(i, i + 6) === "<mark " && text.indexOf("</mark>", i) !== -1) {
+    if (
+      text.substring(i, i + 6) === "<mark " &&
+      text.indexOf("</mark>", i) !== -1
+    ) {
       if (currentText) {
         nodes.push({ type: "text", text: currentText });
         currentText = "";
@@ -602,20 +637,22 @@ function processInlineMarkdown(text: string): TiptapNode[] {
 
       const endMark = text.indexOf("</mark>", i);
       const markContent = text.substring(i, endMark + 7);
-      
+
       // Style attribute'ünden rengi çıkar
       const styleMatch = markContent.match(/style="background-color:([^"]+)"/);
-      const color = styleMatch ? styleMatch[1] : "var(--tt-color-highlight-yellow)";
-      
+      const color = styleMatch
+        ? styleMatch[1]
+        : "var(--tt-color-highlight-yellow)";
+
       // Mark içindeki metni çıkar
       const textMatch = markContent.match(/>([^<]+)</);
       const markText = textMatch ? textMatch[1] : "";
-      
+
       // İç içe markdown işaretlerini işle (bold, italic vb.)
       const innerNodes = processInlineMarkdown(markText);
-      
+
       // Her bir node'a highlight mark'ı ekle
-      innerNodes.forEach(node => {
+      innerNodes.forEach((node) => {
         if (node.type === "text") {
           const existingMarks = node.marks || [];
           nodes.push({

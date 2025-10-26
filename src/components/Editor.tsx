@@ -146,7 +146,7 @@ export default function Editor({ author }: any) {
 
       // Başarılı kaydetme
       console.log("Post başarıyla kaydedildi");
-      
+
       setSaveStatus("success");
       setTimeout(() => {
         setSaveStatus("idle");
@@ -254,6 +254,8 @@ export default function Editor({ author }: any) {
         return processImage(node) + "\n\n";
       case "youtube":
         return processYoutubeVideo(node) + "\n\n";
+      case "rating":
+        return processRating(node) + "\n\n";
       default:
         if (node.content) {
           return node.content.map(processNode).join("");
@@ -369,6 +371,11 @@ export default function Editor({ author }: any) {
     return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
   }
 
+  function processRating(node: any): string {
+    const score = node.attrs?.score || 0;
+    return `<Rating score="${score}" />`;
+  }
+
   function processTextNode(node: any): string {
     if (!node) return "";
 
@@ -438,7 +445,7 @@ export default function Editor({ author }: any) {
       />
 
       <style>{`
-      body { 
+      body {
         overflow-x: hidden;
       }
         .editor-container {
@@ -515,7 +522,7 @@ export default function Editor({ author }: any) {
         .save-button.error {
           background-color: #dc3545;
         }
-        
+
         /* Kapak resmi stilleri */
         .cover-image-section {
           margin-top: 8px;
@@ -568,7 +575,7 @@ export default function Editor({ author }: any) {
         .remove-cover-image:hover {
           background-color: rgba(0, 0, 0, 0.7);
         }
-        
+
         @media (max-width: 768px) {
           .editor-header {
             flex-direction: column;

@@ -1,0 +1,12 @@
+.rating-node-wrapper {
+  margin: 3rem 0;
+  user-select: none;
+
+  @media (max-width: 640px) {
+    margin: 2rem 0;
+
+    .text-9xl {
+      font-size: 4rem;
+    }
+  }
+}

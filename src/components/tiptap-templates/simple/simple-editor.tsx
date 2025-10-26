@@ -14,6 +14,7 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Selection, Placeholder, Focus } from "@tiptap/extensions";
 // import Youtube from "@tiptap/extension-youtube";
 import { YoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node-extension";
+import { Rating } from "@/components/tiptap-node/rating-node/rating";
 
 import { Document } from "@tiptap/extension-document";
 
@@ -36,6 +37,7 @@ import "@/components/tiptap-node/list-node/list-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
 import "@/components/tiptap-node/heading-node/heading-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
+import "@/components/tiptap-node/rating-node/rating-node.scss";
 
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
@@ -48,6 +50,7 @@ import {
   ColorHighlightPopoverContent,
   ColorHighlightPopoverButton,
 } from "@/components/tiptap-ui/color-highlight-popover";
+import { RatingButton } from "@/components/tiptap-ui/rating-button";
 import {
   LinkPopover,
   LinkContent,
@@ -121,20 +124,22 @@ const MainToolbarContent = ({
         const url = prompt("YouTube URL'sini girin");
 
         if (url) {
-          console.log('YouTube video ekleme deneniyor:', url);
-          
+          console.log("YouTube video ekleme deneniyor:", url);
+
           // Komutu çağır
           const result = editor.commands.setYoutubeVideo({
             src: url,
             width: "100%",
             height: "260",
           });
-          
-          console.log('YouTube video ekleme sonucu:', result);
+
+          console.log("YouTube video ekleme sonucu:", result);
         }
       } catch (error) {
-        console.error('YouTube video ekleme hatası:', error);
-        alert('YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin.');
+        console.error("YouTube video ekleme hatası:", error);
+        alert(
+          "YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin."
+        );
       }
     };
 
@@ -227,6 +232,12 @@ const MainToolbarContent = ({
       <ToolbarSeparator />
 
       <ToolbarGroup>
+        <RatingButton editor={editor} />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      <ToolbarGroup>
         <MenuBar editor={editor} />
       </ToolbarGroup>
 
@@ -304,8 +315,12 @@ export function SimpleEditor({
   >("main");
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [coverImagePreview, setCoverImagePreview] = React.useState<string>(initialCoverImageUrl || "");
-  const [categories, setCategories] = React.useState<string[]>(selectedCategories || []);
+  const [coverImagePreview, setCoverImagePreview] = React.useState<string>(
+    initialCoverImageUrl || ""
+  );
+  const [categories, setCategories] = React.useState<string[]>(
+    selectedCategories || []
+  );
 
   const FixedDocument = Document.extend({
     content: "heading paragraph block*",
@@ -384,6 +399,7 @@ export function SimpleEditor({
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
+      Rating,
     ],
     autofocus: true,
     content: initialContent || {
@@ -466,13 +482,13 @@ export function SimpleEditor({
       editor.off("update", updateTitleAndDescription);
     };
   }, [editor, onTitleChange, onDescriptionChange, title, description]);
-  
+
   // initialContent yalnız ilk dəfə set olunmalıdır
   const [isInitialContentSet, setIsInitialContentSet] = React.useState(false);
-  
+
   React.useEffect(() => {
     if (!editor || !initialContent || isInitialContentSet) return;
-    
+
     // Editör içeriğini yalnız bir dəfə güncelle
     try {
       editor.commands.setContent(initialContent);
@@ -605,9 +621,7 @@ export function SimpleEditor({
                         ? "bg-rose-500 text-white"
                         : ""
                     }`}
-                    onClick={() =>
-                      handleCategoryToggle(category.slug)
-                    }
+                    onClick={() => handleCategoryToggle(category.slug)}
                   >
                     {category.name}
                   </button>

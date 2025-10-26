@@ -332,6 +332,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
         return processImage(node) + "\n\n";
       case "youtube":
         return processYoutubeVideo(node) + "\n\n";
+      case "rating":
+        return processRating(node) + "\n\n";
       default:
         if (node.content) {
           return node.content.map(processNode).join("");
@@ -461,11 +463,13 @@ export default function PostEditor({ post, content, slug, author }: any) {
       console.error("YouTube URL işleme hatası:", error);
     }
 
-    console.log("Video ID:", videoId);
-
     // iframe kullanmadan sadece data-youtube-video özniteliği ile video ID'sini ekle
-    // Öznitelikler arasında boşluk bırak
     return `<div data-youtube-video="${videoId}" class="aspect-video rounded-xl overflow-hidden"></div>`;
+  }
+
+  function processRating(node: any): string {
+    const score = node.attrs?.score || 0;
+    return `<Rating score="${score}" />`;
   }
 
   function processTextNode(node: any): string {
@@ -551,7 +555,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
       />
 
       <style>{`
-      body { 
+      body {
         overflow-x: hidden;
       }
         .editor-container {
@@ -629,7 +633,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
         .save-button.error {
           background-color: #dc3545;
         }
-        
+
         /* Kapak resmi stilleri */
         .cover-image-section {
           margin-top: 8px;
@@ -682,7 +686,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
         .remove-cover-image:hover {
           background-color: rgba(0, 0, 0, 0.7);
         }
-        
+
         @media (max-width: 768px) {
           .editor-header {
             flex-direction: column;

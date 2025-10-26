@@ -85,12 +85,12 @@
   });
 </script>
 
-  <CommentForm 
-    {postSlug} 
-    {user} 
-    onCommentAdded={fetchComments} 
+  <CommentForm
+    {postSlug}
+    {user}
+    onCommentAdded={fetchComments}
   />
-  
+
   {#if loading}
     <div class="py-6 text-center font-display">
       <span class="shimmer-text">Şərhlər yüklənir</span>
@@ -151,11 +151,11 @@
               <button
                 type="button"
                 onclick={() => navigateToComment(comment.id)}
-                class="w-full text-left cursor-pointer hover:bg-zinc-50 transition-colors rounded p-2 -ml-2"
+                class="w-full text-left cursor-pointer"
               >
                 <p class="mt-2 text-base-700 font-display text-[14px] line-clamp-3">{comment.content}</p>
               </button>
-              
+
                <div class="flex items-center gap-5">
                 <button
                   type="button"
@@ -165,7 +165,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
                   </svg>
-                  
+
                   Cavab
                 </button>
 
@@ -209,4 +209,3 @@
     }
   }
 </style>
-

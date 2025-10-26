@@ -25,7 +25,25 @@ if (error || !post) {
 // Markdown-ı HTML-ə çevir
 // Əvvəlcə escape edilmiş \n simvollarını real yeni sətir simvolları ilə əvəz et
 const cleanContent = post.content.replace(/\\n/g, '\n');
-const htmlContent = marked(cleanContent);
+
+// Custom renderer for Rating component
+let htmlContent = await marked(cleanContent);
+
+// Replace <Rating score="X" /> tags with rendered component (GameInformer style)
+const ratingRegex = /<Rating\s+score=["']([^"']+)["']\s*\/>/gi;
+htmlContent = htmlContent.replace(ratingRegex, (match, score) => {
+  const numericScore = parseFloat(score);
+
+  const ratingHtml = `
+    <div class="my-12 mx-auto py-12 px-8 text-center flex flex-col items-center bg-white w-full">
+      <div class="w-full max-w-2xl h-px bg-gray-300"></div>
+      <div class="text-8xl font-bold leading-none text-black mt-5">${numericScore.toFixed(2)}</div>
+      <p class="text-sm text-blue-600 italic mb-5">Reytinq sistemi haqqında</p>
+      <div class="w-full max-w-2xl h-px bg-gray-300"></div>
+    </div>
+  `;
+  return ratingHtml;
+});
 
 // Frontmatter formatında məlumat hazırla
 const frontmatter = {
