@@ -6,7 +6,7 @@
     function goToPost() {
         navigate(`/posts/${slug}`);
     }
-</script>
+</script> 
 
 <button type="button"
     onclick={goToPost}
@@ -18,5 +18,5 @@
             <path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/>
         <path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
     </svg>
-    <p class="text-[15px] font-normal">Oxu</p>
+    <!-- <p class="text-[15px] font-normal">Oxu</p> -->
 </button>   

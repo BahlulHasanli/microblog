@@ -6,7 +6,10 @@ import { formatShortDate, formatSimpleDate } from "@/utils/date";
 // Supabase-dən featured postları al
 const { data: featuredPostsData, error } = await supabase
   .from("posts")
-  .select("*")
+  .select(`
+    *,
+    users:author_email (avatar, fullname, username)
+  `)
   .eq("featured", true)
   .eq("approved", true)
   .order("pub_date", { ascending: false })
@@ -29,18 +32,12 @@ const featuredPost = featuredPostData ? {
       url: featuredPostData.image_url,
       alt: featuredPostData.image_alt || featuredPostData.title
     },
-    featured: featuredPostData.featured
+    featured: featuredPostData.featured,
+    author: featuredPostData.users
   }
 } : null;
 
 const backgroundImage = featuredPost?.data.image.url;
-
-
-const { data } = await supabase.from('posts') 
-  .select(`
-    *,
-    users:author_email (avatar, fullname)
-  `).single()
 
 ---
 
@@ -79,20 +76,20 @@ const { data } = await supabase.from('posts')
                 </p>
             </div>
   
-            <div class="flex w-[420px] flex-row gap-6 items-center justify-between mt-10">
-               <div class="flex flex-row gap-2 items-center">
-                    <img src={data?.users.avatar} 
-                    alt={data?.users.fullname} 
+            <div class="flex w-[370px] flex-row items-center justify-between mt-10">
+               <a href={`/user/@${featuredPost.data.author?.username}`} class="flex flex-row gap-2 items-center hover:opacity-80 transition-opacity">
+                    <img src={featuredPost.data.author?.avatar} 
+                    alt={featuredPost.data.author?.fullname} 
                     class="squircle !w-[80px] !h-[78px]" />
                    <div class="flex flex-col ml-2">
                     <span class="text-white/80 font-medium text-[15px]">
-                      {data?.users.fullname}
+                      {featuredPost.data.author?.fullname}
                     </span>
                     <p class="text-white/50 font-light text-[11px]">
                       {featuredPost && formatSimpleDate(featuredPost.data.pubDate)}
                     </p>
                    </div> 
-               </div>
+               </a>
 
                <SliderReadMoreBtn client:idle slug={featuredPost.slug} />
             </div>

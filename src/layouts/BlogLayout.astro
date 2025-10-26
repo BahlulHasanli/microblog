@@ -4,6 +4,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { categories as CATEGORIES } from "../data/categories";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
+import PostReactions from "@/components/reactions/PostReactions";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
@@ -18,12 +19,15 @@ if (isLoggedIn) {
   currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
 }
 
-const { data } = await supabase
-  .from('posts') 
-  .select(`
-    *,
-    users:author_email (avatar, fullname)
-  `).single()
+// Get post ID from slug
+const postSlug = frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
+const { data: postData } = await supabase
+  .from('posts')
+  .select('id')
+  .eq('slug', postSlug)
+  .single();
+
+const postId = postData?.id;
 
 ---
 <BaseLayout>
@@ -41,21 +45,25 @@ const { data } = await supabase
           </p>
         </div>
 
-        <div class="flex justify-center items-center flex-col gap-2 my-10"> 
+        <div class="flex justify-center items-center flex-col gap-2 my-10">
          <div class="relative">
           <div class="squircle-border -left-[3px] -top-[3.5px]"></div>
          <div class="squircle-wrapper">
-            <Image
-            width={1280}
-            height={720}
-            src={data.users.avatar}
-            alt={data.users.fullname}
-            class="squircle !w-[85px] !h-[83px]"
-          />
+            <a href={`/user/@${frontmatter.author?.username}`}>
+              <Image
+              width={1280}
+              height={720}
+              src={frontmatter.author?.avatar}
+              alt={frontmatter.author?.fullname}
+              class="squircle !w-[85px] !h-[83px] hover:opacity-80 transition-opacity"
+            />
+            </a>
          </div>
          </div>
           <div class="mt-3">
-            <span class="text-md font-medium text-base-700">{data.users.fullname}</span>
+            <a href={`/user/@${frontmatter.author?.username}`} class="hover:text-rose-600 transition-colors">
+              <span class="text-md font-medium text-base-700">{frontmatter.author?.fullname}</span>
+            </a>
             <p class="text-xs text-zinc-400">
               {formatSimpleDate(frontmatter.pubDate)}
             </p>
@@ -78,8 +86,8 @@ const { data } = await supabase
             </div>
             {currentUser && (
               <div class="mt-2 md:mt-0">
-                <a 
-                  href={`/edit-post/${Astro.params.slug || frontmatter.slug}`} 
+                <a
+                  href={`/edit-post/${Astro.params.slug || frontmatter.slug}`}
                   class="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,7 +98,7 @@ const { data } = await supabase
               </div>
             )}
           </div>
-          
+
           {frontmatter.image && frontmatter.image.url && (
             <Image
               width={1280}
@@ -107,30 +115,38 @@ const { data } = await supabase
       <div class="prose prose-sm max-w-md mt-12 mx-auto">
         <slot />
       </div>
-      
+
+      {postId && (
+        <PostReactions
+          client:load
+          postId={postId}
+          userEmail={currentUser?.email}
+        />
+      )}
+
       <Comments client:load postSlug={frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-')} />
       <CommentButton client:load />
-      
-      <script is:inline>  
+
+      <script is:inline>
         function loadYoutubeVideos() {
           const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
-          
+
           youtubeContainers.forEach(container => {
             if (container.querySelector('iframe')) return;
-            
+
             const videoId = container.getAttribute('data-youtube-video');
-            
+
             if (videoId) {
               const iframe = document.createElement('iframe');
               iframe.src = `https://www.youtube.com/embed/${videoId}`;
               iframe.width = '100%';
-              iframe.height = '100%'; 
+              iframe.height = '100%';
               iframe.frameBorder = '0';
               iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
               iframe.allowFullscreen = true;
               iframe.classList.add('aspect-video');
               iframe.style.maxWidth = '100%';
-              
+
               container.innerHTML = '';
               container.appendChild(iframe);
             }
@@ -139,10 +155,10 @@ const { data } = await supabase
 
         // Sayfa ilk yüklenirken
         document.addEventListener('DOMContentLoaded', loadYoutubeVideos);
-        
+
         // Astro sayfa geçişlerinde
         document.addEventListener('astro:page-load', loadYoutubeVideos);
-        
+
         // Astro içerik güncellendiğinde
         document.addEventListener('astro:after-swap', loadYoutubeVideos);
       </script>

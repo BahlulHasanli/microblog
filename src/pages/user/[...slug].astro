@@ -6,31 +6,46 @@ import ProfileTabs from "@/components/profile/ProfileTabs";
 import { supabase } from "@/db/supabase";
 import { formatISO } from "@/utils/date";
 
-const isLoggedIn = isAuthenticated(Astro.cookies);
-if (!isLoggedIn) Astro.redirect("/signin");
+export const prerender = false;
 
-const authUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
-if (!authUser) {
-  return Astro.redirect("/signin");
+const { slug } = Astro.params;
+
+// Extract username from slug (remove @ prefix if present)
+let username = slug;
+if (username?.startsWith("@")) {
+  username = username.slice(1);
 }
 
+// İstifadəçi məlumatlarını username ilə al
 const { data: userData, error: userError } = await supabase
   .from("users") 
   .select("id, fullname, username, avatar, email")
-  .eq("id", authUser.id)
+  .eq("username", username)
   .single();
 
-if (userError) {
-  console.error("Kullanıcı bilgileri alınamadı:", userError);
-  return Astro.redirect("/signin");
+if (userError || !userData) {
+  console.error("İstifadəçi tapılmadı:", userError);
+  return Astro.redirect("/404");
 }
 
 const user = userData;
 
-// Supabase-dən postları al
+// Cari istifadəçini yoxla (giriş etmişsə)
+const isLoggedIn = isAuthenticated(Astro.cookies);
+let currentUser = null;
+let isOwner = false;
+
+if (isLoggedIn) {
+  currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
+  // Profil sahibi ilə cari istifadəçini müqayisə et
+  isOwner = currentUser?.id === user.id;
+}
+
+// İstifadəçinin postlarını al
 const { data: postsData, error: postsError } = await supabase
   .from("posts")
   .select("*")
+  .eq("author_email", user.email)
   .order("pub_date", { ascending: false });
 
 if (postsError) {
@@ -51,13 +66,15 @@ const posts = (postsData || []).map(post => ({
   <div class="max-w-3xl mx-auto pt-8 pb-16">
     <ProfileHeader 
       client:load 
-      user={user} 
+      user={user}
+      isOwner={isOwner}
     />
     
     <ProfileTabs 
       client:load 
       posts={posts || []} 
-      userId={user.id} 
+      userId={user.id}
+      isOwner={isOwner}
     />
   </div>
 </BaseLayout>

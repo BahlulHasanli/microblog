@@ -20,7 +20,10 @@ if (!category) {
 // Supabase-dən kateqoriyaya görə postları al
 const { data: postsData, error } = await supabase
   .from("posts")
-  .select("*")
+  .select(`
+    *,
+    users:author_email (avatar, fullname, username)
+  `)
   .eq("approved", true)
   .contains("categories", [category.name])
   .order("pub_date", { ascending: false });
@@ -40,7 +43,8 @@ const sortedPosts = (postsData || []).map(post => ({
       url: post.image_url || '',
       alt: post.image_alt || post.title
     },
-    categories: post.categories || []
+    categories: post.categories || [],
+    author: post.users
   }
 }));
 ---
@@ -76,6 +80,7 @@ const sortedPosts = (postsData || []).map(post => ({
               image={post.data.image.url}
               description={post.data.description}
               pubDate={formatSimpleDate(post.data.pubDate)}
+              author={post.data.author}
             />
           ))}
         </div>

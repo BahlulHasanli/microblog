@@ -7,10 +7,13 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
-// Supabase-dən postu al
+// Supabase-dən postu və müəllif məlumatlarını al
 const { data: post, error } = await supabase
   .from("posts")
-  .select("*")
+  .select(`
+    *,
+    users:author_email (avatar, fullname, username)
+  `)
   .eq("slug", slug)
   .single();
 
@@ -34,6 +37,7 @@ const frontmatter = {
     alt: post.image_alt || post.title
   },
   categories: post.categories || [],
+  author: post.users,
 };
 ---
 

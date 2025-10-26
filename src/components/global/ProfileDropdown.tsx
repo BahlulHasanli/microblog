@@ -9,12 +9,14 @@ import { slugifyCategory } from "@/data/categories";
 interface ProfileDropdownProps {
   userImage: string;
   userName: string;
+  userUsername?: string;
   isStudioRoutePath: boolean;
 }
 
 export default function ProfileDropdown({
   userImage,
   userName,
+  userUsername,
   isStudioRoutePath,
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +25,7 @@ export default function ProfileDropdown({
   const [userData, setUserData] = useState({
     avatar: userImage,
     fullname: userName,
+    username: userUsername || "",
   });
 
   const isSaveBtnState = useStore(isSaveBtn);
@@ -52,6 +55,7 @@ export default function ProfileDropdown({
           setUserData({
             avatar: data.avatar || userImage,
             fullname: data.fullname || userName,
+            username: data.username || userUsername || "",
           });
         }
       } catch (err) {
@@ -204,13 +208,19 @@ export default function ProfileDropdown({
             onClick={handleMenuClick}
             className="absolute bg-white/40 overflow-hidden backdrop-blur-xl right-0 mt-2 w-48 rounded-lg shadow-lg py-1  animate-fadeIn"
           >
-            <a
-              href="#"
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/profile");
+                console.log("Profile button clicked, userData:", userData);
+                if (userData.username) {
+                  console.log("Navigating to:", `/user/@${userData.username}`);
+                  navigate(`/user/@${userData.username}`);
+                } else {
+                  console.log("Username is empty, userUsername prop:", userUsername);
+                }
               }}
-              className="block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
+              className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
             >
               <div className="flex items-center">
                 <svg
@@ -235,13 +245,14 @@ export default function ProfileDropdown({
                 </svg>
                 Hesabım
               </div>
-            </a>
+            </button>
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 handleLogout();
               }}
-              className="w-full cursor-pointer text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
+              className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
             >
               <div className="flex items-center">
                 <svg

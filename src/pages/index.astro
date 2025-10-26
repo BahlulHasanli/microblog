@@ -8,7 +8,10 @@ import { supabase } from "@/db/supabase";
 // Supabase-dən postları al
 const { data: postsData, error: postsError } = await supabase
   .from("posts")
-  .select("*")
+  .select(`
+    *,
+    users:author_email (avatar, fullname, username)
+  `)
   .eq("approved", true)
   .order("pub_date", { ascending: false });
 
@@ -31,7 +34,8 @@ const posts = (postsData || []).map(post => {
       },
       categories: post.categories || [],
       approved: post.approved,
-      featured: post.featured
+      featured: post.featured,
+      author: post.users
     }
   };
 });
@@ -79,6 +83,7 @@ const posts = (postsData || []).map(post => {
                   image={post.data.image.url}
                   description={post.data.description}
                   pubDate={post.data.pubDate.toString()}
+                  author={post.data.author}
                 />
               )).slice(0, 10)
             }

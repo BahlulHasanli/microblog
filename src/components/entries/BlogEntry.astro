@@ -1,18 +1,8 @@
 ---
 import { Image } from "astro:assets";
 import { categories as CATEGORIES } from "@/data/categories";
-import { supabase } from "@/db/supabase";
- 
 
-const { title, url, description, image, categories } = Astro.props;
-
-
-const { data } = await supabase
-  .from('posts') 
-  .select(`
-    *,
-    users:author_email (avatar, fullname)
-  `).single()
+const { title, url, description, image, categories, author } = Astro.props;
 
 ---
  
@@ -31,13 +21,15 @@ const { data } = await supabase
 
   <div class="mt-5">
     <div class="flex items-center space-x-1 gap-2 text-xs text-base-500">
-      <div class="overflow-hidden !size-14 squircle cursor-pointer">
-      <img src={data.users.avatar}
-          alt="User"
-          class="w-full h-full object-cover"
-      />
-      </div>
-      <span class="font-medium">{data.users.fullname}</span>
+      <a href={`/user/@${author?.username}`} class="overflow-hidden !size-14 squircle cursor-pointer hover:opacity-80 transition-opacity">
+        <img src={author?.avatar}
+            alt={author?.fullname}
+            class="w-full h-full object-cover"
+        />
+      </a>
+      <a href={`/user/@${author?.username}`} class="font-medium hover:text-rose-600 transition-colors">
+        {author?.fullname}
+      </a>
       <span aria-hidden="true">&middot;</span>
       {categories && categories.length > 0 && (
         <span class="flex flex-wrap gap-2">

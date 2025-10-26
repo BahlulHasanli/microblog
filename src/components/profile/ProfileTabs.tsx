@@ -13,9 +13,10 @@ interface Post {
 interface ProfileTabsProps {
   posts: Post[];
   userId: string;
+  isOwner?: boolean;
 }
 
-export default function ProfileTabs({ posts, userId }: ProfileTabsProps) {
+export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState("posts");
   // userId artık string tipinde
 
@@ -67,7 +68,7 @@ export default function ProfileTabs({ posts, userId }: ProfileTabsProps) {
                   <PostCard key={post.id} post={post} />
                 ))}
               </div>
-            ) : (
+            ) : isOwner ? (
               <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
                 <div className="max-w-sm mx-auto">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
@@ -90,7 +91,8 @@ export default function ProfileTabs({ posts, userId }: ProfileTabsProps) {
                     Hələ heç bir məqalə yazmamısınız
                   </h3>
                   <p className="text-base-600 mb-6">
-                    İlk məqalənizi yazmaq üçün "Yaz" düyməsinə klikləyin
+                    İlk məqalənizi yazmaq üçün "Yeni məqalə yaz" düyməsinə
+                    klikləyin
                   </p>
                   <a
                     href="/studio"
@@ -115,6 +117,33 @@ export default function ProfileTabs({ posts, userId }: ProfileTabsProps) {
                     </svg>
                     Yeni məqalə yaz
                   </a>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
+                <div className="max-w-sm mx-auto">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-8 text-base-400"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-base-900 mb-2">
+                    Heç bir məqalə yoxdur
+                  </h3>
+                  <p className="text-base-600">
+                    Bu istifadəçi hələ heç bir məqalə yazmamışdır
+                  </p>
                 </div>
               </div>
             )}
