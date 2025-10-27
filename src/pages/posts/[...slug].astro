@@ -35,11 +35,9 @@ htmlContent = htmlContent.replace(ratingRegex, (match, score) => {
   const numericScore = parseFloat(score);
 
   const ratingHtml = `
-    <div class="my-12 mx-auto py-12 px-8 text-center flex flex-col items-center bg-white w-full">
-      <div class="w-full max-w-2xl h-px bg-gray-300"></div>
-      <div class="text-8xl font-bold leading-none text-black mt-5">${numericScore.toFixed(2)}</div>
-      <p class="text-sm text-blue-600 italic mb-5">Reytinq sistemi haqqında</p>
-      <div class="w-full max-w-2xl h-px bg-gray-300"></div>
+    <div class="rounded-2xl mx-auto text-center flex flex-col items-center bg-white w-full">
+      <div class="text-7xl font-black leading-none text-black mt-5">${numericScore.toFixed(1)}</div>
+      <p class="text-sm text-blue-600 mb-5">Reytinq sistemi</p>
     </div>
   `;
   return ratingHtml;

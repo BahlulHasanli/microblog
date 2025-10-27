@@ -23,11 +23,11 @@ export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileT
   return (
     <div>
       {/* Tabs */}
-      <div className="border-b border-base-200 mb-10">
-        <div className="flex space-x-8">
+      <div className="border-b border-base-200 mb-6 sm:mb-10">
+        <div className="flex space-x-4 sm:space-x-8">
           <button
             onClick={() => setActiveTab("posts")}
-            className={`py-4 px-1 border-b-2 font-semibold text-sm transition-colors ${
+            className={`py-3 sm:py-4 px-1 border-b-2 font-semibold text-xs sm:text-sm transition-colors ${
               activeTab === "posts"
                 ? "border-rose-500 text-rose-600"
                 : "border-transparent text-base-500 hover:text-base-700 hover:border-base-300"

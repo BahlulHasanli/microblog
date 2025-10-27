@@ -8,8 +8,8 @@ export const categories = [
     name: "Art",
   },
   {
-    slug: "qan-ter-piksellər",
-    name: "Qan, Tər və Piksellər",
+    slug: "icmal",
+    name: "İcmal",
   },
   {
     slug: "film-serial",
@@ -43,13 +43,15 @@ export const categories = [
 
 export function slugifyCategory(categoryNameOrSlug: string): string {
   // First check if this is already a slug in our categories array
-  const categoryObj = categories.find(cat => cat.slug === categoryNameOrSlug || cat.name === categoryNameOrSlug);
-  
+  const categoryObj = categories.find(
+    (cat) => cat.slug === categoryNameOrSlug || cat.name === categoryNameOrSlug
+  );
+
   // If it's a known category, return its slug
   if (categoryObj) {
     return categoryObj.slug;
   }
-  
+
   // Otherwise, create a new slug from the string
   return categoryNameOrSlug
     .toLowerCase()

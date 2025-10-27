@@ -109,9 +109,12 @@ export default function PostReactions({
   };
 
   return (
-    <div className="max-w-2xl mx-auto my-12 px-4">
+    <div className="max-w-2xl mx-auto my-8 sm:my-12 px-3 sm:px-4">
       <div className="mt-2">
-        <div className="flex flex-wrap gap-2 justify-center">
+        <p className="text-center mb-3 sm:mb-5 font-display font-medium text-sm sm:text-base">
+          Nə düşünürsən?
+        </p>
+        <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
           {Object.entries(reactionIcons).map(([type, iconPath]) => {
             const isActive = userReactions.includes(type);
             const count = counts[type as keyof ReactionCounts];
@@ -120,7 +123,7 @@ export default function PostReactions({
               <button
                 key={type}
                 className={`
-                  group relative inline-flex items-center gap-2 px-4 py-2.5 rounded-full
+                  group relative inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-full text-xs sm:text-sm
                   transition-all duration-200 font-nouvelr select-none overflow-hidden
                   ${isActive ? "bg-rose-50 text-rose-600" : "bg-zinc-50"}
                   ${
@@ -144,14 +147,14 @@ export default function PostReactions({
                   <img
                     src={iconPath}
                     alt={reactionLabels[type as keyof typeof reactionLabels]}
-                    className={`size-11 object-contain transition-all duration-300 ${
+                    className={`size-6 sm:size-11 object-contain transition-all duration-300 ${
                       isActive ? "scale-110 opacity-100" : "opacity-70"
                     }`}
                   />
                 </span>
                 {count > 0 && (
                   <span
-                    className={`text-lg font-semibold tabular-nums ${
+                    className={`text-sm sm:text-lg font-semibold tabular-nums ${
                       isActive ? "text-rose-600" : "text-zinc-600"
                     }`}
                   >

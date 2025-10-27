@@ -43,7 +43,7 @@ const backgroundImage = featuredPost?.data.image.url;
 
 {featuredPost && (
   <>
-    <div class="absolute inset-0 h-[700px] overflow-hidden -z-10">
+    <div class="absolute inset-0 h-[300px] sm:h-[500px] md:h-[700px] overflow-hidden -z-10">
       <img src={backgroundImage}
       alt={featuredPost.data.title} 
       class="w-full h-full object-cover opacity-40" 
@@ -51,9 +51,9 @@ const backgroundImage = featuredPost?.data.image.url;
       <div class="absolute inset-0 bg-gradient-to-t from-white to-transparent backdrop-blur-xs"></div>
     </div>
 
-    <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[500px] bg-zinc-600 mt-8 rounded-xl">
-    <!-- Right Side -->
-    <div class="absolute right-0 top-0 w-1/2 h-full">
+    <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl">
+    <!-- Right Side - Hidden on mobile -->
+    <div class="hidden sm:block absolute right-0 top-0 w-1/2 h-full">
         <img src={backgroundImage}
         alt={featuredPost.data.title}
         class="w-full h-full object-cover object-center" 
@@ -61,31 +61,31 @@ const backgroundImage = featuredPost?.data.image.url;
     </div> 
   
       <!-- Left Side -->
-    <div class="absolute left-0 top-0 w-[855px] h-full z-10">
+    <div class="absolute left-0 top-0 w-full sm:w-[855px] h-full z-10">
         <img src={backgroundImage}  
         alt={featuredPost.data.title}
-        class="size-[750px] object-cover blur-3xl -mt-28 object-center" 
+        class="hidden sm:block size-[750px] object-cover blur-3xl -mt-28 object-center" 
         />
-        <div class="absolute inset-0 ml-15 flex flex-col justify-between pt-24 mb-10">
-            <div class="text-white flex flex-col gap-1 w-[470px]">
-                <h2 class="text-4xl font-semibold font-display m-0 break-words tracking-wide">
+        <div class="absolute inset-0 px-4 sm:ml-15 flex flex-col justify-between pt-4 sm:pt-24 pb-4 sm:mb-10">
+            <div class="text-white flex flex-col gap-1 w-full sm:w-[470px]">
+                <h2 class="text-xl sm:text-3xl md:text-4xl font-semibold font-display m-0 break-words tracking-wide line-clamp-2 sm:line-clamp-none">
                   {featuredPost && featuredPost.data.title}
                 </h2>
-                <p class="text-md font-light opacity-70 mt-5 break-words font-display tracking-wide">
+                <p class="text-xs sm:text-sm md:text-md font-light opacity-70 mt-2 sm:mt-5 break-words font-display tracking-wide line-clamp-2 sm:line-clamp-none">
                   {featuredPost && featuredPost.data.description}
                 </p>
             </div>
   
-            <div class="flex w-[370px] flex-row items-center justify-between mt-10">
-               <a href={`/user/@${featuredPost.data.author?.username}`} class="flex flex-row gap-2 items-center hover:opacity-80 transition-opacity">
+            <div class="flex w-full sm:w-[370px] flex-row items-center justify-between mt-3 sm:mt-10 gap-2">
+               <a href={`/user/@${featuredPost.data.author?.username}`} class="flex flex-row gap-1 sm:gap-2 items-center hover:opacity-80 transition-opacity min-w-0">
                     <img src={featuredPost.data.author?.avatar} 
                     alt={featuredPost.data.author?.fullname} 
-                    class="squircle !w-[80px] !h-[78px]" />
-                   <div class="flex flex-col ml-2">
-                    <span class="text-white/80 font-medium text-[15px]">
+                    class="squircle !w-10 sm:!w-[80px] !h-10 sm:!h-[78px] flex-shrink-0" />
+                   <div class="flex flex-col ml-1 sm:ml-2 min-w-0">
+                    <span class="text-white/80 font-medium text-[11px] sm:text-[15px] truncate">
                       {featuredPost.data.author?.fullname}
                     </span>
-                    <p class="text-white/50 font-light text-[11px]">
+                    <p class="text-white/50 font-light text-[9px] sm:text-[11px]">
                       {featuredPost && formatSimpleDate(featuredPost.data.pubDate)}
                     </p>
                    </div> 

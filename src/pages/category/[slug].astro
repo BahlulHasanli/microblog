@@ -51,26 +51,26 @@ const sortedPosts = (postsData || []).map(post => ({
 
 <BaseLayout title={`${category.name} Kategorisi - Mikroblog`}>
   <section>
-    <div class="py-18 max-w-3xl mx-auto px-4">
-      <div class="flex items-center gap-2 mb-6">
-        <a href="/" class="text-sm text-base-500 hover:text-base-900">Ana Səhifə</a>
+    <div class="py-8 sm:py-12 md:py-18 max-w-3xl mx-auto px-4 sm:px-0">
+      <div class="flex items-center gap-2 mb-4 sm:mb-6">
+        <a href="/" class="text-xs sm:text-sm text-base-500 hover:text-base-900">Ana Səhifə</a>
         <span class="text-base-400">/</span>
-        <span class="text-sm font-medium text-base-900">{category.name}</span>
+        <span class="text-xs sm:text-sm font-medium text-base-900">{category.name}</span>
       </div>
       
-      <h1 class="text-4xl text-balance font-light font-display text-base-900 mb-6">
+      <h1 class="text-2xl sm:text-3xl md:text-4xl text-balance font-light font-display text-base-900 mb-4 sm:mb-6">
         <span class="font-semibold">{category.name}</span> bölməsi
       </h1>
 
       {sortedPosts.length === 0 ? (
-        <div class="text-center py-12">
-          <p class="text-base-600">Bölmədə heçnə mövcud deyil.</p>
-          <a href="/" class="text-base-900 font-medium underline underline-offset-4 underline-2 decoration-wavy hover:no-underline mt-2 inline-block">
+        <div class="text-center py-8 sm:py-12">
+          <p class="text-sm sm:text-base text-base-600">Bölmədə heçnə mövcud deyil.</p>
+          <a href="/" class="text-base-900 font-medium underline underline-offset-4 underline-2 decoration-wavy hover:no-underline mt-2 inline-block text-sm sm:text-base">
             Ana səhifəyə qayıt
           </a>
         </div>
       ) : (
-        <div class="grid grid-cols-1 mt-8 gap-8 gap-y-24 sm:grid-cols-2">
+        <div class="grid grid-cols-1 mt-6 sm:mt-8 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">
           {sortedPosts.map((post) => (
             <BlogEntries
               url={"/posts/" + post.slug}

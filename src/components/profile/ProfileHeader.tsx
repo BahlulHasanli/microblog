@@ -56,11 +56,11 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
   };
 
   return (
-    <div className="mb-12">
-      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+    <div className="mb-8 sm:mb-12">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
         {/* Avatar */}
         <div className="relative group flex-shrink-0">
-          <div className="overflow-hidden !size-32 squircle cursor-pointer ring-4 ring-base-100">
+          <div className="overflow-hidden !size-24 sm:!size-32 squircle cursor-pointer ring-2 sm:ring-4 ring-base-100">
             <img
               src={currentUser.avatar}
               alt={currentUser.fullname}
@@ -79,7 +79,7 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="size-8 text-white"
+                  className="size-6 sm:size-8 text-white"
                 >
                   <path
                     strokeLinecap="round"
@@ -98,19 +98,19 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
         </div>
 
         {/* User Info */}
-        <div className="flex-1 flex flex-col sm:flex-row justify-between items-center sm:items-start gap-4 w-full">
+        <div className="flex-1 flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 sm:gap-4 w-full">
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-display font-semibold text-base-800 mb-1">
+            <h1 className="text-xl sm:text-2xl font-display font-semibold text-base-800 mb-1">
               {currentUser.fullname}
             </h1>
-            <p className="text-base-500/80 text-sm">@{currentUser.username}</p>
+            <p className="text-base-500/80 text-xs sm:text-sm">@{currentUser.username}</p>
           </div>
           {isOwner && (
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="px-2.5 py-2.5 rounded-xl hover:bg-base-200 bg-base-100/50 cursor-pointer text-sm font-medium
+              className="px-2 sm:px-2.5 py-2 sm:py-2.5 rounded-lg sm:rounded-xl hover:bg-base-200 bg-base-100/50 cursor-pointer text-xs sm:text-sm font-medium
                   transition-all duration-200 focus:ring-offset-2 focus:ring-rose-500 text-base-900 
-                  inline-flex items-center justify-center gap-2"
+                  inline-flex items-center justify-center gap-1 sm:gap-2"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -118,7 +118,7 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="size-5"
+                className="size-4 sm:size-5"
               >
                 <path
                   strokeLinecap="round"

@@ -32,8 +32,8 @@
   });
 </script>
 
-<div id="comments-section" class="max-w-2xl mx-auto mt-12 px-4">
-  <div class="border-t border-zinc-100 pt-6">
+<div id="comments-section" class="max-w-2xl mx-auto mt-8 sm:mt-12 px-3 sm:px-4">
+  <div class="border-t border-zinc-100 pt-4 sm:pt-6">
     <CommentList {postSlug} {user} />
   </div>
 </div>
