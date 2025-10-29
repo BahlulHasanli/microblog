@@ -8,7 +8,7 @@ import PostReactions from "@/components/reactions/PostReactions";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
-
+ 
 const { frontmatter } = Astro.props;
 
 // Kullanıcı giriş yapmış mı kontrol et
@@ -49,15 +49,15 @@ const postId = postData?.id;
          <div class="relative">
           <div class="squircle-border -left-[3px] -top-[3.5px]"></div>
          <div class="squircle-wrapper">
-            <a href={`/user/@${frontmatter.author?.username}`}>
+            <button type="button" class="user-avatar" data-username={frontmatter.author?.username}>
               <Image
               width={1280}
               height={720}
               src={frontmatter.author?.avatar}
               alt={frontmatter.author?.fullname}
-              class="squircle !w-[85px] !h-[83px] hover:opacity-80 transition-opacity"
+              class="squircle !w-16 sm:!w-20 md:!w-[85px] !h-16 sm:!h-20 md:!h-[83px] cursor-pointer"
             />
-            </a>
+            </button>
          </div>
          </div>
           <div class="mt-3">
@@ -124,8 +124,8 @@ const postId = postData?.id;
         />
       )}
 
-      <Comments client:load postSlug={frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-')} />
-      <CommentButton client:load />
+      <Comments client:load="svelte" postSlug={frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-')} />
+      <CommentButton client:load="svelte" />
 
       <script is:inline>
         function loadYoutubeVideos() {
@@ -161,6 +161,28 @@ const postId = postData?.id;
 
         // Astro içerik güncellendiğinde
         document.addEventListener('astro:after-swap', loadYoutubeVideos);
+      </script>
+
+      <script> 
+        import { navigate } from 'astro:transitions/client';
+
+        function setupUserAvatarClick() {
+          const userAvatar = document.querySelector('.user-avatar');
+          if (userAvatar) {
+            userAvatar.addEventListener('click', () => {
+              const username = userAvatar.getAttribute('data-username');
+              if (username) {
+                navigate(`/user/@${username}`);
+              }
+            });
+          }
+        }
+        
+        // İlk yükləmə üçün
+        setupUserAvatarClick();
+        
+        // Transitions sonrası yenidən quraşdır
+        document.addEventListener('astro:after-swap', setupUserAvatarClick);
       </script>
     </div>
   </section>

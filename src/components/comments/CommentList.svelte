@@ -3,7 +3,7 @@
   import { supabase } from '@/db/supabase';
   import CommentForm from './CommentForm.svelte';
   import { navigate } from "astro:transitions/client";
-  import { formatSimpleDate } from '@/utils/date';
+  import { formatSimpleDate } from "@/utils/date";
 
   let {postSlug, user} = $props();
 
@@ -112,12 +112,12 @@
                     e.stopPropagation();
                     navigateToProfile(comment.user_name);
                   }}
-                  class="cursor-pointer hover:opacity-80 transition-opacity"
+                  class="cursor-pointer overflow-hidden !size-10 squircle hover:opacity-80 transition-opacity"
                 >
                   <img
                     src={comment.user_avatar}
                     alt={comment.user_name}
-                    class="w-[36px] h-[36px] rounded-xl object-cover"
+                    class="w-full h-full object-cover"
                   />
                 </button>
               {/if}

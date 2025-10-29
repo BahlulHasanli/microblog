@@ -21,9 +21,12 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User>(user);
   const [loading, setLoading] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Supabase'den kullanıcı bilgilerini al
   useEffect(() => {
+    setIsHydrated(true);
+    
     const fetchUserData = async () => {
       setLoading(true);
       try {
@@ -60,11 +63,12 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         {/* Avatar */}
         <div className="relative group flex-shrink-0">
-          <div className="overflow-hidden !size-32 squircle cursor-pointer ring-4 ring-base-100">
+          <div className="overflow-hidden !size-32 squircle cursor-pointer ring-4 ring-base-100" suppressHydrationWarning>
             <img
               src={currentUser.avatar}
               alt={currentUser.fullname}
               className="w-full h-full object-cover"
+              suppressHydrationWarning
             />
 
             {isOwner && (
@@ -99,7 +103,7 @@ export default function ProfileHeader({ user, isOwner = true }: ProfileHeaderPro
 
         {/* User Info */}
         <div className="flex-1 flex flex-col sm:flex-row justify-between items-center sm:items-start gap-4 w-full">
-          <div className="text-center sm:text-left">
+          <div className="text-center sm:text-left" suppressHydrationWarning>
             <h1 className="text-2xl font-display font-semibold text-base-800 mb-1">
               {currentUser.fullname}
             </h1>
