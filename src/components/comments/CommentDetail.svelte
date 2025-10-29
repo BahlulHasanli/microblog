@@ -150,12 +150,12 @@
           <button
             type="button"
             onclick={() => navigateToProfile(comment.user_name)}
-            class="cursor-pointer hover:opacity-80 transition-opacity"
+            class="cursor-pointer overflow-hidden !size-12 squircle hover:opacity-80 transition-opacity"
           >
             <img
               src={comment.user_avatar}
               alt={comment.user_name}
-              class="w-[48px] h-[48px] rounded-2xl object-cover"
+              class="w-full h-full object-cover"
             />
           </button>
     

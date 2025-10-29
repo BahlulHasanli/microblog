@@ -167,7 +167,7 @@ export default function PostReactions({
         </div>
       </div>
 
-      <style>{`
+      <style dangerouslySetInnerHTML={{__html: `
         .reaction-icon-wrapper {
           display: inline-block;
         }
@@ -189,7 +189,7 @@ export default function PostReactions({
             transform: translateY(-6px) scale(1.1);
           }
         }
-      `}</style>
+      `}} suppressHydrationWarning></style>
     </div>
   );
 }

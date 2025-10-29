@@ -63,7 +63,7 @@ export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileT
         {activeTab === "posts" && (
           <div>
             {posts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-x-4 sm:gap-x-6 md:gap-x-8 gap-y-8 sm:gap-y-12 md:gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}

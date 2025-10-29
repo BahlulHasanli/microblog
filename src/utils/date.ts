@@ -1,17 +1,17 @@
-import moment from "moment";
-import "moment/locale/az";
+import { format } from "date-fns";
+import { az } from "date-fns/locale";
 
 /**
  * Tarixi formatla
- * @param date - Tarix (string, Date, və ya moment obyekti)
- * @param format - Format (default: "D MMMM YYYY")
+ * @param date - Tarix
+ * @param formatStr - Format (default: "d MMMM yyyy")
  * @returns Formatlanmış tarix
  */
 export function formatDate(
   date: string | Date,
-  format: string = "D MMMM YYYY"
+  formatStr: string = "d MMMM yyyy"
 ): string {
-  return moment(date).locale("az").format(format);
+  return format(new Date(date), formatStr, { locale: az });
 }
 
 /**
@@ -20,7 +20,7 @@ export function formatDate(
  * @returns Formatlanmış tarix (məs: "15 Oktyabr")
  */
 export function formatShortDate(date: string | Date): string {
-  return moment(date).locale("az").format("D MMMM");
+  return format(new Date(date), "d MMMM", { locale: az });
 }
 
 /**
@@ -29,7 +29,7 @@ export function formatShortDate(date: string | Date): string {
  * @returns Formatlanmış tarix (məs: "15 Oktyabr 2025")
  */
 export function formatFullDate(date: string | Date): string {
-  return moment(date).locale("az").format("D MMMM YYYY");
+  return format(new Date(date), "d MMMM yyyy", { locale: az });
 }
 
 /**
@@ -38,18 +38,14 @@ export function formatFullDate(date: string | Date): string {
  * @returns ISO formatında tarix
  */
 export function formatISO(date: string | Date): string {
-  return moment(date).toISOString();
+  return new Date(date).toISOString();
 }
 
 /**
- * Sadə tarix formatı (YYYY-MM-DD)
+ * Sadə tarix formatı (Okt 21, 2025)
  * @param date - Tarix
- * @returns Formatlanmış tarix (məs: "2025-10-15")
+ * @returns Formatlanmış tarix (məs: "Okt 21, 2025")
  */
 export function formatSimpleDate(date: string | Date): string {
-  return moment(date)
-    .locale("az")
-    .format("MMM D, YYYY")
-    .toLowerCase()
-    .replace(/^./, (firstChar) => firstChar.toUpperCase());
+  return format(new Date(date), "MMM d, yyyy", { locale: az });
 }
