@@ -123,8 +123,7 @@ export default function Editor({ author }: any) {
             type: coverImage.type,
           });
           formData.append("uploadedImage", newFile);
-          // Kapak resmi için aynı klasör yapısını kullan (notes/[slug]/images)
-          formData.append("image", `notes/${slug}/images/${imageFileName}`);
+          formData.append("image", `posts/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
         } catch (error) {

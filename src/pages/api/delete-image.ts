@@ -5,7 +5,7 @@ export async function POST(context: APIContext) {
     // Form verilerini al
     const formData = await context.request.formData();
     const imageUrl = formData.get("imageUrl") as string;
-    
+
     if (!imageUrl) {
       return new Response(
         JSON.stringify({
@@ -18,12 +18,11 @@ export async function POST(context: APIContext) {
         }
       );
     }
-    
+
     console.log(`API: Resim silme başlatılıyor: ${imageUrl}`);
-    
-    // BunnyCDN URL'sinden dosya yolunu çıkar
-    // Örnek: https://the99.b-cdn.net/notes/slug/images/slug-uuid.jpg -> notes/slug/images/slug-uuid.jpg
+
     let filePath = "";
+
     try {
       const url = new URL(imageUrl);
       // URL'nin pathname kısmını al ve başındaki / işaretini kaldır
@@ -42,14 +41,14 @@ export async function POST(context: APIContext) {
         }
       );
     }
-    
+
     // Bunny CDN ayarları
     const REGION = "";
     const BASE_HOSTNAME = "storage.bunnycdn.com";
     const HOSTNAME = REGION ? `${REGION}.${BASE_HOSTNAME}` : BASE_HOSTNAME;
     const STORAGE_ZONE_NAME = "the99-storage";
     const ACCESS_KEY = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
-    
+
     // Dosyayı BunnyCDN'den sil
     try {
       const deleteResponse = await fetch(
@@ -61,14 +60,16 @@ export async function POST(context: APIContext) {
           },
         }
       );
-      
+
       if (!deleteResponse.ok) {
         const errorText = await deleteResponse.text();
-        throw new Error(`Silme hatası: ${deleteResponse.status} - ${errorText}`);
+        throw new Error(
+          `Silme hatası: ${deleteResponse.status} - ${errorText}`
+        );
       }
-      
+
       console.log(`API: Dosya başarıyla silindi: ${filePath}`);
-      
+
       // Başarılı yanıt döndür
       return new Response(
         JSON.stringify({
@@ -82,7 +83,7 @@ export async function POST(context: APIContext) {
       );
     } catch (error) {
       console.error(`API: Silme sırasında hata: ${error.message}`);
-      
+
       // Hata yanıtı döndür
       return new Response(
         JSON.stringify({
@@ -97,7 +98,7 @@ export async function POST(context: APIContext) {
     }
   } catch (error) {
     console.error(`API: Genel hata: ${error.message}`);
-    
+
     // Genel hata yanıtı döndür
     return new Response(
       JSON.stringify({

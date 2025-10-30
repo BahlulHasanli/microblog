@@ -52,7 +52,7 @@ export const POST: APIRoute = async (context) => {
       const bunnyApiKey = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
       const storageZoneName = "the99-storage";
       const hostname = "storage.bunnycdn.com";
-      const folder = `notes/${postSlug}`;
+      const folder = `posts/${postSlug}`;
 
       const response = await fetch(
         `https://${hostname}/${storageZoneName}/${folder}/`,

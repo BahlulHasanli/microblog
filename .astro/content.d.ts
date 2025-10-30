@@ -1,7 +1,7 @@
 declare module 'astro:content' {
 	interface Render {
 		'.mdx': Promise<{
-			Content: import('astro').MarkdownInstance<{}>['Content'];
+			Content: import('astro').MDXContent;
 			headings: import('astro').MarkdownHeading[];
 			remarkPluginFrontmatter: Record<string, any>;
 			components: import('astro').MDXInstance<{}>['components'];
@@ -215,6 +215,6 @@ declare module 'astro:content' {
 		LiveContentConfig['collections'][C]['loader']
 	>;
 
-	export type ContentConfig = typeof import("../src/content/config.js");
+	export type ContentConfig = typeof import("./../src/content/config.js");
 	export type LiveContentConfig = never;
 }

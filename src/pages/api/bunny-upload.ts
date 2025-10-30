@@ -8,48 +8,48 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    
+
     // Farklı senaryolar için parametreler
-    const uploadType = formData.get("uploadType") as string || "general"; // general, post-image, avatar, etc.
+    const uploadType = (formData.get("uploadType") as string) || "general"; // general, post-image, avatar, etc.
     const slug = formData.get("slug") as string;
     const tempId = formData.get("tempId") as string;
     const fileName = formData.get("fileName") as string;
     const filePath = formData.get("filePath") as string;
-    
+
     // Dosya kontrolü
     if (!file) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
-          message: "Dosya belirtilmedi" 
+          message: "Dosya belirtilmedi",
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    
+
     // Yükleme türüne göre gerekli parametreleri kontrol et
     if (uploadType === "post-image" && !slug) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
-          message: "Post resmi yüklemesi için slug zorunludur" 
+          message: "Post resmi yüklemesi için slug zorunludur",
         }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
-    
+
     // Dosya formatını tespit et
     const fileExtension = file.name.split(".").pop() || "jpg";
-    
+
     // Yükleme türüne göre dosya adı ve yolu oluştur
     let finalFileName: string;
     let finalFilePath: string;
-    
+
     if (uploadType === "post-image") {
       // Post resmi için benzersiz bir dosya adı oluştur
       const uuid = generateUUID().substring(0, 8);
       finalFileName = `${slug}-${uuid}.${fileExtension}`;
-      finalFilePath = `notes/${slug}/images/${finalFileName}`;
+      finalFilePath = `posts/${slug}/images/${finalFileName}`;
       console.log(`Post resmi yükleniyor: ${finalFileName}, slug: ${slug}`);
     } else if (uploadType === "avatar") {
       // Avatar için dosya adı oluştur
@@ -59,14 +59,19 @@ export const POST: APIRoute = async ({ request }) => {
       console.log(`Avatar yükleniyor: ${finalFileName}, userId: ${userId}`);
     } else {
       // Genel dosya yükleme için
-      finalFileName = fileName || `${Date.now()}-${Math.floor(Math.random() * 10000)}.${fileExtension}`;
+      finalFileName =
+        fileName ||
+        `${Date.now()}-${Math.floor(Math.random() * 10000)}.${fileExtension}`;
       finalFilePath = filePath || finalFileName;
       console.log(`Genel dosya yükleniyor: ${finalFileName}`);
     }
-    
+
     // Geçici dosya oluştur
     const tempDir = os.tmpdir();
-    const tempFilePath = path.join(tempDir, `upload-${Date.now()}-${finalFileName}`);
+    const tempFilePath = path.join(
+      tempDir,
+      `upload-${Date.now()}-${finalFileName}`
+    );
 
     // File içeriğini buffer'a dönüştür
     const arrayBuffer = await file.arrayBuffer();
@@ -80,18 +85,18 @@ export const POST: APIRoute = async ({ request }) => {
     const BASE_HOSTNAME = "storage.bunnycdn.com";
     const HOSTNAME = REGION ? `${REGION}.${BASE_HOSTNAME}` : BASE_HOSTNAME;
     const STORAGE_ZONE_NAME = "the99-storage";
-    
+
     // API anahtarı - BunnyCDN Storage API anahtarı
     // Önemli: Bu anahtarı BunnyCDN kontrol panelinden almalısınız
     // Storage > [Storage Zone Adı] > FTP & API Access > Storage API Password
     const ACCESS_KEY = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
-    
+
     console.log("BunnyCDN ayarları:", {
       hostname: HOSTNAME,
       storageZone: STORAGE_ZONE_NAME,
-      apiKeyLength: ACCESS_KEY.length
+      apiKeyLength: ACCESS_KEY.length,
     });
-    
+
     // Storage klasör yapısını oluştur
     // Dosya yolu belirtilmişse kullan, yoksa fileName'i kullan
     // Özellikle avatars/ yolu için destek eklenmiştir
@@ -109,13 +114,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     try {
       // Önce klasörün var olup olmadığını kontrol et ve yoksa oluştur
-      if (finalFilePath && finalFilePath.includes('/')) {
+      if (finalFilePath && finalFilePath.includes("/")) {
         // Klasör yolunu al
-        const folderPath = finalFilePath.substring(0, finalFilePath.lastIndexOf('/'));
-        
+        const folderPath = finalFilePath.substring(
+          0,
+          finalFilePath.lastIndexOf("/")
+        );
+
         if (folderPath) {
           console.log(`Klasör kontrol ediliyor: ${folderPath}`);
-          
+
           // Klasörü kontrol et
           const checkFolderResponse = await fetch(
             `https://${HOSTNAME}/${STORAGE_ZONE_NAME}/${folderPath}/`,
@@ -127,11 +135,11 @@ export const POST: APIRoute = async ({ request }) => {
               },
             }
           );
-          
+
           // Eğer klasör yoksa oluştur (404 dönerse klasör yok demektir)
           if (checkFolderResponse.status === 404) {
             console.log(`Klasör bulunamadı, oluşturuluyor: ${folderPath}`);
-            
+
             // Klasör oluştur
             const createFolderResponse = await fetch(
               `https://${HOSTNAME}/${STORAGE_ZONE_NAME}/${folderPath}/`,
@@ -142,9 +150,11 @@ export const POST: APIRoute = async ({ request }) => {
                 },
               }
             );
-            
+
             if (!createFolderResponse.ok) {
-              console.error(`Klasör oluşturma hatası: ${createFolderResponse.status}`);
+              console.error(
+                `Klasör oluşturma hatası: ${createFolderResponse.status}`
+              );
               const errorText = await createFolderResponse.text();
               console.error(`Hata detayı: ${errorText}`);
             } else {
@@ -154,7 +164,7 @@ export const POST: APIRoute = async ({ request }) => {
           }
         }
       }
-      
+
       // Fetch API ile dosya yükleme
       const url = `https://${HOSTNAME}/${STORAGE_ZONE_NAME}/${finalFilePath}`;
 
@@ -171,18 +181,20 @@ export const POST: APIRoute = async ({ request }) => {
         body: buffer,
       });
 
-      console.log(`Fetch API yanıtı: ${fetchResponse.status} ${fetchResponse.statusText}`);
-      
+      console.log(
+        `Fetch API yanıtı: ${fetchResponse.status} ${fetchResponse.statusText}`
+      );
+
       if (fetchResponse.ok) {
         console.log(`Fetch API ile yükleme başarılı: ${fetchResponse.status}`);
         uploadSuccess = true;
-        
+
         // Başarılı yanıtı logla
         try {
           const responseText = await fetchResponse.text();
-          console.log(`Başarılı yanıt içeriği: ${responseText || 'Boş yanıt'}`);
+          console.log(`Başarılı yanıt içeriği: ${responseText || "Boş yanıt"}`);
         } catch (e) {
-          console.log('Başarılı yanıt içeriği okunamadı');
+          console.log("Başarılı yanıt içeriği okunamadı");
         }
       } else {
         try {
@@ -192,7 +204,9 @@ export const POST: APIRoute = async ({ request }) => {
           );
           errorMessage = `Fetch API hatası: ${fetchResponse.status} - ${responseText}`;
         } catch (textError) {
-          console.error(`Fetch API yükleme hatası: ${fetchResponse.status} ${fetchResponse.statusText} - Yanıt içeriği okunamadı`);
+          console.error(
+            `Fetch API yükleme hatası: ${fetchResponse.status} ${fetchResponse.statusText} - Yanıt içeriği okunamadı`
+          );
           errorMessage = `Fetch API hatası: ${fetchResponse.status} ${fetchResponse.statusText}`;
         }
       }
@@ -249,9 +263,9 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     console.error("Bunny CDN yükleme hatası:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        message: `Resim yükleme işlemi başarısız oldu: ${error.message}` 
+        message: `Resim yükleme işlemi başarısız oldu: ${error.message}`,
       }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
@@ -264,9 +278,9 @@ export const POST: APIRoute = async ({ request }) => {
  */
 function generateUUID(): string {
   // 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx' formatında UUID oluştur
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
