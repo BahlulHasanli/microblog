@@ -365,7 +365,15 @@ export function SimpleEditor({
           const nodes = editor?.state.doc.content.content || [];
 
           if (node.type.name === "heading") {
-            return "Başlıq";
+            // Yalnız ilk başlığa "Başlıq" placeholder ver
+            const firstHeadingIndex = nodes.findIndex(
+              (n) => n.type.name === "heading"
+            );
+            const currentIndex = nodes.findIndex((n) => n === node);
+
+            if (firstHeadingIndex === currentIndex) {
+              return "Başlıq";
+            }
           }
 
           if (node.type.name === "paragraph") {

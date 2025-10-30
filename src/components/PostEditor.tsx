@@ -50,6 +50,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
     if (content && !isContentProcessed) {
       try {
         // Markdown içeriğini JSON'a dönüştür
+        // title və description parametrləri ilə çağır
         const processedContent = markdownToTiptap(content, title, description);
 
         // İçeriği ayarla
@@ -194,8 +195,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
             type: coverImage.type,
           });
           formData.append("uploadedImage", newFile);
-          // Kapak resmi için aynı klasör yapısını kullan (notes/[slug]/images)
-          formData.append("image", `notes/${slug}/images/${imageFileName}`);
+          formData.append("image", `posts/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
 

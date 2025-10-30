@@ -23,18 +23,24 @@ export function markdownToTiptap(
   // Temel doküman yapısını oluştur
   const document: TiptapDocument = {
     type: "doc",
-    content: [
-      {
-        type: "heading",
-        attrs: { level: 1 },
-        content: [{ type: "text", text: title }],
-      },
-      {
-        type: "paragraph",
-        content: [{ type: "text", text: description }],
-      },
-    ],
+    content: [],
   };
+
+  // Eğer title ve description varsa, başlıq ve paragraf ekle
+  if (title) {
+    document.content.push({
+      type: "heading",
+      attrs: { level: 1 },
+      content: [{ type: "text", text: title }],
+    });
+  }
+
+  if (description) {
+    document.content.push({
+      type: "paragraph",
+      content: [{ type: "text", text: description }],
+    });
+  }
 
   // HTML elementlerini tek satıra birleştir
   let processedMarkdown = markdown;
@@ -51,6 +57,8 @@ export function markdownToTiptap(
   let inCodeBlock = false;
   let codeBlockContent = "";
   let codeBlockLanguage = "";
+  let firstHeadingSkipped = false;
+  let firstParagraphSkipped = false;
 
   // Her satırı işle
   for (let i = 0; i < lines.length; i++) {
@@ -118,6 +126,12 @@ export function markdownToTiptap(
 
     // Başlıklar
     if (line.startsWith("# ")) {
+      // İlk başlığı atla (title parametrəsi ilə artıq yaradılıb)
+      if (!firstHeadingSkipped) {
+        firstHeadingSkipped = true;
+        continue;
+      }
+
       // Başlık içeriğini al
       const headingContent = line.substring(2);
 
@@ -126,7 +140,7 @@ export function markdownToTiptap(
 
       document.content.push({
         type: "heading",
-        attrs: { level: 1 },
+        attrs: { level: 2 },
         content: processedContent,
       });
       continue;
@@ -405,6 +419,12 @@ export function markdownToTiptap(
     }
 
     // Normal paragraf
+    // İlk paragrafı atla (description parametrəsi ilə artıq yaradılıb)
+    if (!firstParagraphSkipped && !firstHeadingSkipped) {
+      firstParagraphSkipped = true;
+      continue;
+    }
+
     if (!currentParagraph) {
       currentParagraph = {
         type: "paragraph",

@@ -20,7 +20,7 @@ if (isLoggedIn) {
 }
 
 // Get post ID from slug
-const postSlug = frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
+const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
   .from('posts')
   .select('id')
@@ -124,7 +124,7 @@ const postId = postData?.id;
         />
       )}
 
-      <Comments client:load="svelte" postSlug={frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-')} />
+      <Comments client:load="svelte" postSlug={postSlug} />
       <CommentButton client:load="svelte" />
 
       <script is:inline>
