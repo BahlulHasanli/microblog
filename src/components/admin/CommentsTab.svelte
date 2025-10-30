@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import moment from 'moment';
+  import { format } from 'date-fns';
   import ConfirmModal from './ConfirmModal.svelte';
   import AlertModal from './AlertModal.svelte';
 
@@ -175,7 +175,7 @@
   }
 
   function formatDate(dateString: string) {
-    return moment(dateString).format('D MMM YYYY, HH:mm');
+    return format(new Date(dateString), 'd MMM yyyy, HH:mm');
   }
 
   function truncateText(text: string, maxLength: number = 100) {
