@@ -179,7 +179,7 @@ export const POST: APIRoute = async ({ request }) => {
           "Content-Type": "application/octet-stream",
           "Content-Length": buffer.length.toString(),
         },
-        body: buffer,
+        body: new Uint8Array(buffer),
       });
 
       console.log(
