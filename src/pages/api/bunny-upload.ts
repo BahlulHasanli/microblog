@@ -90,7 +90,7 @@ export const POST: APIRoute = async ({ request }) => {
     // API anahtarı - BunnyCDN Storage API anahtarı
     // Önemli: Bu anahtarı BunnyCDN kontrol panelinden almalısınız
     // Storage > [Storage Zone Adı] > FTP & API Access > Storage API Password
-    const ACCESS_KEY = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
+    const ACCESS_KEY = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
 
     console.log("BunnyCDN ayarları:", {
       hostname: HOSTNAME,
