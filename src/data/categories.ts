@@ -1,3 +1,4 @@
+// Fallback kategoriyalar (Supabase-dən çəkilə bilməzsə istifadə olunur)
 export const categories = [
   {
     slug: "oyun",
@@ -40,6 +41,22 @@ export const categories = [
     name: "Podcast",
   },
 ];
+
+// Supabase-dən kategoriyaları çək
+export async function getCategories() {
+  try {
+    const response = await fetch("/api/categories");
+    if (!response.ok) {
+      console.warn("Kategoriyalar API-dən çəkilə bilmədi, fallback istifadə edilir");
+      return categories;
+    }
+    const data = await response.json();
+    return data.categories || categories;
+  } catch (error) {
+    console.warn("Kategoriyalar çəkilərkən xəta, fallback istifadə edilir:", error);
+    return categories;
+  }
+}
 
 export function slugifyCategory(categoryNameOrSlug: string): string {
   // First check if this is already a slug in our categories array

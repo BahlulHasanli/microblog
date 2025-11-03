@@ -539,7 +539,6 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
   return (
     <div className="editor-container">
-      <h1 className="text-2xl font-bold mb-4 text-center">Gönderi Düzenle</h1>
       <SimpleEditor
         onUpdate={setEditorContent}
         title={title}

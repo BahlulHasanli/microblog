@@ -2,8 +2,20 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
 import Slider from "@/components/entries/HomeSlider.astro";
-import { categories, slugifyCategory } from "@/data/categories";
+import { categories as defaultCategories, slugifyCategory } from "@/data/categories";
 import { supabase } from "@/db/supabase";
+
+// Supabase-dən kategoriyaları al
+const { data: categoriesData, error: categoriesError } = await supabase
+  .from("categories")
+  .select("*")
+  .order("id", { ascending: true });
+
+const categories = categoriesData || defaultCategories;
+
+if (categoriesError) {
+  console.warn('Kategoriyalar yüklənərkən xəta:', categoriesError);
+}
 
 // Supabase-dən postları al
 const { data: postsData, error: postsError } = await supabase

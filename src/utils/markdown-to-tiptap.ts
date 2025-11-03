@@ -420,9 +420,15 @@ export function markdownToTiptap(
 
     // Normal paragraf
     // İlk paragrafı atla (description parametrəsi ilə artıq yaradılıb)
-    if (!firstParagraphSkipped && !firstHeadingSkipped) {
+    // Ancaq sadəcə description boşsa atla
+    if (!firstParagraphSkipped && !firstHeadingSkipped && !description) {
       firstParagraphSkipped = true;
       continue;
+    }
+    
+    // Əgər description varsa, firstParagraphSkipped-i true yap
+    if (!firstParagraphSkipped && description) {
+      firstParagraphSkipped = true;
     }
 
     if (!currentParagraph) {

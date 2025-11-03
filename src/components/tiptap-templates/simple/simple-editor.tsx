@@ -79,7 +79,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
 
-import { categories as CATEGORIES } from "@/data/categories";
+import { categories as CATEGORIES, getCategories } from "@/data/categories";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -321,6 +321,21 @@ export function SimpleEditor({
   const [categories, setCategories] = React.useState<string[]>(
     selectedCategories || []
   );
+  const [supabaseCategories, setSupabaseCategories] = React.useState<any[]>(CATEGORIES);
+
+  // Supabase-dən kategoriyaları çək
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const cats = await getCategories();
+        setSupabaseCategories(cats);
+      } catch (error) {
+        console.warn("Kategoriyalar çəkilərkən xəta, fallback istifadə edilir:", error);
+        setSupabaseCategories(CATEGORIES);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const FixedDocument = Document.extend({
     content: "heading paragraph block*",
@@ -620,7 +635,7 @@ export function SimpleEditor({
             {/* Kategoriler Bölümü */}
             <div className="categories-container mt-8 mb-5">
               <div className="flex flex-wrap gap-2">
-                {CATEGORIES.map((category) => (
+                {supabaseCategories.map((category) => (
                   <button
                     key={category.slug}
                     type="button"
