@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { requireAuth } from "../../../utils/auth";
-import { slugify } from "../../../utils/slugify";
-import { supabase } from "../../../db/supabase";
+import { requireAuth } from "@/utils/auth";
+import { slugify } from "@/utils/slugify";
+import { supabase } from "@/db/supabase";
 
 // Global resim sayacı tanımı
 declare global {
@@ -20,17 +20,13 @@ export const POST: APIRoute = async (context) => {
     // Form verilerini al
     const formData = await context.request.formData();
     const title = formData.get("title")?.toString() || "";
-    const authorFullname: any =
-      formData.get("author.fullname")?.toString() || "";
-    const authorAvatar: any = formData.get("author.avatar")?.toString() || "";
     const description = formData.get("description")?.toString() || "";
     const content = formData.get("content")?.toString() || "";
-    // Kategorileri al ve virgülle ayrılmış stringleri ayır
+
     const categoriesRaw = formData
       .getAll("categories")
       .map((c) => c.toString());
 
-    // Virgülle ayrılmış kategorileri ayır ve tekrar eden kategorileri kaldır
     const categoriesData = [
       ...new Set(
         categoriesRaw.flatMap((category) =>
@@ -40,10 +36,9 @@ export const POST: APIRoute = async (context) => {
         )
       ),
     ].filter(Boolean);
-    // Resim URL'si ve alt metni için varsayılan değerler
+
     const imageAltFromForm = formData.get("imageAlt")?.toString();
 
-    // Yüklenen resim dosyasını al
     const uploadedImage = formData.get("uploadedImage") as File | null;
 
     const imageAlt =
@@ -51,12 +46,11 @@ export const POST: APIRoute = async (context) => {
         ? imageAltFromForm
         : "";
 
-    // Gerekli alanları kontrol et
     if (!title || !content) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Başlık ve içerik alanları zorunludur",
+          message: "Başlıq və mətn boş olmalı deyil",
         }),
         {
           status: 400,
@@ -65,40 +59,29 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Tarih oluştur
     const pubDate = new Date().toISOString();
 
-    // Slug oluştur
     const slug = slugify(title);
 
-    // Eğer yüklenen bir resim varsa, Bunny CDN'e yükle
     let coverImageUrl = "";
+
     if (uploadedImage) {
       try {
-        // Resim dosyasının adını oluştur - içerik resimleriyle aynı format
         const fileExtension = uploadedImage.name.split(".").pop() || "jpg";
         const imageFileName = `${slug}-cover.${fileExtension}`;
 
-        // Bunny CDN klasör yapısı - içerik resimleriyle aynı klasörü kullan
         const folder = `posts/${slug}/images`;
 
-        console.log("Bunny CDN klasör yapısı:", folder);
-        console.log("Resim dosya adı:", imageFileName);
-
         try {
-          // Resim dosyasının içeriğini al
           const arrayBuffer = await uploadedImage.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
 
-          // Bunny CDN'e yükleme yap
-          const bunnyApiKey = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
+          const bunnyApiKey = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
           const storageZoneName = "the99-storage";
           const hostname = "storage.bunnycdn.com";
 
-          // Tam dosya yolu
           const filePath = `${folder}/${imageFileName}`;
 
-          // Fetch API ile yükleme yap
           const response = await fetch(
             `https://${hostname}/${storageZoneName}/${filePath}`,
             {
@@ -115,9 +98,7 @@ export const POST: APIRoute = async (context) => {
             throw new Error(`Bunny CDN yükleme hatası: ${response.statusText}`);
           }
 
-          // Başarılı yükleme sonrası CDN URL'sini oluştur
           coverImageUrl = `https://the99.b-cdn.net/${folder}/${imageFileName}`;
-          console.log("Bunny CDN'e yüklendi, URL:", coverImageUrl);
         } catch (uploadError) {
           throw new Error(`Bunny CDN yükleme hatası: ${uploadError.message}`);
         }
@@ -130,14 +111,10 @@ export const POST: APIRoute = async (context) => {
           { status: 500 }
         );
       }
-    } else {
-      console.log("Yüklenen resim yok");
     }
 
-    // İçerikteki geçici resimleri CDN URL'leriyle değiştir
     let processedContent = content;
 
-    // Blob URL'lerini bul ve değiştir - format bilgisini de içeren regex
     const blobUrlRegex =
       /blob:http:\/\/localhost:4321\/[a-zA-Z0-9-]+#temp-[0-9]+-[a-z]+/g;
     const blobUrls = content.match(blobUrlRegex) || [];
