@@ -3,11 +3,6 @@ import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
 
-// Global resim sayacı tanımı
-declare global {
-  var _imageCounters: Record<string, number>;
-}
-
 export const POST: APIRoute = async (context) => {
   try {
     // Kimlik doğrulama kontrolü
@@ -118,6 +113,9 @@ export const POST: APIRoute = async (context) => {
       /blob:http:\/\/localhost:4321\/[a-zA-Z0-9-]+#temp-[0-9]+-[a-z]+/g;
     const blobUrls = content.match(blobUrlRegex) || [];
 
+    // Resim sayacını başlat (lokal variable)
+    let imageCounter = 0;
+
     for (const blobUrl of blobUrls) {
       try {
         // Temp ID'yi al
@@ -126,14 +124,7 @@ export const POST: APIRoute = async (context) => {
         if (!tempId) continue;
 
         // Resim sayacını artır (her post için benzersiz numaralar)
-        // Global bir sayacı kullan
-        if (!global._imageCounters) {
-          global._imageCounters = {};
-        }
-        if (!global._imageCounters[slug]) {
-          global._imageCounters[slug] = 0;
-        }
-        global._imageCounters[slug] += 1;
+        imageCounter += 1;
 
         // Dosya formatını tespit et
         // Blob URL'den format bilgisini çıkar
@@ -143,7 +134,7 @@ export const POST: APIRoute = async (context) => {
           formatMatch && formatMatch[1] ? formatMatch[1] : "png";
 
         // Resim adını oluştur: slug-1.png formatında (tiptap-utils.ts ile tutarlı)
-        const imageFileName = `${slug}-${global._imageCounters[slug]}.${fileExtension}`;
+        const imageFileName = `${slug}-${imageCounter}.${fileExtension}`;
         const cdnUrl = `https://the99.b-cdn.net/posts/${slug}/images/${imageFileName}`;
 
         // İçerikteki URL'yi değiştir

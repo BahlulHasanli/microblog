@@ -590,51 +590,48 @@ export const POST: APIRoute = async (context) => {
 
     console.log(`Toplam ${tempImages.length} geçici resim işlenecek`);
 
-    // Global resim sayacını başlat
-    if (!global._imageCounters) {
-      global._imageCounters = {};
-    }
-    if (!global._imageCounters[newSlug]) {
-      // Mevcut resimlerin sayısını bul
-      try {
-        const folderPath = `posts/${newSlug}/images`;
+    // Resim sayacını başlat (lokal variable)
+    let imageCounter = 0;
+    
+    // Mevcut resimlerin sayısını bul
+    try {
+      const folderPath = `posts/${newSlug}/images`;
 
-        // Klasör içeriğini kontrol et
-        const response = await fetch(
-          `https://${hostname}/${storageZoneName}/${folderPath}/`,
-          {
-            method: "GET",
-            headers: {
-              AccessKey: bunnyApiKey,
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (response.ok) {
-          const files = await response.json();
-          // Slug ile başlayan ve .jpg, .png, .gif vb. uzantılı dosyaları say
-          const imageFiles = files.filter(
-            (file: any) =>
-              file.ObjectName.startsWith(newSlug) &&
-              /\.(jpg|jpeg|png|gif|webp)$/i.test(file.ObjectName)
-          );
-          global._imageCounters[newSlug] = imageFiles.length;
-        } else {
-          // Klasör bulunamadıysa veya başka bir hata varsa, sayacı sıfırla
-          global._imageCounters[newSlug] = 0;
+      // Klasör içeriğini kontrol et
+      const response = await fetch(
+        `https://${hostname}/${storageZoneName}/${folderPath}/`,
+        {
+          method: "GET",
+          headers: {
+            AccessKey: bunnyApiKey,
+            Accept: "application/json",
+          },
         }
-      } catch (error) {
-        console.error("BunnyCDN klasör kontrolü hatası:", error);
-        global._imageCounters[newSlug] = 0;
+      );
+
+      if (response.ok) {
+        const files = await response.json();
+        // Slug ile başlayan ve .jpg, .png, .gif vb. uzantılı dosyaları say
+        const imageFiles = files.filter(
+          (file: any) =>
+            file.ObjectName.startsWith(newSlug) &&
+            /\.(jpg|jpeg|png|gif|webp)$/i.test(file.ObjectName)
+        );
+        imageCounter = imageFiles.length;
+      } else {
+        // Klasör bulunamadıysa veya başka bir hata varsa, sayacı sıfırla
+        imageCounter = 0;
       }
+    } catch (error) {
+      console.error("BunnyCDN klasör kontrolü hatası:", error);
+      imageCounter = 0;
     }
 
     // Bulunan geçici resimleri işle
     for (const tempImage of tempImages) {
       try {
         // Resim sayacını artır (her post için benzersiz numaralar)
-        global._imageCounters[newSlug] += 1;
+        imageCounter += 1;
 
         // Dosya formatını tespit et
         let fileExtension = "png"; // Varsayılan format
