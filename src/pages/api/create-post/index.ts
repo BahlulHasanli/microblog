@@ -74,7 +74,6 @@ export const POST: APIRoute = async (context) => {
 
         try {
           const arrayBuffer = await uploadedImage.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
 
           const bunnyApiKey = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
           const storageZoneName = "the99-storage";
@@ -90,7 +89,7 @@ export const POST: APIRoute = async (context) => {
                 AccessKey: bunnyApiKey,
                 "Content-Type": "application/octet-stream",
               },
-              body: buffer,
+              body: arrayBuffer,
             }
           );
 
