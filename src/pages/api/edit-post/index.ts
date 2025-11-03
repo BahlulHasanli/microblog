@@ -858,11 +858,12 @@ export const POST: APIRoute = async (context) => {
     );
   } catch (error) {
     console.error("Post güncelleme hatası:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
     return new Response(
       JSON.stringify({
         success: false,
-        message: "Gönderi güncellenirken bir hata oluştu",
+        message: `Gönderi güncellenirken bir hata oluştu: ${errorMessage}`,
       }),
       {
         status: 500,
