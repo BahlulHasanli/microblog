@@ -91,7 +91,7 @@ export const POST: APIRoute = async (context) => {
     const pubDate = existingPost.pub_date;
 
     // BunnyCDN məlumatları
-    const bunnyApiKey = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
+    const bunnyApiKey = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
     const storageZoneName = "the99-storage";
     const hostname = "storage.bunnycdn.com";
 
