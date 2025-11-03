@@ -288,7 +288,6 @@ export const POST: APIRoute = async (context) => {
         try {
           // Resim dosyasının içeriğini al
           const arrayBuffer = await uploadedImage.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
 
           // Tam dosya yolu
           const filePath = `${folder}/${imageFileName}`;
@@ -346,7 +345,7 @@ export const POST: APIRoute = async (context) => {
           // Fetch API ile yükleme yap
           console.log(`\n📤 Yeni şəkil yüklənir...`);
           console.log(`Fayl yolu: ${filePath}`);
-          console.log(`Fayl ölçüsü: ${buffer.length} bytes`);
+          console.log(`Fayl ölçüsü: ${arrayBuffer.byteLength} bytes`);
           console.log(
             `URL: https://${hostname}/${storageZoneName}/${filePath}`
           );
@@ -359,7 +358,7 @@ export const POST: APIRoute = async (context) => {
                 AccessKey: bunnyApiKey,
                 "Content-Type": "application/octet-stream",
               },
-              body: buffer,
+              body: arrayBuffer,
             }
           );
 
