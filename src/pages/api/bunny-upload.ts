@@ -1,9 +1,4 @@
 import type { APIRoute } from "astro";
-import * as https from "https";
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
-import { Buffer } from "node:buffer";
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -67,19 +62,8 @@ export const POST: APIRoute = async ({ request }) => {
       console.log(`Genel dosya yükleniyor: ${finalFileName}`);
     }
 
-    // Geçici dosya oluştur
-    const tempDir = os.tmpdir();
-    const tempFilePath = path.join(
-      tempDir,
-      `upload-${Date.now()}-${finalFileName}`
-    );
-
-    // File içeriğini buffer'a dönüştür
+    // File içeriğini arrayBuffer'a dönüştür
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Geçici dosyaya yaz
-    fs.writeFileSync(tempFilePath, buffer);
 
     // Bunny.net ayarları
     const REGION = "";
@@ -105,8 +89,7 @@ export const POST: APIRoute = async ({ request }) => {
     console.log("Bunny CDN yükleme başlıyor:", {
       fileName,
       filePath,
-      tempFilePath,
-      fileSize: buffer.length,
+      fileSize: arrayBuffer.byteLength,
     });
 
     // Alternatif yükleme yöntemi - node-fetch kullanarak
@@ -170,16 +153,16 @@ export const POST: APIRoute = async ({ request }) => {
       const url = `https://${HOSTNAME}/${STORAGE_ZONE_NAME}/${finalFilePath}`;
 
       console.log(`Fetch API ile yükleme deneniyor: ${url}`);
-      console.log(`Yüklenen dosya boyutu: ${buffer.length} byte`);
+      console.log(`Yüklenen dosya boyutu: ${arrayBuffer.byteLength} byte`);
 
       const fetchResponse = await fetch(url, {
         method: "PUT",
         headers: {
           AccessKey: ACCESS_KEY,
           "Content-Type": "application/octet-stream",
-          "Content-Length": buffer.length.toString(),
+          "Content-Length": arrayBuffer.byteLength.toString(),
         },
-        body: new Uint8Array(buffer),
+        body: arrayBuffer,
       });
 
       console.log(
@@ -216,35 +199,8 @@ export const POST: APIRoute = async ({ request }) => {
       errorMessage = `Fetch hatası: ${fetchError.message}`;
     }
 
-    // Eğer fetch başarısız olduysa, geleneksel yöntemi dene
-    if (!uploadSuccess) {
-      try {
-        console.log("Geleneksel yöntem ile yükleme deneniyor...");
-        await uploadToBunny(
-          tempFilePath,
-          finalFilePath,
-          HOSTNAME,
-          STORAGE_ZONE_NAME,
-          ACCESS_KEY
-        );
-        uploadSuccess = true;
-      } catch (traditionalError) {
-        console.error("Geleneksel yükleme hatası:", traditionalError);
-        if (!errorMessage) {
-          errorMessage = `Geleneksel yükleme hatası: ${traditionalError.message}`;
-        }
-      }
-    }
-
     if (!uploadSuccess) {
       throw new Error(`Yükleme başarısız: ${errorMessage}`);
-    }
-
-    // Geçici dosyayı temizle
-    try {
-      fs.unlinkSync(tempFilePath);
-    } catch (err) {
-      console.error("Geçici dosya temizleme hatası:", err);
     }
 
     // CDN URL'ini oluştur
@@ -283,70 +239,5 @@ function generateUUID(): string {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
     return v.toString(16);
-  });
-}
-
-// Bunny.net'e dosya yükleme fonksiyonu
-function uploadToBunny(
-  filePath: string,
-  targetPath: string,
-  hostname: string,
-  storageZone: string,
-  accessKey: string
-): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    const readStream = fs.createReadStream(filePath);
-
-    // Log isteği
-    console.log(`BunnyCDN yükleme başlatılıyor: ${targetPath}`);
-    console.log(`Host: ${hostname}, StorageZone: ${storageZone}`);
-
-    const options = {
-      method: "PUT",
-      host: hostname,
-      path: `/${storageZone}/${targetPath}`,
-      headers: {
-        // Bunny CDN'in beklediği şekilde header'ları düzelttim
-        AccessKey: accessKey,
-        "Content-Type": "application/octet-stream",
-        "Content-Length": fs.statSync(filePath).size,
-      },
-    };
-
-    console.log("BunnyCDN istek ayarları:", JSON.stringify(options, null, 2));
-
-    const req = https.request(options, (res) => {
-      let responseData = "";
-
-      res.on("data", (chunk) => {
-        responseData += chunk.toString("utf8");
-      });
-
-      res.on("end", () => {
-        console.log(`BunnyCDN yanıtı: Durum Kodu ${res.statusCode}`);
-        console.log(`Yanıt: ${responseData}`);
-
-        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-          console.log(`Dosya başarıyla yüklendi: ${targetPath}`);
-          resolve(true);
-        } else {
-          console.error(
-            `BunnyCDN yükleme hatası: ${res.statusCode} - ${responseData}`
-          );
-          reject(new Error(`HTTP Hata: ${res.statusCode} - ${responseData}`));
-        }
-      });
-    });
-
-    req.on("error", (error) => {
-      console.error(`BunnyCDN istek hatası:`, error);
-      reject(error);
-    });
-
-    // Dosya boyutunu log'la
-    const stats = fs.statSync(filePath);
-    console.log(`Yüklenen dosya boyutu: ${stats.size} byte`);
-
-    readStream.pipe(req);
   });
 }
