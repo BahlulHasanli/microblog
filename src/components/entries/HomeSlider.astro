@@ -102,10 +102,20 @@ const backgroundImage = featuredPost?.data.image.url;
 <script>
   import { navigate } from "astro:transitions/client";
 
-  const userProfile = document.querySelector("#user-profile");
-  const userName = document.querySelector("[data-username]");
- 
-  userProfile.addEventListener("click", () => {
-    navigate(`/user/@${userName.getAttribute("data-username")}`);
-  });
+  function attachUserProfileListener() {
+    const userProfile = document.querySelector("#user-profile");
+    const userName = document.querySelector("[data-username]");
+    
+    if (userProfile && userName) {
+      userProfile.addEventListener("click", () => {
+        navigate(`/user/@${userName.getAttribute("data-username")}`);
+      });
+    }
+  }
+
+  // İlk yükləmə zamanı
+  attachUserProfileListener();
+
+  // Page transition-dan sonra yenidən attach et
+  document.addEventListener("astro:after-swap", attachUserProfileListener);
 </script>
