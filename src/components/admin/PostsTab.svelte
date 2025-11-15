@@ -30,9 +30,10 @@
     title: '',
     message: '',
     confirmText: 'Təsdiq et',
-    variant: 'primary' as 'danger' | 'success' | 'warning' | 'primary',
-    onConfirm: () => {}
+    variant: 'primary' as 'danger' | 'success' | 'warning' | 'primary'
   });
+
+  let confirmCallback: (() => void) | null = $state(null);
 
   let alertModal = $state({
     isOpen: false,
@@ -80,6 +81,28 @@
   }
 
   async function handleApprove(postId: string, approve: boolean = true) {
+    confirmCallback = async () => {
+      try {
+        const response = await fetch("/api/admin/posts/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId, approve }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert(data.message, 'success', 'Uğurlu');
+          loadPosts();
+        } else {
+          showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+        }
+      } catch (error) {
+        console.error("Təsdiq xətası:", error);
+        showAlert("Xəta baş verdi", 'error', 'Xəta');
+      }
+    };
+
     confirmModal = {
       isOpen: true,
       title: approve ? 'Post təsdiqi' : 'Yayımdan çıxarma',
@@ -87,59 +110,39 @@
         ? "Bu postu təsdiq etmək istədiyinizə əminsiniz?" 
         : "Bu postu yayımdan çıxarmaq istədiyinizə əminsiniz?",
       confirmText: approve ? 'Təsdiq et' : 'Yayımdan çıxart',
-      variant: approve ? 'success' : 'warning',
-      onConfirm: async () => {
-        try {
-          const response = await fetch("/api/admin/posts/approve", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ postId, approve }),
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            showAlert(data.message, 'success', 'Uğurlu');
-            loadPosts();
-          } else {
-            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
-          }
-        } catch (error) {
-          console.error("Təsdiq xətası:", error);
-          showAlert("Xəta baş verdi", 'error', 'Xəta');
-        }
-      }
+      variant: approve ? 'success' : 'warning'
     };
   }
 
   async function handleDelete(postId: string, slug: string) {
+    confirmCallback = async () => {
+      try {
+        const response = await fetch("/api/admin/posts/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId, slug }),
+        });
+   
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert("Post uğurla silindi", 'success', 'Uğurlu');
+          loadPosts();
+        } else {
+          showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+        }
+      } catch (error) {
+        console.error("Silmə xətası:", error);
+        showAlert("Xəta baş verdi", 'error', 'Xəta');
+      }
+    };
+
     confirmModal = {
       isOpen: true,
       title: 'Post silinməsi',
       message: "Bu postu silmək istədiyinizə əminsiniz? Bu əməliyyat geri alına bilməz.",
       confirmText: 'Sil',
-      variant: 'danger',
-      onConfirm: async () => {
-        try {
-          const response = await fetch("/api/admin/posts/delete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ postId, slug }),
-          });
-     
-          const data = await response.json();
-
-          if (data.success) {
-            showAlert("Post uğurla silindi", 'success', 'Uğurlu');
-            loadPosts();
-          } else {
-            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
-          }
-        } catch (error) {
-          console.error("Silmə xətası:", error);
-          showAlert("Xəta baş verdi", 'error', 'Xəta');
-        }
-      }
+      variant: 'danger'
     };
   }
 
@@ -148,6 +151,28 @@
   }
 
   async function handleFeatured(postId: string, featured: boolean) {
+    confirmCallback = async () => {
+      try {
+        const response = await fetch("/api/admin/posts/featured", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ postId, featured }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert(data.message, 'success', 'Uğurlu');
+          loadPosts();
+        } else {
+          showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+        }
+      } catch (error) {
+        console.error("Featured toggle xətası:", error);
+        showAlert("Xəta baş verdi", 'error', 'Xəta');
+      }
+    };
+
     confirmModal = {
       isOpen: true,
       title: featured ? 'Önə çıxarma' : 'Önə çıxarmadan çıxarma',
@@ -155,28 +180,7 @@
         ? "Bu postu önə çıxarmaq istədiyinizə əminsiniz?" 
         : "Bu postu önə çıxarmadan çıxarmaq istədiyinizə əminsiniz?",
       confirmText: featured ? 'Önə çıxart' : 'Çıxart',
-      variant: 'primary',
-      onConfirm: async () => {
-        try {
-          const response = await fetch("/api/admin/posts/featured", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ postId, featured }),
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            showAlert(data.message, 'success', 'Uğurlu');
-            loadPosts();
-          } else {
-            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
-          }
-        } catch (error) {
-          console.error("Featured toggle xətası:", error);
-          showAlert("Xəta baş verdi", 'error', 'Xəta');
-        }
-      }
+      variant: 'primary'
     };
   }
 </script>
@@ -433,7 +437,7 @@
   message={confirmModal.message}
   confirmText={confirmModal.confirmText}
   confirmVariant={confirmModal.variant}
-  onConfirm={confirmModal.onConfirm}
+  onConfirm={() => confirmCallback?.()}
   onCancel={() => {}}
 />
 

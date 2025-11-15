@@ -9,6 +9,13 @@
   export let user: any;
 
   let activeTab: 'posts' | 'users' | 'comments' | 'settings' = 'posts';
+  
+  // Moderator yalnız Posts tabını görə bilər
+  $: isAdmin = user?.is_admin === true;
+  $: isModerator = user?.is_moderator === true;
+  $: canViewUsers = isAdmin;
+  $: canViewComments = isAdmin;
+  $: canViewSettings = isAdmin;
   let stats = {
     totalPosts: 0,
     pendingPosts: 0,
@@ -30,38 +37,52 @@
       const postsData = await postsResponse.json();
 
       // İstifadəçiləri yüklə
-      const usersResponse = await fetch("/api/admin/users/list");
-      const usersData = await usersResponse.json();
+      let usersData = { success: false, users: [] };
+      try {
+        const usersResponse = await fetch("/api/admin/users/list");
+        if (usersResponse.ok) {
+          usersData = await usersResponse.json();
+        }
+      } catch (e) {
+        // Moderator üçün xəta olacaq, amma stats yüklənməyə davam edəcək
+      }
 
       // Şərhləri yüklə
-      const commentsResponse = await fetch("/api/admin/comments/list");
-      const commentsData = await commentsResponse.json();
+      let commentsData = { success: false, comments: [] };
+      try {
+        const commentsResponse = await fetch("/api/admin/comments/list");
+        if (commentsResponse.ok) {
+          commentsData = await commentsResponse.json();
+        }
+      } catch (e) {
+        // Moderator üçün xəta olacaq, amma stats yüklənməyə davam edəcək
+      }
 
-      if (postsData.success && usersData.success && commentsData.success) {
+      if (postsData.success) {
         const pending = postsData.posts.filter(
           (p: any) => p.status === "pending"
         ).length;
 
         // Son 7 gündə qeydiyyatdan keçmiş istifadəçilər
         const sevenDaysAgo = subDays(new Date(), 7);
-        const newUsers = usersData.users.filter(
+        const newUsers = usersData.success ? usersData.users.filter(
           (u: any) => isAfter(new Date(u.created_at), sevenDaysAgo)
-        ).length;
+        ).length : 0;
 
         // Şərh statistikaları
-        const parentComments = commentsData.comments.filter(
+        const parentComments = commentsData.success ? commentsData.comments.filter(
           (c: any) => c.parent_id === null
-        ).length;
-        const replyComments = commentsData.comments.filter(
+        ).length : 0;
+        const replyComments = commentsData.success ? commentsData.comments.filter(
           (c: any) => c.parent_id !== null
-        ).length;
+        ).length : 0;
 
         stats = {
           totalPosts: postsData.posts.length,
           pendingPosts: pending,
-          totalUsers: usersData.users.length,
+          totalUsers: usersData.success ? usersData.users.length : 0,
           newUsers: newUsers,
-          totalComments: commentsData.comments.length,
+          totalComments: commentsData.success ? commentsData.comments.length : 0,
           parentComments: parentComments,
           replyComments: replyComments,
         };
@@ -95,9 +116,9 @@
           </div>
           <div>
             <h1 class="text-xl sm:text-2xl font-nouvelr-bold text-slate-900">
-              Admin Panel
+              {isAdmin ? 'Admin Panel' : isModerator ? 'Moderator Panel' : 'Panel'}
             </h1>
-            <p class="text-xs text-base-500 hidden sm:block">İdarəetmə paneli</p>
+            <p class="text-xs text-base-500 hidden sm:block">{isAdmin ? 'Admin idarəetmə paneli' : isModerator ? 'Moderator idarəetmə paneli' : 'İdarəetmə paneli'}</p>
           </div>
         </div>
         <div class="flex items-center gap-3 sm:gap-6 w-full sm:w-auto">
@@ -111,7 +132,7 @@
               <span class="text-xs sm:text-sm font-medium text-slate-900 truncate">
                 {user?.fullname}
               </span>
-              <span class="text-xs text-base-500">Admin</span>
+              <span class="text-xs text-base-500">{isAdmin ? 'Admin' : isModerator ? 'Moderator' : 'İstifadəçi'}</span>
             </div>
           </div>
           <a
@@ -237,84 +258,90 @@
               <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
             {/if}
           </button>
-          <button
-            on:click={() => activeTab = 'users'}
-            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'users' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
-          >
-            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
-              <svg
-                class="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-              İstifadəçilər
-            </span>
-            {#if activeTab === 'users'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
-            {/if}
-          </button>
-          <button
-            on:click={() => activeTab = 'comments'}
-            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'comments' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
-          >
-            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
-              <svg
-                class="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width={2}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              Şərhlər
-            </span>
-            {#if activeTab === 'comments'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
-            {/if}
-          </button>
-          <button
-            on:click={() => activeTab = 'settings'}
-            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'settings' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
-          >
-            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
-              <svg
-                class="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              Nizamlamalar
-            </span>
-            {#if activeTab === 'settings'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
-            {/if}
-          </button>
+          {#if canViewUsers}
+            <button
+              on:click={() => activeTab = 'users'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'users' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg
+                  class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+                İstifadəçilər
+              </span>
+              {#if activeTab === 'users'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+          {/if}
+          {#if canViewComments}
+            <button
+              on:click={() => activeTab = 'comments'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'comments' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg
+                  class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                Şərhlər
+              </span>
+              {#if activeTab === 'comments'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+          {/if}
+          {#if canViewSettings}
+            <button
+              on:click={() => activeTab = 'settings'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'settings' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg
+                  class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Nizamlamalar
+              </span>
+              {#if activeTab === 'settings'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+          {/if}
         </nav>
       </div>
 

@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireAdmin } from "@/utils/auth";
-import { supabase } from "@/db/supabase";
+import { supabaseAdmin } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -26,7 +26,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     // İstifadəçini sil
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("users")
       .delete()
       .eq("id", userId);

@@ -1,52 +1,53 @@
 import type { APIRoute } from "astro";
+import { requireAdmin } from "@/utils/auth";
+import { supabase } from "@/db/supabase";
 
-export const GET: APIRoute = async ({ locals }: { locals: any }) => {
-  const runtime = locals.runtime as any;
-  const db = runtime.env.DB;
-
+export const GET: APIRoute = async (context) => {
   try {
     // Admin yoxlaması
-    const user = locals.user;
-    if (!user || !user.is_admin) {
+    const adminCheck = await requireAdmin(context);
+    if (adminCheck instanceof Response) {
+      return adminCheck;
+    }
+
+    // Bütün nizamlamaları al
+    const { data: settings, error } = await supabase
+      .from("settings")
+      .select("*")
+      .order("key", { ascending: true });
+
+    if (error) {
+      console.error("Settings get error:", error);
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Bu əməliyyat üçün admin hüququ tələb olunur",
+          message: "Nizamlamalar yüklənərkən xəta baş verdi",
         }),
-        { status: 403 }
+        { status: 500 }
       );
     }
 
-    // Settings cədvəlini yoxla, yoxdursa yarat
-    await db
-      .prepare(
-        `CREATE TABLE IF NOT EXISTS settings (
-          key TEXT PRIMARY KEY,
-          value TEXT NOT NULL,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`
-      )
-      .run();
-
-    // Bütün nizamlamaları al
-    const settingsRows = await db
-      .prepare("SELECT key, value FROM settings")
-      .all();
-
     // Key-value obyektinə çevir
-    const settings: any = {};
-    for (const row of settingsRows.results) {
+    const settingsObj: any = {};
+    for (const setting of settings || []) {
       try {
-        settings[row.key] = JSON.parse(row.value);
+        settingsObj[setting.key] =
+          setting.type === "boolean"
+            ? setting.value === "true"
+            : setting.type === "number"
+              ? parseFloat(setting.value)
+              : setting.type === "json"
+                ? JSON.parse(setting.value)
+                : setting.value;
       } catch {
-        settings[row.key] = row.value;
+        settingsObj[setting.key] = setting.value;
       }
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        settings,
+        settings: settingsObj,
       }),
       { status: 200 }
     );

@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
-import { requireAdmin } from "@/utils/auth";
+import { requireModerator } from "@/utils/auth";
 import { supabase } from "@/db/supabase";
 
 export const GET: APIRoute = async (context) => {
   try {
-    // Admin yoxlaması
-    const adminCheck = await requireAdmin(context);
-    if (adminCheck instanceof Response) {
-      return adminCheck;
+    // Moderator yoxlaması (admin və moderator)
+    const modCheck = await requireModerator(context);
+    if (modCheck instanceof Response) {
+      return modCheck;
     }
 
     // İstifadəçiləri çək

@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireAdmin } from "@/utils/auth";
-import { supabase } from "@/db/supabase";
+import { supabaseAdmin } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -10,7 +10,8 @@ export const POST: APIRoute = async (context) => {
       return adminCheck;
     }
 
-    const { userId, fullname, email, username, is_admin } = await context.request.json();
+    const { userId, fullname, email, username, is_admin } =
+      await context.request.json();
 
     if (!userId) {
       return new Response(
@@ -33,7 +34,7 @@ export const POST: APIRoute = async (context) => {
     if (is_admin !== undefined) updateData.is_admin = is_admin;
 
     // İstifadəçini yenilə
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("users")
       .update(updateData)
       .eq("id", userId);

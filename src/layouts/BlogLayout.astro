@@ -29,8 +29,24 @@ const { data: postData } = await supabase
 
 const postId = postData?.id;
 
+// Check if comments are enabled
+let enableComments = true;
+try {
+  const { data: commentsSetting } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "enable_comments")
+    .single();
+  
+  if (commentsSetting) {
+    enableComments = commentsSetting.value === 'true' || commentsSetting.value === true;
+  }
+} catch (error) {
+  console.error("Comments setting yüklənərkən xəta:", error);
+}
+
 ---
-<BaseLayout>
+<BaseLayout title={frontmatter.title} description={frontmatter.description}>
   <section>
     <div class="py-24">
       <div class="lg:text-center">
@@ -124,8 +140,12 @@ const postId = postData?.id;
         />
       )}
 
-      <Comments client:load="svelte" postSlug={postSlug} />
-      <CommentButton client:load="svelte" />
+      {enableComments && (
+        <>
+          <Comments client:load="svelte" postSlug={postSlug} />
+          <CommentButton client:load="svelte" />
+        </>
+      )}
 
       <script is:inline>
         function loadYoutubeVideos() {

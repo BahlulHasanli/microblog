@@ -1,11 +1,33 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { isAuthenticated } from "@/utils/auth";
+import { supabase } from "@/db/supabase";
 
 // Check if user is already authenticated
 if (isAuthenticated(Astro.cookies)) {
   return Astro.redirect('/');
-} 
+}
+
+// Check if registration is enabled
+let enableRegistration = true;
+try {
+  const { data: registrationSetting } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "enable_registration")
+    .single();
+  
+  if (registrationSetting) {
+    enableRegistration = registrationSetting.value === 'true' || registrationSetting.value === true;
+  }
+} catch (error) {
+  console.error("Registration setting yüklənərkən xəta:", error);
+}
+
+// If registration is disabled, redirect to home
+if (!enableRegistration) {
+  return Astro.redirect('/');
+}
 ---
 
 <BaseLayout>

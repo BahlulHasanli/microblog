@@ -103,7 +103,9 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
       const cookieHeader = ctx.request.headers.get("cookie");
       if (cookieHeader) {
         const cookies = cookieHeader.split(";").map((c) => c.trim());
-        const accessCookie = cookies.find((c) => c.startsWith("sb-access-token="));
+        const accessCookie = cookies.find((c) =>
+          c.startsWith("sb-access-token=")
+        );
         if (accessCookie) {
           token = accessCookie.split("=")[1];
         }
@@ -196,9 +198,7 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
 /**
  * Admin yoxlaması - istifadəçinin admin olub-olmadığını yoxlayır
  */
-export async function isAdmin(
-  cookies: AstroCookies
-): Promise<boolean> {
+export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
   try {
     const user = await getUserFromCookies(cookies, () => null);
     if (!user) return false;
@@ -220,13 +220,38 @@ export async function isAdmin(
 }
 
 /**
+ * Moderator yoxlaması - istifadəçinin moderator olub-olmadığını yoxlayır
+ */
+export async function isModerator(cookies: AstroCookies): Promise<boolean> {
+  try {
+    const user = await getUserFromCookies(cookies, () => null);
+    if (!user) return false;
+
+    // Supabase-dən istifadəçi məlumatlarını yoxla
+    const { data, error } = await supabase
+      .from("users")
+      .select("is_moderator, is_admin")
+      .eq("email", user.email)
+      .single();
+
+    if (error || !data) return false;
+
+    // Admin və ya moderator ola bilər
+    return data.is_moderator === true || data.is_admin === true;
+  } catch (error) {
+    console.error("Moderator yoxlama xətası:", error);
+    return false;
+  }
+}
+
+/**
  * Admin endpoint'ləri üçün middleware
  */
 export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
   try {
     // Cookie-dən istifadəçi məlumatlarını al
     const user = await getUserFromCookies(ctx.cookies, () => null);
-    
+
     if (!user) {
       return new Response(
         JSON.stringify({
@@ -258,6 +283,60 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
     return user;
   } catch (error) {
     console.error("requireAdmin xətası:", error);
+    return new Response(
+      JSON.stringify({
+        message: "Autentifikasiya xətası",
+        status: 500,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+}
+
+/**
+ * Moderator endpoint'ləri üçün middleware
+ */
+export async function requireModerator(
+  ctx: APIContext
+): Promise<Response | any> {
+  try {
+    // Cookie-dən istifadəçi məlumatlarını al
+    const user = await getUserFromCookies(ctx.cookies, () => null);
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          message: "Giriş tələb olunur",
+          status: 401,
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Moderator yoxlaması
+    const modCheck = await isModerator(ctx.cookies);
+    if (!modCheck) {
+      return new Response(
+        JSON.stringify({
+          message: "Bu əməliyyat üçün moderator hüququ tələb olunur",
+          status: 403,
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    return user;
+  } catch (error) {
+    console.error("requireModerator xətası:", error);
     return new Response(
       JSON.stringify({
         message: "Autentifikasiya xətası",

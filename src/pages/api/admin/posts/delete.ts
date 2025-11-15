@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
-import { requireAdmin } from "@/utils/auth";
-import { supabase } from "@/db/supabase";
+import { requireModerator } from "@/utils/auth";
+import { supabaseAdmin } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
-    // Admin yoxlaması
-    const adminCheck = await requireAdmin(context);
-    if (adminCheck instanceof Response) {
-      return adminCheck;
+    // Moderator yoxlaması (admin və moderator)
+    const modCheck = await requireModerator(context);
+    if (modCheck instanceof Response) {
+      return modCheck;
     }
 
     const { postId, slug } = await context.request.json();
@@ -28,7 +28,7 @@ export const POST: APIRoute = async (context) => {
     const postSlug = slug || postId;
 
     // Supabase-dən postu sil
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from("posts")
       .delete()
       .eq("slug", postSlug);

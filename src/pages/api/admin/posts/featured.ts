@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
-import { requireAdmin } from "@/utils/auth";
-import { supabase } from "@/db/supabase";
+import { requireModerator } from "@/utils/auth";
+import { supabaseAdmin } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
-    // Admin yoxlaması
-    const adminCheck = await requireAdmin(context);
-    if (adminCheck instanceof Response) {
-      return adminCheck;
+    // Moderator yoxlaması (admin və moderator)
+    const modCheck = await requireModerator(context);
+    if (modCheck instanceof Response) {
+      return modCheck;
     }
 
     const { postId, featured } = await context.request.json();
@@ -27,18 +27,18 @@ export const POST: APIRoute = async (context) => {
 
     // Əgər post önə çıxarılırsa, əvvəlcə bütün digər postların featured-ini false et
     if (featured === true) {
-      await supabase
+      await supabaseAdmin
         .from("posts")
         .update({ featured: false })
         .neq("id", postId);
     }
 
     // Supabase-də postu yenilə
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("posts")
       .update({
         featured: featured === true,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       })
       .eq("id", postId)
       .select()
@@ -61,8 +61,10 @@ export const POST: APIRoute = async (context) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: featured ? "Post önə çıxarıldı" : "Post önə çıxarmadan çıxarıldı",
-        post: data
+        message: featured
+          ? "Post önə çıxarıldı"
+          : "Post önə çıxarmadan çıxarıldı",
+        post: data,
       }),
       {
         status: 200,

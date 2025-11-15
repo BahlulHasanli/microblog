@@ -24,9 +24,10 @@
     title: '',
     message: '',
     confirmText: 'Təsdiq et',
-    variant: 'primary' as 'danger' | 'success' | 'warning' | 'primary',
-    onConfirm: () => {}
+    variant: 'primary' as 'danger' | 'success' | 'warning' | 'primary'
   });
+
+  let confirmCallback: (() => void) | null = $state(null);
 
   let alertModal = $state({
     isOpen: false,
@@ -65,33 +66,34 @@
   }
 
   async function handleDelete(userId: string) {
+    confirmCallback = async () => {
+      try {
+        const response = await fetch("/api/admin/users/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert("İstifadəçi uğurla silindi", 'success', 'Uğurlu');
+          loadUsers();
+        } else {
+          showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
+        }
+      } catch (error) {
+        console.error("Silmə xətası:", error);
+        showAlert("Xəta baş verdi", 'error', 'Xəta');
+      }
+    };
+
     confirmModal = {
       isOpen: true,
       title: 'İstifadəçi silinməsi',
       message: "Bu istifadəçini silmək istədiyinizə əminsiniz? Bu əməliyyat geri alına bilməz.",
       confirmText: 'Sil',
-      variant: 'danger',
-      onConfirm: async () => {
-        try {
-          const response = await fetch("/api/admin/users/delete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId }),
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            showAlert("İstifadəçi uğurla silindi", 'success', 'Uğurlu');
-            loadUsers();
-          } else {
-            showAlert(data.message || "Xəta baş verdi", 'error', 'Xəta');
-          }
-        } catch (error) {
-          console.error("Silmə xətası:", error);
-          showAlert("Xəta baş verdi", 'error', 'Xəta');
-        }
-      }
+      variant: 'danger'
     };
   }
 
@@ -418,7 +420,7 @@
   message={confirmModal.message}
   confirmText={confirmModal.confirmText}
   confirmVariant={confirmModal.variant}
-  onConfirm={confirmModal.onConfirm}
+  onConfirm={() => confirmCallback?.()}
   onCancel={() => {}}
 />
 

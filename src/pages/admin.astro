@@ -1,5 +1,5 @@
 ---
-import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
+import { isAuthenticated, getUserFromCookies, isAdmin, isModerator } from "@/utils/auth";
 import AdminPanel from "@/components/admin/AdminPanel.svelte";
 import BaseHead from "@/components/BaseHead.astro";
 
@@ -12,10 +12,11 @@ if (!isAuthenticated(cookies)) {
 
 const user = await getUserFromCookies(cookies, redirect);
 
-// Admin yoxlaması
+// Admin və ya Moderator yoxlaması
 const adminCheck = await isAdmin(Astro.cookies);
+const modCheck = await isModerator(Astro.cookies);
 
-if (!adminCheck) {
+if (!adminCheck && !modCheck) {
   return new Response(null, {
     status: 404,
   }); 

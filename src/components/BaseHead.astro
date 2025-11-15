@@ -2,19 +2,43 @@
 import "../styles/global.css";
 import { SEO } from "astro-seo";
 import { ClientRouter } from "astro:transitions";
+import { supabase } from "@/db/supabase";
 
 export interface Props {
   title?: string;
   description?: string;
   canonical?: string;
   image?: string;
+  keywords?: string;
+  twitterHandle?: string;
+  siteName?: string;
+}
+
+// Settings-dən məlumatları al
+let settings: any = {};
+
+try {
+  const { data: settingsData } = await supabase
+    .from("settings")
+    .select("key, value");
+
+  if (settingsData) {
+    for (const setting of settingsData) {
+      settings[setting.key] = setting.value;
+    }
+  }
+} catch (error) {
+  console.error("Settings yüklənərkən xəta:", error);
 }
 
 const { 
-  title = "Your Website Title",
-  description = "A brief description of your website content.",
-  canonical = "https://yoursite.com",
-  image = "https://yoursite.com/og-image.jpg"
+  title = settings.site_title,
+  description = settings.site_description,
+  canonical = Astro.url.origin,
+  image = settings.og_image || `${Astro.url.origin}/og-image.jpg`,
+  keywords = settings.site_keywords,
+  twitterHandle = settings.twitter_handle,
+  siteName = settings.site_title
 } = Astro.props;
 ---
 
@@ -31,26 +55,27 @@ const {
     },
     optional: {
       description: description,
-      siteName: "Your Site Name",
-      locale: "en_US",
+      siteName: siteName,
+      locale: "az_AZ",
     }
   }}
   twitter={{
     card: "summary_large_image",
-    site: "@yoursite",
-    creator: "@yourhandle",
+    site: twitterHandle,
+    creator: twitterHandle,
   }}
 />
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="keywords" content="keyword1, keyword2, keyword3" />
-<meta name="author" content="Your Name or Company Name" />
+<meta name="keywords" content={keywords} />
+<meta name="author" content={siteName} />
 
 <!-- Favicons -->
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" href="/icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
 
 <!-- Favicon for IE -->
@@ -61,41 +86,12 @@ const {
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
 
-<!-- Open Graph / Facebook -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://www.yourwebsite.com/" />
-<meta property="og:title" content="Your Website Title" />
-<meta
-  property="og:description"
-  content="A brief description of your website content."
-/>
-<meta
-  property="og:image"
-  content="https://www.yourwebsite.com/path/to/image.jpg"
-/>
-
-<!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://www.yourwebsite.com/" />
-<meta property="twitter:title" content="Your Website Title" />
-<meta
-  property="twitter:description"
-  content="A brief description of your website content."
-/>
-<meta
-  property="twitter:image"
-  content="https://www.yourwebsite.com/path/to/image.jpg"
-/>
-
 <!-- Canonical URL -->
-<link rel="canonical" href="https://www.yourwebsite.com/" />
+<link rel="canonical" href={canonical} />
 
 <!-- Additional SEO -->
 <meta name="robots" content="index, follow" />
 <meta name="googlebot" content="index, follow" />
-
-<!-- Apple Touch Icon (already included in favicons, but keeping for backwards compatibility) -->
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
 <!-- Theme Color for Mobile Browsers -->
 <meta name="theme-color" content="#ffffff" />

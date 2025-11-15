@@ -37,7 +37,7 @@ htmlContent = htmlContent.replace(ratingRegex, (match, score) => {
   const ratingHtml = `
     <div class="rounded-2xl mx-auto text-center flex flex-col items-center bg-white w-full">
       <div class="text-7xl font-black leading-none text-black mt-5">${numericScore.toFixed(1)}</div>
-      <p class="text-sm text-blue-600 mb-5">Müəllifin verdiyi bal</p>
+      <p class="text-sm text-blue-600 mb-5">Müəllifin balı</p>
     </div>
   `;
   return ratingHtml;

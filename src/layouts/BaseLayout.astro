@@ -3,20 +3,50 @@ import BaseHead from "@/components/BaseHead.astro";
 import Navigation from "@/components/global/Navigation.astro";
 import Footer from "@/components/global/Footer.astro";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import { supabase } from "@/db/supabase";
 
 interface Props {
   title?: string;
+  description?: string;
   hideFooter?: boolean;
 }
 
-const { title, hideFooter = false } = Astro.props;
+const { title: pageTitle, description: pageDescription, hideFooter = false } = Astro.props;
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const user = isLoggedIn ? await getUserFromCookies(Astro.cookies, Astro.redirect) : null;
+
+// Settings-dən sayt başlığı və təsvirini al
+let siteTitle = "The 99";
+let siteDescription = "Azərbaycan texnoloji bloqu";
+
+try {
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("key, value")
+    .in("key", ["site_title", "site_description"]);
+
+  if (settings) {
+    for (const setting of settings) {
+      if (setting.key === "site_title" && setting.value) {
+        siteTitle = setting.value;
+      }
+      if (setting.key === "site_description" && setting.value) {
+        siteDescription = setting.value;
+      }
+    }
+  }
+} catch (error) {
+  console.error("Settings yüklənərkən xəta:", error);
+}
+
+// Səhifə başlığı: əgər verilmişsə, sayt başlığı ilə birləşdir
+const finalTitle = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
+const finalDescription = pageDescription || siteDescription;
 ---
 
 <html lang="en">  
   <head>   
-    <BaseHead />
+    <BaseHead title={finalTitle} description={finalDescription} />
   </head>
   <body class=`flex flex-col min-h-screen px-4 sm:px-6 md:px-8 mx-auto bg-white`>
     <Navigation isLoggedIn={isLoggedIn} user={user} /> 

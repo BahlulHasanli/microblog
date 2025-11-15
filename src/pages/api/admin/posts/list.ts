@@ -1,16 +1,16 @@
 import type { APIRoute } from "astro";
-import { requireAdmin } from "@/utils/auth";
+import { requireModerator } from "@/utils/auth";
 import { supabase } from "@/db/supabase";
 
 export const GET: APIRoute = async (context) => {
   try {
     console.log("Admin posts list API çağırıldı");
-    
-    // Admin yoxlaması
-    const adminCheck = await requireAdmin(context);
-    if (adminCheck instanceof Response) {
-      console.log("Admin yoxlaması uğursuz");
-      return adminCheck;
+
+    // Moderator yoxlaması (admin və moderator)
+    const modCheck = await requireModerator(context);
+    if (modCheck instanceof Response) {
+      console.log("Moderator yoxlaması uğursuz");
+      return modCheck;
     }
 
     console.log("Admin yoxlaması uğurlu");
@@ -20,8 +20,19 @@ export const GET: APIRoute = async (context) => {
     const filter = url.searchParams.get("status") || "all";
     console.log("Filter:", filter);
 
-    // Supabase-dən postları al
-    let query = supabase.from("posts").select("*").order("pub_date", { ascending: false });
+    // Supabase-dən postları al (users cədvəli ilə birləşdir)
+    let query = supabase
+      .from("posts")
+      .select(
+        `
+        *,
+        users:author_email (
+          fullname,
+          avatar
+        )
+      `
+      )
+      .order("pub_date", { ascending: false });
 
     // Filtrələ
     if (filter === "pending") {
@@ -40,13 +51,13 @@ export const GET: APIRoute = async (context) => {
     console.log("Postlar alındı:", posts?.length || 0);
 
     // Response formatına çevir
-    const formattedPosts = (posts || []).map(post => ({
+    const formattedPosts = (posts || []).map((post: any) => ({
       id: post.id,
       slug: post.slug,
       title: post.title,
       description: post.description,
-      author_name: post.author_name,
-      author_avatar: post.author_avatar,
+      author_name: post.users?.fullname || "Bilinməyən",
+      author_avatar: post.users?.avatar || "",
       status: post.approved ? "approved" : "pending",
       featured: post.featured || false,
       created_at: new Date(post.pub_date).toISOString(),

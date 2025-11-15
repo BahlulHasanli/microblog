@@ -1,13 +1,13 @@
 import type { APIRoute } from "astro";
-import { requireAdmin } from "@/utils/auth";
-import { supabase } from "@/db/supabase";
+import { requireModerator } from "@/utils/auth";
+import { supabaseAdmin } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
-    // Admin yoxlaması
-    const adminCheck = await requireAdmin(context);
-    if (adminCheck instanceof Response) {
-      return adminCheck;
+    // Moderator yoxlaması (admin və moderator)
+    const modCheck = await requireModerator(context);
+    if (modCheck instanceof Response) {
+      return modCheck;
     }
 
     const { postId, approve } = await context.request.json();
@@ -28,7 +28,7 @@ export const POST: APIRoute = async (context) => {
     // Supabase-də postu yenilə
     const updateData: any = {
       approved: approve !== false,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     // Yayımdan çıxardıqda featured də false olsun
@@ -36,7 +36,7 @@ export const POST: APIRoute = async (context) => {
       updateData.featured = false;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("posts")
       .update(updateData)
       .eq("id", postId)
@@ -60,8 +60,11 @@ export const POST: APIRoute = async (context) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: approve === false ? "Post yayımdan çıxarıldı" : "Post uğurla təsdiq edildi",
-        post: data
+        message:
+          approve === false
+            ? "Post yayımdan çıxarıldı"
+            : "Post uğurla təsdiq edildi",
+        post: data,
       }),
       {
         status: 200,
