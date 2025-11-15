@@ -58,7 +58,8 @@ const posts = (postsData || []).map(post => ({
   description: post.description,
   slug: post.slug,
   image: post.image_url || '',
-  created_at: formatISO(post.pub_date)
+  created_at: formatISO(post.pub_date),
+  categories: post.categories || []
 }));
 ---
 

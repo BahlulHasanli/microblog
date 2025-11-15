@@ -4,7 +4,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { categories as CATEGORIES } from "../data/categories";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
-import PostReactions from "@/components/reactions/PostReactions";
+import PostReactions from "@/components/reactions/PostReactions.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
@@ -118,7 +118,7 @@ const postId = postData?.id;
 
       {postId && (
         <PostReactions
-          client:load
+          client:load="svelte"
           postId={postId}
           userEmail={currentUser?.email}
         />

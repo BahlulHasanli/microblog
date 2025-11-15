@@ -1,4 +1,5 @@
 import { formatSimpleDate } from "@/utils/date";
+import { categories as CATEGORIES } from "@/data/categories";
 
 interface Post {
   id: string;
@@ -7,6 +8,7 @@ interface Post {
   slug: string;
   image: string;
   created_at: string;
+  categories?: string[];
 }
 
 interface PostCardProps {
@@ -31,7 +33,40 @@ export default function PostCard({ post }: PostCardProps) {
       </a>
 
       <div className="mt-4">
-        <div className="flex items-center gap-2 text-xs text-base-500 mb-3">
+        {post.categories && post.categories.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-base-500 mb-3 flex-wrap">
+            {post.categories.map((categorySlug, index) => {
+              const categoryObj = CATEGORIES.find(
+                (cat) => cat.slug === categorySlug
+              );
+              return (
+                <a
+                  key={categorySlug}
+                  href={`/category/${categorySlug}`}
+                  className="text-yellow-700 hover:text-yellow-800 transition-colors"
+                >
+                  {categoryObj ? categoryObj.name : categorySlug}
+                  {index < post.categories!.length - 1 && ","}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        <h3 className="text-base font-semibold text-base-900 text-balance mb-2 leading-snug line-clamp-2">
+          <a
+            href={`/posts/${post.slug}`}
+            className="hover:text-rose-600 transition-colors"
+          >
+            {post.title}
+          </a>
+        </h3>
+
+        <p className="text-xs text-base-600 line-clamp-2 leading-relaxed mb-3">
+          {post.description}
+        </p>
+
+        <div className="flex items-center gap-2 text-xs text-base-500">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -50,19 +85,6 @@ export default function PostCard({ post }: PostCardProps) {
             {formatSimpleDate(post.created_at)}
           </span>
         </div>
-
-        <h3 className="text-lg font-semibold text-base-900 text-balance mb-2 leading-snug">
-          <a
-            href={`/posts/${post.slug}`}
-            className="hover:text-rose-600 transition-colors"
-          >
-            {post.title}
-          </a>
-        </h3>
-
-        <p className="text-sm text-base-600 line-clamp-2 leading-relaxed">
-          {post.description}
-        </p>
       </div>
     </article>
   );

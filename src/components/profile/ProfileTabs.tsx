@@ -8,6 +8,7 @@ interface Post {
   slug: string;
   image: string;
   created_at: string;
+  categories?: string[];
 }
 
 interface ProfileTabsProps {
@@ -16,7 +17,11 @@ interface ProfileTabsProps {
   isOwner?: boolean;
 }
 
-export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileTabsProps) {
+export default function ProfileTabs({
+  posts,
+  userId,
+  isOwner = false,
+}: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState("posts");
   // userId artık string tipinde
 
@@ -150,7 +155,7 @@ export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileT
           </div>
         )}
 
-        {activeTab === "drafts" && (
+        {/* {activeTab === "drafts" && (
           <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
             <div className="max-w-sm mx-auto">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
@@ -177,9 +182,9 @@ export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileT
               </p>
             </div>
           </div>
-        )}
+        )} */}
 
-        {activeTab === "saved" && (
+        {/* {activeTab === "saved" && (
           <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
             <div className="max-w-sm mx-auto">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
@@ -206,7 +211,7 @@ export default function ProfileTabs({ posts, userId, isOwner = false }: ProfileT
               </p>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
