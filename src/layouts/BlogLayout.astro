@@ -56,6 +56,18 @@ try {
           >
             {frontmatter.title}
           </h1>
+          
+          {/* Gözləmə rejimi göstəricisi */}
+          {!frontmatter.approved && frontmatter.isOwner && (
+            <div class="mt-3 inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-lg text-sm font-semibold">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+              </svg>
+
+              Gözləmə rejimində
+            </div>
+          )}
+          
           <p class="max-w-2xl mx-auto mt-4 text-zinc-500 text-sm font-nouvelr">
             {frontmatter.description}
           </p>

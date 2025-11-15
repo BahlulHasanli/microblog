@@ -146,7 +146,8 @@ export default function ProfileDropdown({
           disabled={
             isSaveBtnState.isSaving ||
             !isSaveBtnState.editorContent ||
-            !isSaveBtnState.title
+            !isSaveBtnState.title ||
+            isSaveBtnState.isDisabled
           }
           className={`cursor-pointer py-1.5 px-2.5 border focus:ring-2 h-7.5 text-sm rounded-full 
             border-transparent bg-emerald-600 hover:bg-white text-white 
@@ -156,10 +157,10 @@ export default function ProfileDropdown({
           {isSaveBtnState.saveStatus === "saving"
             ? "Yadda saxlanılır..."
             : isSaveBtnState.saveStatus === "success"
-            ? "Yadda saxlanıldı!"
-            : isSaveBtnState.saveStatus === "error"
-            ? "Xəta!"
-            : "Yadda saxla"}
+              ? "Yadda saxlanıldı!"
+              : isSaveBtnState.saveStatus === "error"
+                ? "Xəta!"
+                : "Yadda saxla"}
         </button>
       )}
 
@@ -217,7 +218,10 @@ export default function ProfileDropdown({
                   console.log("Navigating to:", `/user/@${userData.username}`);
                   navigate(`/user/@${userData.username}`);
                 } else {
-                  console.log("Username is empty, userUsername prop:", userUsername);
+                  console.log(
+                    "Username is empty, userUsername prop:",
+                    userUsername
+                  );
                 }
               }}
               className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"

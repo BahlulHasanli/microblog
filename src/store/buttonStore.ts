@@ -7,4 +7,5 @@ export const isSaveBtn = atom({
   editorContent: null,
   title: "",
   saveStatus: "idle",
+  isDisabled: false,
 });

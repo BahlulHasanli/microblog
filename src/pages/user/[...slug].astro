@@ -52,14 +52,25 @@ if (postsError) {
   console.error('Postlar yüklənərkən xəta:', postsError);
 }
 
-const posts = (postsData || []).map(post => ({
+// Postları filtrləmə: sahibi olarsa bütün postları göstər, əks halda yalnız təsdiqlənmiş postları
+const filteredPostsData = (postsData || []).filter(post => {
+  if (isOwner) {
+    // Sahibi olarsa bütün postları göstər
+    return true;
+  }
+  // Başqaları olarsa yalnız təsdiqlənmiş postları göstər
+  return post.approved === true;
+});
+
+const posts = filteredPostsData.map(post => ({
   id: post.id,
   title: post.title,
   description: post.description,
   slug: post.slug,
   image: post.image_url || '',
   created_at: formatISO(post.pub_date),
-  categories: post.categories || []
+  categories: post.categories || [],
+  approved: post.approved || false
 }));
 ---
 
@@ -76,6 +87,7 @@ const posts = (postsData || []).map(post => ({
       posts={posts || []} 
       userId={user.id}
       isOwner={isOwner}
+      currentUserEmail={currentUser?.email}
     />
   </div>
 </BaseLayout>

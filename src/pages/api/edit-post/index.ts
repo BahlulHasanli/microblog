@@ -67,6 +67,19 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
+    if (categoriesData.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Ən azı bir kateqoriya seçilməlidir",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Supabase-dən mövcud postu yoxla
     const { data: existingPost, error: fetchError } = await supabase
       .from("posts")
@@ -592,7 +605,7 @@ export const POST: APIRoute = async (context) => {
 
     // Resim sayacını başlat (lokal variable)
     let imageCounter = 0;
-    
+
     // Mevcut resimlerin sayısını bul
     try {
       const folderPath = `posts/${newSlug}/images`;

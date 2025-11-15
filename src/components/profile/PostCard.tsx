@@ -9,15 +9,38 @@ interface Post {
   image: string;
   created_at: string;
   categories?: string[];
+  approved?: boolean;
 }
 
 interface PostCardProps {
   post: Post;
+  isOwner?: boolean;
 }
 
-export default function PostCard({ post }: PostCardProps) {
+export default function PostCard({ post, isOwner = false }: PostCardProps) {
   return (
-    <article className="flex flex-col h-full group">
+    <article className="flex flex-col h-full group relative">
+      {/* Gözləmə rejimi göstəricisi */}
+      {!post.approved && isOwner && (
+        <div className="absolute top-3 right-3 z-10 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            className="size-4"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+          Gözləmədə
+        </div>
+      )}
+
       <a
         href={`/posts/${post.slug}`}
         title={post.title}

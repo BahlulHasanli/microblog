@@ -1,5 +1,6 @@
 ---
 import { supabase } from "@/db/supabase";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import MarkdownPostLayout from "../../layouts/BlogLayout.astro";
 import { marked } from "marked";
 
@@ -19,6 +20,22 @@ const { data: post, error } = await supabase
 
 if (error || !post) {
   console.error('Post tapılmadı:', error);
+  return new Response(null, { status: 404 });
+}
+
+// Cari istifadəçini yoxla
+const isLoggedIn = isAuthenticated(Astro.cookies);
+let currentUser = null;
+let isOwner = false;
+
+if (isLoggedIn) {
+  currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
+  isOwner = currentUser?.email === post.author_email;
+}
+
+// Əgər post təsdiqlənməmişsə və cari istifadəçi sahibi deyilsə, 404 qaytarın
+if (!post.approved && !isOwner) {
+  console.error('Post təsdiqlənməmişdir və cari istifadəçi sahibi deyildir');
   return new Response(null, { status: 404 });
 }
 
@@ -54,6 +71,8 @@ const frontmatter = {
   },
   categories: post.categories || [],
   author: post.users,
+  approved: post.approved || false,
+  isOwner: isOwner,
 };
 ---
 

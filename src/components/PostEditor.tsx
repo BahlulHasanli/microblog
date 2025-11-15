@@ -89,6 +89,20 @@ export default function PostEditor({ post, content, slug, author }: any) {
       return;
     }
 
+    if (selectedCategories.length === 0) {
+      console.error("Ən azı bir kateqoriya seçilməlidir");
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+      return;
+    }
+
+    if (!coverImage && !existingImageUrl) {
+      console.error("Kapak şəkli zorunludur");
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus("saving");
 
@@ -534,8 +548,21 @@ export default function PostEditor({ post, content, slug, author }: any) {
       editorContent,
       title,
       saveStatus,
+      isDisabled:
+        !title ||
+        !editorContent ||
+        selectedCategories.length === 0 ||
+        (!coverImage && !existingImageUrl),
     });
-  }, [editorContent, title, isSaving, saveStatus]);
+  }, [
+    editorContent,
+    title,
+    isSaving,
+    saveStatus,
+    selectedCategories,
+    coverImage,
+    existingImageUrl,
+  ]);
 
   return (
     <div className="editor-container">

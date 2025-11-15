@@ -45,6 +45,20 @@ export default function Editor({ author }: any) {
       return;
     }
 
+    if (selectedCategories.length === 0) {
+      console.error("Ən azı bir kateqoriya seçilməlidir");
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+      return;
+    }
+
+    if (!coverImage) {
+      console.error("Kapak şəkli zorunludur");
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus("saving");
 
@@ -147,6 +161,60 @@ export default function Editor({ author }: any) {
       console.log("Post başarıyla kaydedildi");
 
       setSaveStatus("success");
+
+      // Bildiriş göstər
+      if (typeof window !== "undefined") {
+        // Animasiya stilləri əlavə et (bir dəfə)
+        if (!document.getElementById("notification-styles")) {
+          const style = document.createElement("style");
+          style.id = "notification-styles";
+          style.innerHTML = `
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateX(100%);
+              }
+              to {
+                opacity: 1;
+                transform: translateX(0);
+              }
+            }
+            @keyframes slideOut {
+              from {
+                opacity: 1;
+                transform: translateX(0);
+              }
+              to {
+                opacity: 0;
+                transform: translateX(100%);
+              }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        const notification = document.createElement("div");
+        notification.className =
+          "fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50";
+        notification.style.animation = "slideIn 0.3s ease-out";
+        notification.innerHTML = `
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>Post gözləmə rejimində yadda saxlanıldı</span>
+          </div>
+        `;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.style.animation = "slideOut 0.3s ease-in forwards";
+          setTimeout(() => {
+            notification.remove();
+          }, 300);
+        }, 3000);
+      }
+
       setTimeout(() => {
         setSaveStatus("idle");
         // Başarılı kaydetme sonrası gönderi sayfasına yönlendir
@@ -427,8 +495,20 @@ export default function Editor({ author }: any) {
       editorContent,
       title,
       saveStatus,
+      isDisabled:
+        !title ||
+        !editorContent ||
+        selectedCategories.length === 0 ||
+        !coverImage,
     });
-  }, [editorContent, title, isSaving, saveStatus]);
+  }, [
+    editorContent,
+    title,
+    isSaving,
+    saveStatus,
+    selectedCategories,
+    coverImage,
+  ]);
 
   return (
     <div className="editor-container">

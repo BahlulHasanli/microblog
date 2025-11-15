@@ -55,6 +55,19 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
+    if (categoriesData.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Ən azı bir kateqoriya seçilməlidir",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const pubDate = new Date().toISOString();
 
     const slug = slugify(title);

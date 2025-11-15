@@ -9,18 +9,21 @@ interface Post {
   image: string;
   created_at: string;
   categories?: string[];
+  approved?: boolean;
 }
 
 interface ProfileTabsProps {
   posts: Post[];
   userId: string;
   isOwner?: boolean;
+  currentUserEmail?: string;
 }
 
 export default function ProfileTabs({
   posts,
   userId,
   isOwner = false,
+  currentUserEmail,
 }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState("posts");
   // userId artık string tipinde
@@ -70,7 +73,7 @@ export default function ProfileTabs({
             {posts.length > 0 ? (
               <div className="grid grid-cols-1 gap-x-4 sm:gap-x-6 md:gap-x-8 gap-y-8 sm:gap-y-12 md:gap-y-16 sm:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post) => (
-                  <PostCard key={post.id} post={post} />
+                  <PostCard key={post.id} post={post} isOwner={isOwner} />
                 ))}
               </div>
             ) : isOwner ? (
