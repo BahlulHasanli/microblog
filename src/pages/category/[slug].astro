@@ -25,15 +25,19 @@ const { data: postsData, error } = await supabase
     users:author_email (avatar, fullname, username)
   `)
   .eq("approved", true)
-  .contains("categories", [category.name])
+  .filter("categories", "cs", `["${category.slug}"]`)
   .order("pub_date", { ascending: false });
 
 if (error) {
   console.error('Kateqoriya postları yüklənərkən xəta:', error);
 }
 
+const filteredPosts = postsData || [];
+
+console.log(`Kateqoriya: ${category.slug}, Tapılan post sayı: ${filteredPosts.length}`);
+
 // Postları formatla
-const sortedPosts = (postsData || []).map(post => ({
+const sortedPosts = (filteredPosts || []).map(post => ({
   slug: post.slug,
   data: {
     title: post.title,

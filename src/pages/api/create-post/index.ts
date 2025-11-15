@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
+import { slugifyCategory } from "@/data/categories";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -26,8 +27,8 @@ export const POST: APIRoute = async (context) => {
       ...new Set(
         categoriesRaw.flatMap((category) =>
           category.includes(",")
-            ? category.split(",").map((c) => c.trim())
-            : [category.trim()]
+            ? category.split(",").map((c) => slugifyCategory(c.trim()))
+            : [slugifyCategory(category.trim())]
         )
       ),
     ].filter(Boolean);

@@ -68,7 +68,7 @@ const backgroundImage = featuredPost?.data.image.url;
         />
         <div class="absolute inset-0 px-4 sm:ml-15 flex flex-col justify-between pt-4 sm:pt-24 pb-4 sm:mb-10">
             <div class="text-white flex flex-col gap-1 w-full sm:w-[470px]">
-                <h2 class="text-xl sm:text-3xl md:text-4xl font-semibold font-display m-0 break-words tracking-wide line-clamp-2 sm:line-clamp-none">
+                <h2 class="text-xl sm:text-3xl md:text-4xl font-semibold font-display m-0 break-words tracking-wide line-clamp-2">
                   {featuredPost && featuredPost.data.title}
                 </h2>
                 <p class="text-xs sm:text-sm md:text-md font-light opacity-70 mt-2 sm:mt-5 break-words font-display tracking-wide line-clamp-2 sm:line-clamp-none">
@@ -76,20 +76,20 @@ const backgroundImage = featuredPost?.data.image.url;
                 </p>
             </div>
   
-            <div class="flex w-full sm:w-[370px] flex-row items-center justify-between mt-3 sm:mt-10 gap-2">
-               <a href={`/user/@${featuredPost.data.author?.username}`} class="flex flex-row gap-1 sm:gap-2 items-center hover:opacity-80 transition-opacity min-w-0">
+            <div class="flex w-full sm:w-[320px] flex-row items-center justify-between mt-3 sm:mt-10 gap-2">
+               <button type="button" id="user-profile" class="cursor-pointer flex flex-row gap-1 sm:gap-2 items-center hover:opacity-90 transition-opacity min-w-0">
                     <img src={featuredPost.data.author?.avatar} 
                     alt={featuredPost.data.author?.fullname} 
                     class="squircle !w-10 sm:!w-[80px] !h-10 sm:!h-[78px] flex-shrink-0" />
-                   <div class="flex flex-col ml-1 sm:ml-2 min-w-0">
-                    <span class="text-white/80 font-medium text-[11px] sm:text-[15px] truncate">
+                   <div class="flex flex-col ml-1 sm:ml-4 min-w-0">
+                    <span data-username={featuredPost.data.author?.username} class="text-white/80 font-medium text-[11px] sm:text-[15px] truncate">
                       {featuredPost.data.author?.fullname}
                     </span>
-                    <p class="text-white/50 font-light text-[9px] sm:text-[11px]">
+                    <p class="text-white/50 font-light text-left text-[9px] sm:text-[11px]">
                       {featuredPost && formatSimpleDate(featuredPost.data.pubDate)}
                     </p>
                    </div> 
-               </a>
+               </button>
 
                <SliderReadMoreBtn client:idle slug={featuredPost.slug} />
             </div>
@@ -97,4 +97,15 @@ const backgroundImage = featuredPost?.data.image.url;
     </div>
     </div>
   </>
-)} 
+)}  
+ 
+<script>
+  import { navigate } from "astro:transitions/client";
+
+  const userProfile = document.querySelector("#user-profile");
+  const userName = document.querySelector("[data-username]");
+ 
+  userProfile.addEventListener("click", () => {
+    navigate(`/user/@${userName.getAttribute("data-username")}`);
+  });
+</script>

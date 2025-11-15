@@ -17,21 +17,12 @@ export default defineConfig({
     shikiConfig: {
       theme: "css-variables",
     },
-    render: [
-      { mode: "md" },
-      {
-        mode: "html",
-        htmlOptions: { 
-          allowDangerousHtml: true,
-        },
-      },
-    ],
   },
   shikiConfig: {
     wrap: true,
-    skipInline: false, 
+    skipInline: false,
     drafts: true,
-  }, 
-  integrations: [sitemap(), mdx(), react(), svelte()],
+  },
+  integrations: [sitemap(), react(), svelte()],
   adapter: cloudflare(),
 });
