@@ -60,7 +60,7 @@ export const GET: APIRoute = async (context) => {
       author_avatar: post.users?.avatar || "",
       status: post.approved ? "approved" : "pending",
       featured: post.featured || false,
-      created_at: new Date(post.pub_date).toISOString(),
+      created_at: post.pub_date ? new Date(post.pub_date).toISOString() : new Date().toISOString(),
     }));
 
     console.log("Response göndərilir:", formattedPosts.length, "post");
