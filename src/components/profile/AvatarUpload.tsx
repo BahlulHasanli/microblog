@@ -84,6 +84,8 @@ export default function AvatarUpload({
     setError("");
 
     try {
+      console.log("Avatar yüklənməsi başlayır...");
+
       // Kullanıcı ID'sini kullanarak benzersiz bir dosya adı oluştur
       const fileExt = file.name.split(".").pop();
       // Benzersiz dosya adı oluştur (sadece dosya adı, path değil)
@@ -96,8 +98,11 @@ export default function AvatarUpload({
       formData.append("file", file);
       formData.append("fileName", uniqueFileName);
       formData.append("filePath", filePath);
+      formData.append("uploadType", "avatar");
+      formData.append("userId", user.id);
 
       // Bunny CDN'e yükle
+      console.log("Bunny CDN-ə yüklənir...");
       const uploadResponse = await fetch("/api/bunny-upload", {
         method: "POST",
         body: formData,
@@ -109,12 +114,14 @@ export default function AvatarUpload({
       }
 
       const uploadResult = await uploadResponse.json();
+      console.log("Bunny yüklənməsi uğurlu:", uploadResult);
       const avatarUrl = uploadResult.imageUrl;
 
+      setLoading(false); // Bunny yüklənməsi bitdikdən sonra loading-i söndür
       await updateAvatarInSupabase(avatarUrl);
     } catch (err: any) {
+      console.error("Avatar yüklənməsi xətası:", err);
       setError(err.message || "Avatar yüklənərkən xəta baş verdi");
-    } finally {
       setLoading(false);
     }
   };
@@ -174,41 +181,66 @@ export default function AvatarUpload({
 
   // Helper function to update avatar in Supabase
   const updateAvatarInSupabase = async (avatarUrl: string) => {
-    setLoading(true);
     setError("");
 
     try {
-      // Önce eski avatarı sil
-      if (user.avatar) {
-        await deleteOldAvatar(user.avatar);
-      }
+      console.log("Avatar Supabase-də güncəllənir:", {
+        userId: user.id,
+        avatarUrl,
+      });
 
-      // Kullanıcı bilgilerini güncelle
-      const { data, error } = await supabase
+      // Kullanıcı bilgilerini güncelle (əvvəl update et, sonra eski avatarı sil)
+      console.log("Update parametrləri:", { userId: user.id, avatarUrl });
+
+      const { data: updateData, error } = await supabase
         .from("users")
         .update({ avatar: avatarUrl })
         .eq("id", user.id)
-        .select()
-        .single();
+        .select("id, avatar");
+
+      console.log("Supabase update cavabı:", { data: updateData, error });
 
       if (error) {
+        console.error("Supabase update xətası:", error);
         throw error;
       }
 
-      // Başarılı mesajını göster ve ana bileşeni güncelle
+      // Eski avatarı sil (update-dən sonra)
+      if (user.avatar) {
+        try {
+          await deleteOldAvatar(user.avatar);
+        } catch (deleteError) {
+          console.error("Eski avatar silmə xətası (ignore):", deleteError);
+          // Eski avatarı silmə xətası update-i bloklamasın
+        }
+      }
+
+      // Update-dən sonra verify et
+      const { data: verifyData } = await supabase
+        .from("users")
+        .select("id, avatar")
+        .eq("id", user.id)
+        .single();
+
+      console.log("Supabase verify cavabı:", { verifyData });
+
+      // Başarılı mesajını göster və ana bileşeni güncelle
       setSuccess(true);
-      onUpdate({ ...user, ...data });
+      const updatedUser = { ...user, avatar: avatarUrl };
+      console.log("Avatar uğurla güncəlləndi:", updatedUser);
+      onUpdate(updatedUser);
 
       // Update avatar in global store to notify other components
       updateUserAvatar(avatarUrl);
 
       // 1.5 saniye sonra modalı kapat
       setTimeout(() => {
+        setLoading(false);
         onClose();
       }, 1500);
     } catch (err: any) {
+      console.error("Avatar Supabase update xətası:", err);
       setError(err.message || "Avatar yüklənərkən xəta baş verdi");
-    } finally {
       setLoading(false);
     }
   };
