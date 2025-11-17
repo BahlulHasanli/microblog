@@ -40,7 +40,7 @@ const posts = (postsData || []).map(post => {
     data: {
       title: post.title,
       description: post.description,
-      pubDate: new Date(post.pub_date),
+      pubDate: post.pub_date ? new Date(post.pub_date) : new Date(),
       image: {
         url: post.image_url || '',
         alt: post.image_alt || post.title
@@ -95,7 +95,7 @@ const posts = (postsData || []).map(post => {
                   title={post.data.title}
                   image={post.data.image.url}
                   description={post.data.description}
-                  pubDate={post.data.pubDate.toString()}
+                  pubDate={post.data.pubDate}
                   author={post.data.author}
                 />
               )).slice(0, 10)

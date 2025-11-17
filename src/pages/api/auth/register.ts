@@ -194,7 +194,7 @@ export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
   }
 
   try {
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -216,15 +216,31 @@ export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
       );
     }
 
+    // Auth user ID-sini al
+    const userId = authData?.user?.id;
+    if (!userId) {
+      return new Response(
+        JSON.stringify({
+          message: "User ID alına bilmədi",
+          status: 500,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Username generate
-    const generator = new UsernameGenerator();
-    const generateUsername = generator.generateUniqueUsername(fullName);
+    const generator = new UsernameGenerator(supabase);
+    const generateUsername = await generator.generateUniqueUsername(fullName);
 
     // User avatar
     const avatarManager = new AvatarManager();
     const userAvatar = avatarManager.selectRandomAvatar();
 
     const { error: insertError } = await supabase.from("users").insert({
+      id: userId,
       email,
       fullname: fullName,
       avatar: userAvatar?.url,

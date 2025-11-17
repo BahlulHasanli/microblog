@@ -4,8 +4,9 @@ class UsernameGenerator {
   private nouns: string[];
   private prefixes: string[];
   private usedUsernames: Set<string>;
+  private supabase: any;
 
-  constructor() {
+  constructor(supabaseClient?: any) {
     // Sifətlər
     this.adjectives = [
       "clever",
@@ -126,6 +127,32 @@ class UsernameGenerator {
 
     // İstifadə edilmiş usernamelər (simulasiya)
     this.usedUsernames = new Set();
+    this.supabase = supabaseClient;
+  }
+
+  // Azərbaycan hərflərini ASCII-yə çevir (slug formatı)
+  slugify(text: string): string {
+    const charMap = {
+      'ı': 'i',
+      'ə': 'e',
+      'ö': 'o',
+      'ü': 'u',
+      'ç': 'c',
+      'ş': 's',
+      'ğ': 'g',
+      'Ə': 'E',
+      'Ö': 'O',
+      'Ü': 'U',
+      'Ç': 'C',
+      'Ş': 'S',
+      'Ğ': 'G',
+      'İ': 'I',
+    };
+
+    return text
+      .toLowerCase()
+      .replace(/[ıəöüçşğİƏÖÜÇŞĞ]/g, (char) => charMap[char] || char)
+      .replace(/[^a-z0-9]/g, '');
   }
 
   // Təsadüfi element seç
@@ -195,8 +222,8 @@ class UsernameGenerator {
     if (!fullName) return this.generateRandom();
 
     const names = fullName.toLowerCase().trim().split(/\s+/);
-    const firstName = names[0] || "";
-    const lastName = names[1] || "";
+    let firstName = this.slugify(names[0] || "");
+    let lastName = this.slugify(names[1] || "");
 
     const patterns = [
       // Ad + soyadın ilk hərfi + rəqəm
@@ -226,14 +253,45 @@ class UsernameGenerator {
     return selectedPattern();
   }
 
-  // Username mövcudluğunu yoxla (simulasiya)
-  isUsernameAvailable(username) {
-    // Gerçək tətbiqdə bu API çağırışı olardı
-    return !this.usedUsernames.has(username.toLowerCase());
+  // Username mövcudluğunu yoxla (Supabase ilə)
+  async isUsernameAvailable(username: string): Promise<boolean> {
+    // Əvvəlcə local cache-i yoxla
+    if (this.usedUsernames.has(username.toLowerCase())) {
+      return false;
+    }
+
+    // Supabase-dən yoxla
+    if (this.supabase) {
+      try {
+        const { data, error } = await this.supabase
+          .from("users")
+          .select("username")
+          .eq("username", username.toLowerCase())
+          .single();
+
+        // Əgər data varsa, username mövcuddur
+        if (data) {
+          return false;
+        }
+
+        // Əgər error "PGRST116" olarsa (no rows), username mövcud deyil
+        if (error && error.code === "PGRST116") {
+          return true;
+        }
+
+        // Digər error hallarında true qaytarırıq (username mövcud olmayan kimi)
+        return true;
+      } catch (err) {
+        console.error("Username mövcudluğu yoxlanarkən xəta:", err);
+        return true;
+      }
+    }
+
+    return true;
   }
 
   // Unikal username yarat
-  generateUniqueUsername(fullName = null, maxAttempts = 10) {
+  async generateUniqueUsername(fullName = null, maxAttempts = 10) {
     for (let i = 0; i < maxAttempts; i++) {
       let username;
 
@@ -245,6 +303,9 @@ class UsernameGenerator {
         username = this.generateRandom();
       }
 
+      // Slug formatına çevir (Azərbaycan hərflərini ASCII-yə)
+      username = this.slugify(username);
+
       // Uzunluq məhdudiyyəti (4-15 hərf)
       if (username.length < 4) {
         username += this.getRandomNumbers(2);
@@ -253,7 +314,8 @@ class UsernameGenerator {
         username = username.substring(0, 15);
       }
 
-      if (this.isUsernameAvailable(username)) {
+      const isAvailable = await this.isUsernameAvailable(username);
+      if (isAvailable) {
         this.usedUsernames.add(username.toLowerCase());
         return {
           username: username,
@@ -274,11 +336,11 @@ class UsernameGenerator {
   }
 
   // Çoxlu variant yarat
-  generateSuggestions(fullName = null, count = 5) {
+  async generateSuggestions(fullName = null, count = 5) {
     const suggestions = [];
 
     for (let i = 0; i < count; i++) {
-      const result = this.generateUniqueUsername(fullName);
+      const result = await this.generateUniqueUsername(fullName);
       suggestions.push(result.username);
     }
 

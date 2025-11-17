@@ -42,7 +42,7 @@ const sortedPosts = (filteredPosts || []).map(post => ({
   data: {
     title: post.title,
     description: post.description,
-    pubDate: new Date(post.pub_date),
+    pubDate: post.pub_date ? new Date(post.pub_date) : new Date(),
     image: {
       url: post.image_url || '',
       alt: post.image_alt || post.title
@@ -83,7 +83,7 @@ const sortedPosts = (filteredPosts || []).map(post => ({
               title={post.data.title}
               image={post.data.image.url}
               description={post.data.description}
-              pubDate={formatSimpleDate(post.data.pubDate)}
+              pubDate={post.data.pubDate}
               author={post.data.author}
             />
           ))}
