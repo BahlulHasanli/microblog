@@ -103,7 +103,7 @@ function validateFullName(fullName) {
   };
 }
 
-export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
+export const POST: APIRoute = async ({ clientAddress, request, redirect, cookies }) => {
   // Check rate limiting
   const clientIP =
     clientAddress || request.headers.get("x-forwarded-for") || "unknown";
@@ -257,9 +257,47 @@ export const POST: APIRoute = async ({ clientAddress, request, redirect }) => {
       );
     }
 
+    // Qeydiyyatdan sonra avtomatik login et
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError || !signInData.session) {
+      return new Response(
+        JSON.stringify({ 
+          message: "Qeydiyyat uğurla tamamlandı, ancaq avtomatik login uğursuz oldu. Zəhmət olmasa daxil olun.",
+          status: 200 
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Session token-larını Astro cookies API-sı ilə saxla
+    const { access_token, refresh_token } = signInData.session;
+    
+    cookies.set("sb-access-token", access_token, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax"
+    });
+    
+    cookies.set("sb-refresh-token", refresh_token, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax"
+    });
+    
     return new Response(
       JSON.stringify({ email, message: "Qeydiyyat uğurla tamamlandı" }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 200, 
+        headers: { 
+          "Content-Type": "application/json"
+        } 
+      }
     );
   } catch (error) {
     return new Response(JSON.stringify({ message: error, status: 500 }), {

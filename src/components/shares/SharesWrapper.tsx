@@ -5,9 +5,11 @@ import ShareTimeline from "./ShareTimeline";
 export default function SharesWrapper() {
   return (
     <ShareProvider>
-      <div className="max-w-2xl mx-auto border border-slate-200 rounded-lg overflow-hidden">
+      <div className="max-w-3xl mx-auto border border-slate-100 rounded-lg overflow-hidden h-screen flex flex-col">
         <ShareEditor />
-        <ShareTimeline />
+        <div className="flex-1 overflow-hidden">
+          <ShareTimeline />
+        </div>
       </div>
     </ShareProvider>
   );

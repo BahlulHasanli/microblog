@@ -321,7 +321,7 @@
                     {:else}
                       <div class="w-6 mr-2"></div>
                     {/if}
-                    <div class="flex-shrink-0 h-10 w-10">
+                    <div class="shrink-0 h-10 w-10">
                       {#if comment.user_avatar}
                         <img
                           src={comment.user_avatar}

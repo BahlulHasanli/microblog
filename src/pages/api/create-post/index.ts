@@ -171,7 +171,7 @@ export const POST: APIRoute = async (context) => {
         description,
         content: processedContent,
         pub_date: pubDate,
-        author_email: user.email,
+        author_id: user.id,
         image_url: coverImageUrl || null,
         image_alt: imageAlt || title,
         categories: categoriesData,

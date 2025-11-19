@@ -23,7 +23,7 @@ const { data: postsData, error: postsError } = await supabase
   .from("posts")
   .select(`
     *,
-    users:author_email (avatar, fullname, username)
+    users:author_id (avatar, fullname, username)
   `)
   .eq("approved", true)
   .order("pub_date", { ascending: false });
@@ -87,25 +87,45 @@ const posts = (postsData || []).map(post => {
           </div>
           <div class="grid grid-cols-1 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">
             {
-              posts.map((post) => (
-                <BlogEntries
-                  url={"/posts/" + post.slug} 
-                  alt={post.data.title}
-                  categories={post.data.categories}
-                  title={post.data.title}
-                  image={post.data.image.url}
-                  description={post.data.description}
-                  pubDate={post.data.pubDate}
-                  author={post.data.author}
-                />
-              )).slice(0, 10)
+              posts.length > 0 ? (
+                posts.map((post) => (
+                  <BlogEntries
+                    url={"/posts/" + post.slug} 
+                    alt={post.data.title}
+                    categories={post.data.categories}
+                    title={post.data.title}
+                    image={post.data.image.url}
+                    description={post.data.description}
+                    pubDate={post.data.pubDate}
+                    author={post.data.author}
+                  />
+                )).slice(0, 10)
+              ) : (
+                <div class="col-span-1 sm:col-span-2 py-16 sm:py-24">
+                  <div class="flex flex-col items-center justify-center text-center">
+                    <div class="mb-6 p-4 rounded-2xl bg-slate-50">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
+                      </svg>
+                    </div>
+                    <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 mb-2">Hələ ki, post yoxdur</h3>
+                    <p class="text-sm sm:text-sm text-slate-500 max-w-sm">Yeni məzmun tezliklə əlavə olunacaq. Bizi izləyin!</p>
+                  </div>
+                </div>
+              )
             }
           </div>
         </div>
 
         <div id="window" class="tab-content hidden">
-          <div class="grid grid-cols-1 gap-8 gap-y-24 sm:grid-cols-2">
-            coming soon!
+          <div class="flex flex-col items-center justify-center text-center py-16 sm:py-24">
+            <div class="mb-6 p-4 rounded-2xl bg-slate-50">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
+              </svg>
+            </div>
+            <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 mb-2">Tezliklə</h3>
+            <p class="text-sm sm:text-sm text-slate-500 max-w-sm">Bu bölmə hazırlanır...</p>
           </div>
         </div>
 

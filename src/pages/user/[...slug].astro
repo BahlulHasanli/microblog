@@ -45,7 +45,7 @@ if (isLoggedIn) {
 const { data: postsData, error: postsError } = await supabase
   .from("posts")
   .select("*")
-  .eq("author_email", user.email)
+  .eq("author_id", user.id)
   .order("pub_date", { ascending: false });
 
 if (postsError) {

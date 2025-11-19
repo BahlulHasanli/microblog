@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { az } from "date-fns/locale";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
+import ImageGallery from "./ImageGallery";
 
 interface User {
   fullname: string;
@@ -10,8 +11,9 @@ interface User {
 
 interface Share {
   id: string;
-  author_email: string;
+  user_id: string;
   content: string;
+  image_urls?: string[] | null;
   created_at: string;
   updated_at: string;
   likes_count: number;
@@ -31,15 +33,29 @@ export default function ShareCard({ share }: ShareCardProps) {
     addSuffix: true,
   });
 
+  // Parse image_urls əgər string olarsa
+  let imageUrls: string[] = [];
+  if (share.image_urls) {
+    if (typeof share.image_urls === "string") {
+      try {
+        imageUrls = JSON.parse(share.image_urls);
+      } catch {
+        imageUrls = [];
+      }
+    } else if (Array.isArray(share.image_urls)) {
+      imageUrls = share.image_urls;
+    }
+  }
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex gap-3 sm:gap-4">
         {/* Avatar */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <img
-            src={user?.avatar || "/default-avatar.png"}
-            alt={user?.fullname || "User"}
-            className="w-10 sm:w-12 h-10 sm:h-12 rounded-full object-cover"
+            src={user?.avatar}
+            alt={user?.fullname}
+            className="squircle w-10! sm:w-12! h-10! sm:h-12! object-cover"
           />
         </div>
 
@@ -48,33 +64,34 @@ export default function ShareCard({ share }: ShareCardProps) {
           {/* Header */}
           <div className="flex items-baseline gap-2 flex-wrap">
             <a
-              href={`/user/@${user?.username || "unknown"}`}
+              href={`/user/@${user?.username}`}
               className="font-semibold text-slate-900 hover:underline"
             >
-              {user?.fullname || "Unknown"}
+              {user?.fullname}
             </a>
-            <span className="text-slate-500 text-sm">
-              @{user?.username || "unknown"}
-            </span>
+            <span className="text-slate-500 text-sm">@{user?.username}</span>
             <span className="text-slate-500 text-sm">·</span>
             <span className="text-slate-500 text-sm">{timeAgo}</span>
           </div>
 
           {/* Share Content */}
-          <p className="mt-2 text-slate-900 text-sm sm:text-base break-words whitespace-pre-wrap">
+          <p className="mt-2 text-slate-900 text-sm sm:text-base wrap-break-word whitespace-pre-wrap">
             {share.content}
           </p>
 
+          {/* Share Images */}
+          {imageUrls.length > 0 && <ImageGallery images={imageUrls} />}
+
           {/* Actions */}
-          <div className="mt-3 flex justify-between text-slate-500 max-w-xs text-sm  transition-opacity">
-            <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+          <div className="mt-3 flex justify-between text-slate-500 text-sm  transition-opacity">
+            <button className="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors">
               <MessageCircle size={16} />
               <span>{share.replies_count}</span>
             </button>
-            <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
+            <button className="cursor-pointer flex items-center gap-2 hover:text-green-500 transition-colors">
               <Share2 size={16} />
             </button>
-            <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
+            <button className="cursor-pointer flex items-center gap-2 hover:text-red-500 transition-colors">
               <Heart size={16} />
               <span>{share.likes_count}</span>
             </button>

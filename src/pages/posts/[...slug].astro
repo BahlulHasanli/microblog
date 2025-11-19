@@ -13,7 +13,7 @@ const { data: post, error } = await supabase
   .from("posts")
   .select(`
     *,
-    users:author_email (avatar, fullname, username)
+    users:author_id (avatar, fullname, username)
   `)
   .eq("slug", slug)
   .single();
@@ -30,7 +30,7 @@ let isOwner = false;
 
 if (isLoggedIn) {
   currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
-  isOwner = currentUser?.email === post.author_email;
+  isOwner = currentUser?.id === post.author_id;
 }
 
 // Əgər post təsdiqlənməmişsə və cari istifadəçi sahibi deyilsə, 404 qaytarın

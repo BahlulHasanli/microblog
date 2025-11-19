@@ -26,7 +26,7 @@ export const GET: APIRoute = async (context) => {
       .select(
         `
         *,
-        users:author_email (
+        users:author_id (
           fullname,
           avatar
         )
@@ -60,7 +60,9 @@ export const GET: APIRoute = async (context) => {
       author_avatar: post.users?.avatar || "",
       status: post.approved ? "approved" : "pending",
       featured: post.featured || false,
-      created_at: post.pub_date ? new Date(post.pub_date).toISOString() : new Date().toISOString(),
+      created_at: post.pub_date
+        ? new Date(post.pub_date).toISOString()
+        : new Date().toISOString(),
     }));
 
     console.log("Response göndərilir:", formattedPosts.length, "post");

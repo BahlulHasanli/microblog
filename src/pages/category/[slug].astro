@@ -22,7 +22,7 @@ const { data: postsData, error } = await supabase
   .from("posts")
   .select(`
     *,
-    users:author_email (avatar, fullname, username)
+    users:author_id (avatar, fullname, username)
   `)
   .eq("approved", true)
   .filter("categories", "cs", `["${category.slug}"]`)

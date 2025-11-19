@@ -20,14 +20,14 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Form
-    const { content, imageUrls } = await context.request.json();
+    // Form verilerini al
+    const { shareId, imageUrls } = await context.request.json();
 
-    if (!content || !content.trim()) {
+    if (!shareId) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Paylaşım boş olmalı deyil",
+          message: "Paylaşım ID-si yoxdur",
         }),
         {
           status: 400,
@@ -36,35 +36,21 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    if (content.length > 500) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Paylaşım 500 simvoldan çox olmalı deyil",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    // Supabase admin client-i istifadə edərək insert et
+    // Supabase-də şəkilləri yenilə
     const { data, error } = await supabaseAdmin
       .from("shares")
-      .insert({
-        user_id: user.id,
-        content: content.trim(),
-        image_urls: imageUrls || null,
+      .update({
+        image_urls: imageUrls,
       })
+      .eq("id", shareId)
       .select();
 
     if (error) {
-      console.error("Supabase insert xətası:", error);
+      console.error("Supabase update xətası:", error);
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Paylaşım əlavə edilərkən xəta: " + error.message,
+          message: "Şəkillər yenilənərkən xəta: " + error.message,
         }),
         {
           status: 500,
@@ -76,7 +62,7 @@ export const POST: APIRoute = async (context) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Paylaşım uğurla əlavə edildi!",
+        message: "Şəkillər uğurla yeniləndi",
         data,
       }),
       {
@@ -85,7 +71,7 @@ export const POST: APIRoute = async (context) => {
       }
     );
   } catch (error) {
-    console.error("Paylaşım yaratma xətası:", error);
+    console.error("Şəkillər yenilənməsi xətası:", error);
     return new Response(
       JSON.stringify({
         success: false,

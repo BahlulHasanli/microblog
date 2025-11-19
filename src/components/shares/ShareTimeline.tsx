@@ -5,8 +5,9 @@ import ShareCard from "./ShareCard";
 
 interface Share {
   id: string;
-  author_email: string;
+  user_id: string;
   content: string;
+  image_urls?: string[] | null;
   created_at: string;
   updated_at: string;
   likes_count: number;
@@ -28,21 +29,29 @@ export default function ShareTimeline({
   const { refreshTrigger: contextRefreshTrigger } = useShare();
   const [shares, setShares] = useState<Share[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchShares = async () => {
-    if (isInitialLoad) {
+  const LIMIT = 10;
+
+  const fetchShares = async (isLoadMore = false) => {
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else if (isInitialLoad) {
       setIsLoading(true);
     }
     setError("");
 
     try {
+      const currentOffset = isLoadMore ? offset : 0;
       const { data, error: fetchError } = await supabase
         .from("shares")
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range(currentOffset, currentOffset + LIMIT - 1);
 
       if (fetchError) {
         setError("Paylaşımlar yüklənərkən xəta: " + fetchError.message);
@@ -57,31 +66,57 @@ export default function ShareTimeline({
             const { data: userData } = await supabase
               .from("users")
               .select("fullname, username, avatar")
-              .eq("email", share.author_email)
+              .eq("id", share.user_id)
               .single();
 
             return {
               ...share,
-              user: userData || {
-                fullname: "Unknown",
-                username: "unknown",
-                avatar: "/default-avatar.png",
-              },
+              user: userData,
             };
           })
         );
-        setShares(sharesWithUsers);
+
+        if (isLoadMore) {
+          setShares((prev) => [...prev, ...sharesWithUsers]);
+          setOffset((prev) => prev + LIMIT);
+        } else {
+          setShares(sharesWithUsers);
+          setOffset(LIMIT);
+        }
+
+        // Daha az məlumat varsa, daha çox yoxdur
+        if (data.length < LIMIT) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
       } else {
-        setShares([]);
+        if (!isLoadMore) {
+          setShares([]);
+        }
+        setHasMore(false);
       }
     } catch (err) {
       setError("Xəta baş verdi");
       console.error(err);
     } finally {
-      if (isInitialLoad) {
+      if (isInitialLoad && !isLoadMore) {
         setIsLoading(false);
         setIsInitialLoad(false);
       }
+      if (isLoadMore) {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const element = e.currentTarget;
+    const isNearBottom =
+      element.scrollHeight - element.scrollTop - element.clientHeight < 500;
+
+    if (isNearBottom && hasMore && !isLoadingMore && !isLoading) {
+      fetchShares(true);
     }
   };
 
@@ -120,34 +155,84 @@ export default function ShareTimeline({
 
   if (isLoading) {
     return (
-      <div className="w-full py-8 text-center text-slate-500">
-        Paylaşımlar yüklənir...
+      <div className="w-full py-12 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+          <p className="text-sm text-slate-500">Paylaşımlar yüklənir...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-        {error}
+      <div className="w-full py-8 px-4">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm">
+          <p className="font-medium mb-1">Xəta baş verdi</p>
+          <p className="text-slate-500">{error}</p>
+        </div>
       </div>
     );
   }
 
   if (shares.length === 0) {
     return (
-      <div className="w-full py-12 text-center text-slate-400">
-        <p className="text-lg">Hələ paylaşım yoxdur</p>
-        <p className="text-sm mt-2">Birinci paylaşımı sən et!</p>
+      <div className="w-full py-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 inline-flex p-3 rounded-xl bg-slate-50">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              className="size-6 text-slate-400"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
+              />
+            </svg>
+          </div>
+          <p className="text-slate-900 font-nouvelr-semibold text-base mb-1">
+            Paylaşım yoxdur
+          </p>
+          <p className="text-slate-500 text-sm">
+            Redaktorlar tərəfindən paylaşım edilməyib
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full divide-y divide-slate-200">
+    <div
+      className="w-full space-y-3 h-full overflow-y-auto"
+      onScroll={handleScroll}
+    >
       {shares.map((share) => (
         <ShareCard key={share.id} share={share} />
       ))}
+
+      {/* Loading more indicator */}
+      {isLoadingMore && (
+        <div className="w-full py-4 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-6 h-6 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+            <p className="text-xs text-slate-500">
+              Daha çox paylaşım yüklənir...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* End of list */}
+      {!hasMore && shares.length > 0 && (
+        <div className="w-full py-4 flex items-center justify-center">
+          <p className="text-xs text-slate-400">Daha çox paylaşım yoxdur</p>
+        </div>
+      )}
     </div>
   );
 }
