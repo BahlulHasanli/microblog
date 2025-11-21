@@ -78,8 +78,11 @@ export const POST: APIRoute = async ({
   cookies.set("sb-refresh-token", refresh_token, {
     path: "/",
   });
-  return new Response(JSON.stringify({ email, message: "Daxil olundu" }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ email, message: "Yönləndirilirsiniz.." }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 };

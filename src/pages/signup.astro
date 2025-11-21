@@ -31,11 +31,11 @@ if (!enableRegistration) {
 ---
 
 <BaseLayout>
-    <section class="max-w-md mx-auto py-12 px-4 sm:px-0">
-        <div class="bg-white rounded-lg p-6">
+    <section class="max-w-md mx-auto py-8 px-4 sm:px-0">
+        <div class="bg-white rounded-lg p-4">
             <!-- Başlık -->
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-big-shoulders font-bold text-base-900 mb-1">
+                <h1 class="text-xl font-big-shoulders font-bold text-base-900 mb-1">
                     Qeydiyyat
                 </h1>
                 <p class="text-base-600 text-sm">
@@ -47,7 +47,7 @@ if (!enableRegistration) {
             <form id="signupForm" class="space-y-5">
                 <!-- Ad Soyad -->
                 <div>
-                    <label for="fullName" class="block text-sm font-medium text-base-700 mb-1">
+                    <label for="fullName" class="block text-xs font-medium text-base-700 mb-1">
                         Ad Soyad
                     </label>
                     <input
@@ -56,13 +56,13 @@ if (!enableRegistration) {
                         name="fullName"
                         placeholder="Ad və soyadınızı daxil edin"
                         required
-                        class="w-full px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-base-900 placeholder-base-400"
+                        class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
                     />
                 </div> 
 
                 <!-- Email -->
                 <div>
-                    <label for="email" class="block text-sm font-medium text-base-700 mb-1">
+                    <label for="email" class="block text-xs font-medium text-base-700 mb-1">
                         Email
                     </label>
                     <input
@@ -71,13 +71,13 @@ if (!enableRegistration) {
                         name="email"
                         placeholder="email@example.com"
                         required
-                        class="w-full px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-base-900 placeholder-base-400"
+                        class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
                     />
                 </div>
 
                 <!-- Şifre -->
                 <div>
-                    <label for="password" class="block text-sm font-medium text-base-700 mb-1">
+                    <label for="password" class="block text-xs font-medium text-base-700 mb-1">
                         Şifre
                     </label>
                     <input
@@ -86,9 +86,9 @@ if (!enableRegistration) {
                         name="password"
                         placeholder="Güclü bir şifre seçin"
                         required
-                        class="w-full px-4 py-2 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-base-900 placeholder-base-400"
+                        class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
                     />
-                    <p class="text-xs text-base-500 mt-1">
+                    <p class="text-xs text-base-500 mt-0.5">
                         Minimum 8 karakter, böyük və kiçik hərf, rəqəm və xüsusi simvol
                     </p>
                 </div>
@@ -97,18 +97,18 @@ if (!enableRegistration) {
                 <button
                     type="submit"
                     id="submitButton"
-                    class="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-2 px-4 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                    class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     Qeydiyyat
                 </button>
 
                 <!-- Error/Success Messages -->
-                <div id="message" class="hidden p-3 rounded-lg text-sm font-medium"></div>
+                <div id="message" class="hidden p-2 rounded-lg text-xs font-medium"></div>
             </form>
 
             <!-- Login Link -->
-            <div class="text-center mt-6 pt-5 border-t border-base-100">
-                <p class="text-base-600 text-sm">
+            <div class="text-center mt-4 pt-3 border-t border-base-100">
+                <p class="text-base-600 text-xs">
                     Artıq hesabınız var?
                     <a href="/signin" class="text-rose-500 hover:text-rose-600 font-medium transition-colors">
                         Daxil olun
