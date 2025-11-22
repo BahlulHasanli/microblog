@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/db/supabase";
 import { useShare } from "@/context/ShareContext";
 import ShareCard from "./ShareCard";
@@ -34,6 +34,7 @@ export default function ShareTimeline({
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const LIMIT = 10;
 
@@ -49,7 +50,7 @@ export default function ShareTimeline({
       const currentOffset = isLoadMore ? offset : 0;
       const { data, error: fetchError } = await supabase
         .from("shares")
-        .select("*")
+        .select("*, share_likes(id, user_id)")
         .order("created_at", { ascending: false })
         .range(currentOffset, currentOffset + LIMIT - 1);
 
@@ -110,19 +111,42 @@ export default function ShareTimeline({
     }
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const element = e.currentTarget;
-    const isNearBottom =
-      element.scrollHeight - element.scrollTop - element.clientHeight < 500;
+  const handleLikeChange = (shareId: string, isLiked: boolean) => {
+    // Like sayını update et - bu funksiya ShareCard tərəfindən çağırılır
+    // Actual update API tərəfindən edilir
+  };
 
-    if (isNearBottom && hasMore && !isLoadingMore && !isLoading) {
-      fetchShares(true);
+  const handleScroll = () => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      const scrollTop = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      const isNearBottom = documentHeight - scrollTop - windowHeight < 500;
+
+      if (isNearBottom && hasMore && !isLoadingMore && !isLoading) {
+        fetchShares(true);
+      }
+    }, 150);
   };
 
   useEffect(() => {
     fetchShares();
   }, [refreshTrigger, contextRefreshTrigger]);
+
+  // Window scroll listener
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [hasMore, isLoadingMore, isLoading]);
 
   // Real-time subscription
   useEffect(() => {
@@ -189,8 +213,8 @@ export default function ShareTimeline({
               className="size-6 text-slate-400"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"
               />
             </svg>
@@ -207,10 +231,7 @@ export default function ShareTimeline({
   }
 
   return (
-    <div
-      className="w-full space-y-3 h-full overflow-y-auto"
-      onScroll={handleScroll}
-    >
+    <div className="w-full space-y-3">
       {shares.map((share) => (
         <ShareCard key={share.id} share={share} />
       ))}

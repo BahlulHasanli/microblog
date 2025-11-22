@@ -21,7 +21,7 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Form
-    const { content, imageUrls } = await context.request.json();
+    const { content, imageUrls, youtubeVideoId } = await context.request.json();
 
     if (!content || !content.trim()) {
       return new Response(
@@ -56,6 +56,7 @@ export const POST: APIRoute = async (context) => {
         user_id: user.id,
         content: content.trim(),
         image_urls: imageUrls || null,
+        youtube_video_id: youtubeVideoId || null,
       })
       .select();
 
