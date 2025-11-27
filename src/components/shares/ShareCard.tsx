@@ -19,6 +19,7 @@ interface Share {
   created_at: string;
   updated_at: string;
   replies_count: number;
+  comments_count?: number;
   user?: User;
   share_likes?: Array<{ id: string; user_id: string }>;
 }
@@ -165,13 +166,13 @@ export default function ShareCard({ share, onLikeChange }: ShareCardProps) {
 
           {/* Actions */}
           <div className="mt-3 flex justify-between text-slate-500 text-sm  transition-opacity">
-            <button className="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors">
+            <a
+              href={`/shares/${share.id}`}
+              className="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors"
+            >
               <MessageCircle size={16} />
-              <span>{share.replies_count}</span>
-            </button>
-            <button className="cursor-pointer flex items-center gap-2 hover:text-green-500 transition-colors">
-              <Share2 size={16} />
-            </button>
+              <span>{share.comments_count || 0}</span>
+            </a>
             <button
               onClick={handleLike}
               disabled={isLoading}

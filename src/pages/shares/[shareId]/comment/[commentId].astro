@@ -1,0 +1,76 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { supabase } from "@/db/supabase";
+import ShareCommentDetail from "@/components/shares/ShareCommentDetail";
+
+const { shareId, commentId } = Astro.params;
+
+if (!shareId || !commentId) {
+  return Astro.redirect("/");
+}
+
+// Fetch share
+const { data: share, error: shareError } = await supabase
+  .from("shares")
+  .select("*, share_likes(id, user_id)")
+  .eq("id", shareId)
+  .single();
+
+if (shareError || !share) {
+  return Astro.redirect("/");
+}
+
+// Fetch comment with user info
+const { data: comment, error: commentError } = await supabase
+  .from("share_comments")
+  .select("*, user_id(id, fullname, username, avatar)")
+  .eq("id", commentId)
+  .single();
+
+if (commentError || !comment) {
+  return Astro.redirect(`/shares/${shareId}`);
+}
+
+// Fetch reply count for this comment
+const { data: commentReplies } = await supabase
+  .from("share_comments")
+  .select("id")
+  .eq("parent_id", commentId);
+
+const commentWithReplyCount = {
+  ...comment,
+  reply_count: (commentReplies || []).length,
+};
+
+// Fetch replies for this comment (including nested replies)
+const { data: replies } = await supabase
+  .from("share_comments")
+  .select("*, user_id(id, fullname, username, avatar)")
+  .eq("parent_id", commentId)
+  .order("created_at", { ascending: true });
+
+// Fetch nested replies for each reply
+let repliesWithNested = replies || [];
+if (repliesWithNested.length > 0) {
+  repliesWithNested = await Promise.all(
+    repliesWithNested.map(async (reply) => {
+      const { data: nestedReplies } = await supabase
+        .from("share_comments")
+        .select("*, user_id(id, fullname, username, avatar)")
+        .eq("parent_id", reply.id)
+        .order("created_at", { ascending: true });
+      
+      return {
+        ...reply,
+        nested_replies_count: (nestedReplies || []).length,
+      };
+    })
+  );
+}
+---
+
+<BaseLayout>
+  <div class="max-w-2xl mx-auto px-4 sm:px-0 py-6 sm:py-8">
+    <ShareCommentDetail client:load share={share} comment={commentWithReplyCount} replies={repliesWithNested} />
+  </div>
+</BaseLayout>

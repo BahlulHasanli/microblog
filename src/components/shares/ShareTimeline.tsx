@@ -12,6 +12,7 @@ interface Share {
   updated_at: string;
   likes_count: number;
   replies_count: number;
+  comments_count?: number;
   user?: {
     fullname: string;
     username: string;
@@ -60,7 +61,7 @@ export default function ShareTimeline({
         return;
       }
 
-      // Get user data for each share
+      // Get user data and comment count for each share
       if (data && data.length > 0) {
         const sharesWithUsers = await Promise.all(
           data.map(async (share) => {
@@ -70,9 +71,16 @@ export default function ShareTimeline({
               .eq("id", share.user_id)
               .single();
 
+            // Fetch comment count for this share
+            const { data: comments } = await supabase
+              .from("share_comments")
+              .select("id")
+              .eq("share_id", share.id);
+
             return {
               ...share,
               user: userData,
+              comments_count: (comments || []).length,
             };
           })
         );
