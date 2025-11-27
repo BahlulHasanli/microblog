@@ -1,18 +1,36 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getImage } from "astro:assets";
+
+// Şəkilləri optimize et
+const bahlulImage = await getImage({
+  src: "/squad/bahlulhasanli.png",
+  width: 150,
+  height: 150,
+  format: "webp",
+  quality: 80
+});
+
+const elcanImage = await getImage({
+  src: "/squad/eljaneyvazli.png",
+  width: 150,
+  height: 150,
+  format: "webp",
+  quality: 80
+});
 
 const teamMembers = [
   {
     id: 1,
     name: "Bəhlul Həsənli",
-    image: "/squad/bahlulhasanli.jpeg",
+    image: bahlulImage,
     role: "Founder",
     profil: '',
     emoji: "🫰"
   },  {
     id: 2,
     name: "Elcan Eyvazlı",
-    image: "/squad/eljaneyvazli.jpeg",
+    image: elcanImage,
     role: "Editor in Chief",
     profile: "",
     emoji: "🔥"
@@ -37,16 +55,18 @@ const teamMembers = [
       <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 max-w-3xl mx-auto">
         {teamMembers.map((member) => (
           <div class="flex flex-col items-center relative">
-            <div class="bg-white p-2 absolute z-10 bottom-[55px] right-[55px] rounded-full text-2xl">
+            <div class="bg-white flex justify-center items-center p-2 absolute z-10 bottom-[55px] size-8 right-[55px] rounded-full text-xl">
                {member.emoji}
             </div>
             <!-- Image Container -->
             <div class="mb-4 relative ">
-              <img
-                src={member.image}
-                alt={member.name}
-                class="w-32! h-32! object-cover transition-all duration-300 rounded-lg squircle"
-              />
+                <img 
+                  src={member.image.src} 
+                  width={member.image.attributes.width}
+                  height={member.image.attributes.height}
+                  alt={member.name} 
+                  class="object-cover transition-all duration-300 rounded-lg squircle" 
+                />
             </div>
             <!-- Name -->
             <h3 class="text-base font-semibold text-base-900 text-center">
