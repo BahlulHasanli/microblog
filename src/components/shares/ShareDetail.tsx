@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { az } from "date-fns/locale";
 import { Heart, Share2, ArrowLeft, MessageCircle } from "lucide-react";
 import ImageGallery from "./ImageGallery";
+import { supabase } from "@/db/supabase";
 
 interface User {
   id: string;
@@ -33,6 +34,7 @@ interface Comment {
   parent_id?: string | null;
   users?: User;
   reply_count?: number;
+  likes_count?: number;
 }
 
 interface ShareDetailProps {
@@ -53,6 +55,10 @@ export default function ShareDetail({ share, comments }: ShareDetailProps) {
   const [allComments, setAllComments] = useState<Comment[]>(comments);
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string>("");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
+  const [commentLikesCounts, setCommentLikesCounts] = useState<
+    Map<string, number>
+  >(new Map(comments.map((c) => [c.id, c.likes_count || 0])));
 
   useEffect(() => {
     // Like sayını hesabla
@@ -80,6 +86,43 @@ export default function ShareDetail({ share, comments }: ShareDetailProps) {
           setIsAuthenticated(true);
           const userLiked = likes.some((like) => like.user_id === data.user.id);
           setIsLiked(userLiked);
+
+          // Cari istifadəçinin like etdiyi comment-ləri yoxla
+          const { data: likedCommentIds } = await supabase
+            .from("share_comment_likes")
+            .select("comment_id")
+            .eq("user_id", data.user.id)
+            .in(
+              "comment_id",
+              allComments.map((c) => c.id)
+            );
+
+          if (likedCommentIds) {
+            const likedIds = new Set(
+              likedCommentIds.map((like: any) => like.comment_id)
+            );
+            setLikedComments(likedIds);
+          }
+
+          // Bütün comment-lərin like count-larını fetch et
+          const { data: allLikeCounts } = await supabase
+            .from("share_comment_likes")
+            .select("comment_id")
+            .in(
+              "comment_id",
+              allComments.map((c) => c.id)
+            );
+
+          if (allLikeCounts) {
+            const counts = new Map<string, number>();
+            allComments.forEach((comment) => {
+              const count = allLikeCounts.filter(
+                (like: any) => like.comment_id === comment.id
+              ).length;
+              counts.set(comment.id, count);
+            });
+            setCommentLikesCounts(counts);
+          }
         } else {
           setIsAuthenticated(false);
         }
@@ -140,6 +183,86 @@ export default function ShareDetail({ share, comments }: ShareDetailProps) {
       console.error("Like xətası:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCommentLike = async (commentId: string) => {
+    try {
+      const wasLiked = likedComments.has(commentId);
+
+      // UI-ı dərhal güncəllə
+      setLikedComments((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(commentId)) {
+          newSet.delete(commentId);
+        } else {
+          newSet.add(commentId);
+        }
+        return newSet;
+      });
+
+      // Like count-u güncəllə
+      setCommentLikesCounts((prev) => {
+        const newMap = new Map(prev);
+        const currentCount = newMap.get(commentId) || 0;
+        newMap.set(commentId, wasLiked ? currentCount - 1 : currentCount + 1);
+        return newMap;
+      });
+
+      // API-yə göndər
+      const response = await fetch("/api/shares/toggle-comment-like", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          commentId: commentId,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Comment like response:", data);
+
+      if (!data.success) {
+        console.error("Comment like failed:", data.message);
+        // API xətası varsa, toggle-u geri al
+        setLikedComments((prev) => {
+          const newSet = new Set(prev);
+          if (newSet.has(commentId)) {
+            newSet.delete(commentId);
+          } else {
+            newSet.add(commentId);
+          }
+          return newSet;
+        });
+
+        setCommentLikesCounts((prev) => {
+          const newMap = new Map(prev);
+          const currentCount = newMap.get(commentId) || 0;
+          newMap.set(commentId, wasLiked ? currentCount + 1 : currentCount - 1);
+          return newMap;
+        });
+      }
+    } catch (error) {
+      console.error("Comment like xətası:", error);
+      // Xəta varsa, toggle-u geri al
+      setLikedComments((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(commentId)) {
+          newSet.delete(commentId);
+        } else {
+          newSet.add(commentId);
+        }
+        return newSet;
+      });
+
+      setCommentLikesCounts((prev) => {
+        const newMap = new Map(prev);
+        const currentCount = newMap.get(commentId) || 0;
+        const wasLiked = likedComments.has(commentId);
+        newMap.set(commentId, wasLiked ? currentCount + 1 : currentCount - 1);
+        return newMap;
+      });
     }
   };
 
@@ -252,9 +375,19 @@ export default function ShareDetail({ share, comments }: ShareDetailProps) {
               <MessageCircle size={14} />
               <span>{replies.length || 0}</span>
             </a>
-            <button className="hover:text-red-500 transition-colors inline-flex items-center gap-1">
-              <Heart size={14} />
-              <span>0</span>
+            <button
+              onClick={() => handleCommentLike(comment.id)}
+              className={`transition-colors inline-flex items-center gap-1 ${
+                likedComments.has(comment.id)
+                  ? "text-red-500"
+                  : "hover:text-red-500"
+              }`}
+            >
+              <Heart
+                size={14}
+                fill={likedComments.has(comment.id) ? "currentColor" : "none"}
+              />
+              <span>{commentLikesCounts.get(comment.id) || 0}</span>
             </button>
           </div>
         </div>

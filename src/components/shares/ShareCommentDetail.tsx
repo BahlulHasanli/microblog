@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { az } from "date-fns/locale";
 import { ArrowLeft, MessageCircle, Heart, Share2 } from "lucide-react";
+import { supabase } from "@/db/supabase";
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ interface Comment {
   parent_id?: string | null;
   nested_replies_count?: number;
   reply_count?: number;
+  likes_count?: number;
 }
 
 interface ShareCommentDetailProps {
@@ -47,6 +49,12 @@ export default function ShareCommentDetail({
   const [allReplies, setAllReplies] = useState<Comment[]>(replies);
   const [likedReplies, setLikedReplies] = useState<Set<string>>(new Set());
   const [isParentCommentLiked, setIsParentCommentLiked] = useState(false);
+  const [parentCommentLikesCount, setParentCommentLikesCount] = useState(
+    comment.likes_count || 0
+  );
+  const [replyLikesCounts, setReplyLikesCounts] = useState<Map<string, number>>(
+    new Map(replies.map((r) => [r.id, r.likes_count || 0]))
+  );
 
   useEffect(() => {
     const checkCurrentUser = async () => {
@@ -66,6 +74,51 @@ export default function ShareCommentDetail({
             avatar: data.user.avatar,
           });
           setIsAuthenticated(true);
+
+          // Cari istifadəçinin like etdiyi comment-ləri yoxla
+          const { data: likedCommentIds } = await supabase
+            .from("share_comment_likes")
+            .select("comment_id")
+            .eq("user_id", data.user.id)
+            .in("comment_id", [comment.id, ...replies.map((r) => r.id)]);
+
+          if (likedCommentIds) {
+            const likedIds = new Set(
+              likedCommentIds.map((like: any) => like.comment_id)
+            );
+            if (likedIds.has(comment.id)) {
+              setIsParentCommentLiked(true);
+            }
+            setLikedReplies(
+              new Set(
+                replies.filter((r) => likedIds.has(r.id)).map((r) => r.id)
+              )
+            );
+          }
+
+          // Bütün comment-lərin like count-larını fetch et
+          const { data: allLikeCounts } = await supabase
+            .from("share_comment_likes")
+            .select("comment_id")
+            .in("comment_id", [comment.id, ...replies.map((r) => r.id)]);
+
+          if (allLikeCounts) {
+            // Parent comment like count
+            const parentLikeCount = allLikeCounts.filter(
+              (like: any) => like.comment_id === comment.id
+            ).length;
+            setParentCommentLikesCount(parentLikeCount);
+
+            // Replies like counts
+            const replyCounts = new Map<string, number>();
+            replies.forEach((reply) => {
+              const count = allLikeCounts.filter(
+                (like: any) => like.comment_id === reply.id
+              ).length;
+              replyCounts.set(reply.id, count);
+            });
+            setReplyLikesCounts(replyCounts);
+          }
         } else {
           setIsAuthenticated(false);
         }
@@ -126,20 +179,124 @@ export default function ShareCommentDetail({
     return allReplies.filter((r) => r.parent_id === replyId);
   };
 
-  const handleReplyLike = (replyId: string) => {
-    setLikedReplies((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(replyId)) {
-        newSet.delete(replyId);
-      } else {
-        newSet.add(replyId);
+  const handleReplyLike = async (replyId: string) => {
+    try {
+      const wasLiked = likedReplies.has(replyId);
+
+      // Əvvəlcə UI-ı güncəllə
+      setLikedReplies((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(replyId)) {
+          newSet.delete(replyId);
+        } else {
+          newSet.add(replyId);
+        }
+        return newSet;
+      });
+
+      // Like count-u güncəllə
+      setReplyLikesCounts((prev) => {
+        const newMap = new Map(prev);
+        const currentCount = newMap.get(replyId) || 0;
+        newMap.set(replyId, wasLiked ? currentCount - 1 : currentCount + 1);
+        return newMap;
+      });
+
+      // Sonra API-yə göndər
+      const response = await fetch("/api/shares/toggle-comment-like", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          commentId: replyId,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Like response:", data);
+
+      if (!data.success) {
+        console.error("Like failed:", data.message);
+        // API xətası varsa, toggle-u geri al
+        setLikedReplies((prev) => {
+          const newSet = new Set(prev);
+          if (newSet.has(replyId)) {
+            newSet.delete(replyId);
+          } else {
+            newSet.add(replyId);
+          }
+          return newSet;
+        });
+
+        setReplyLikesCounts((prev) => {
+          const newMap = new Map(prev);
+          const currentCount = newMap.get(replyId) || 0;
+          newMap.set(replyId, wasLiked ? currentCount + 1 : currentCount - 1);
+          return newMap;
+        });
       }
-      return newSet;
-    });
+    } catch (error) {
+      console.error("Like xətası:", error);
+      // Xəta varsa, toggle-u geri al
+      setLikedReplies((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(replyId)) {
+          newSet.delete(replyId);
+        } else {
+          newSet.add(replyId);
+        }
+        return newSet;
+      });
+
+      setReplyLikesCounts((prev) => {
+        const newMap = new Map(prev);
+        const currentCount = newMap.get(replyId) || 0;
+        const wasLiked = likedReplies.has(replyId);
+        newMap.set(replyId, wasLiked ? currentCount + 1 : currentCount - 1);
+        return newMap;
+      });
+    }
   };
 
-  const handleParentCommentLike = () => {
-    setIsParentCommentLiked(!isParentCommentLiked);
+  const handleParentCommentLike = async () => {
+    try {
+      const isLiked = isParentCommentLiked;
+
+      // Əvvəlcə UI-ı güncəllə
+      setIsParentCommentLiked(!isParentCommentLiked);
+
+      // Like count-u güncəllə
+      setParentCommentLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+
+      // Sonra API-yə göndər
+      const response = await fetch("/api/shares/toggle-comment-like", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          commentId: comment.id,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Parent comment like response:", data);
+
+      if (!data.success) {
+        console.error("Parent comment like failed:", data.message);
+        // API xətası varsa, toggle-u geri al
+        setIsParentCommentLiked(!isParentCommentLiked);
+        setParentCommentLikesCount((prev) => (isLiked ? prev + 1 : prev - 1));
+      }
+    } catch (error) {
+      console.error("Parent comment like xətası:", error);
+      // Xəta varsa, toggle-u geri al
+      setIsParentCommentLiked(!isParentCommentLiked);
+      setParentCommentLikesCount((prev) =>
+        isParentCommentLiked ? prev + 1 : prev - 1
+      );
+    }
   };
 
   return (
@@ -202,7 +359,7 @@ export default function ShareCommentDetail({
                   size={14}
                   fill={isParentCommentLiked ? "currentColor" : "none"}
                 />
-                <span>0</span>
+                <span>{parentCommentLikesCount}</span>
               </button>
             </div>
           </div>
@@ -314,7 +471,7 @@ export default function ShareCommentDetail({
                             likedReplies.has(reply.id) ? "currentColor" : "none"
                           }
                         />
-                        <span>0</span>
+                        <span>{replyLikesCounts.get(reply.id) || 0}</span>
                       </button>
                     </div>
                   </div>

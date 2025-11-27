@@ -59,18 +59,36 @@ if (repliesWithNested.length > 0) {
         .select("*, user_id(id, fullname, username, avatar)")
         .eq("parent_id", reply.id)
         .order("created_at", { ascending: true });
+
+      // Fetch like count for this reply
+      const { data: replyLikes } = await supabase
+        .from("share_comment_likes")
+        .select("id")
+        .eq("comment_id", reply.id);
       
       return {
         ...reply,
         nested_replies_count: (nestedReplies || []).length,
+        likes_count: (replyLikes || []).length,
       };
     })
   );
 }
+
+// Fetch like count for parent comment
+const { data: parentCommentLikes } = await supabase
+  .from("share_comment_likes")
+  .select("id")
+  .eq("comment_id", commentId);
+
+const commentWithLikes = {
+  ...commentWithReplyCount,
+  likes_count: (parentCommentLikes || []).length,
+};
 ---
 
 <BaseLayout>
   <div class="max-w-2xl mx-auto px-4 sm:px-0 py-6 sm:py-8">
-    <ShareCommentDetail client:load share={share} comment={commentWithReplyCount} replies={repliesWithNested} />
+    <ShareCommentDetail client:load share={share} comment={commentWithLikes} replies={repliesWithNested} />
   </div>
 </BaseLayout>
