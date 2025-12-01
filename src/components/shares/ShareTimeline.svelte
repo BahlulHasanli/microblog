@@ -156,13 +156,45 @@
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "shares",
         },
-        (payload) => {
+        async (payload) => {
           console.log("Real-time update:", payload);
-          fetchShares();
+          // Yeni paylaşım əlavə olundu - birbaşa listə əlavə et
+          if (payload.new) {
+            const newShare = payload.new as any;
+            
+            // User məlumatını al
+            const { data: userData } = await supabase
+              .from("users")
+              .select("fullname, username, avatar")
+              .eq("id", newShare.user_id)
+              .single();
+
+            // Comment sayını al
+            const { data: comments } = await supabase
+              .from("share_comments")
+              .select("id")
+              .eq("share_id", newShare.id);
+
+            // Likes sayını al
+            const { data: likes } = await supabase
+              .from("share_likes")
+              .select("id")
+              .eq("share_id", newShare.id);
+
+            const shareWithData = {
+              ...newShare,
+              user: userData,
+              comments_count: comments?.length || 0,
+              likes_count: likes?.length || 0,
+            };
+
+            // Listənin əvvəlinə əlavə et
+            shares = [shareWithData, ...shares];
+          }
         }
       )
       .subscribe((status) => {

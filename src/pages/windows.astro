@@ -18,7 +18,7 @@ const currentPath = Astro.url.pathname;
           <li data-tab="gossip" class={`cursor-pointer text-xl sm:text-2xl md:text-4xl text-right text-balance max-w-40 sm:max-w-60 transition-colors duration-200 ${currentPath === '/shares' ? 'text-slate-900' : 'font-light font-display text-slate-200'}`}>
             <div class="font-nouvelr-semibold">Dédi-qodu</div>
             </li>
-          <li data-tab="window" class={`cursor-pointer text-center text-xl sm:text-2xl md:text-4xl text-balance max-w-40 sm:max-w-60 transition-colors duration-200 ${currentPath === '/window' ? 'text-slate-900' : 'font-light font-display text-slate-200'}`}>
+          <li data-tab="window" class={`cursor-pointer text-center text-xl sm:text-2xl md:text-4xl text-balance max-w-40 sm:max-w-60 transition-colors duration-200 ${currentPath === '/windows' ? 'text-slate-900' : 'font-light font-display text-slate-200'}`}>
            <div class="font-nouvelr-semibold">Pəncərələr</div>
           </li>
         </ul>
@@ -57,7 +57,7 @@ const currentPath = Astro.url.pathname;
         if (tabId === 'gossip') {
           url = '/shares';
         } else if (tabId === 'window') {
-          url = '/window';
+          url = '/windows';
         }
         
         window.location.href = url;
