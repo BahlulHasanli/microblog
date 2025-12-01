@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { supabase } from "@/db/supabase";
-import ShareDetail from "@/components/shares/ShareDetail";
+import ShareDetail from "@/components/shares/ShareDetail.svelte";
 
 const { id } = Astro.params;
 
@@ -30,7 +30,7 @@ const { data: comments } = await supabase
 ---
 
 <BaseLayout>
-  <div class="max-w-2xl mx-auto px-4 sm:px-0 py-6 sm:py-8">
+  <div class="max-w-3xl mx-auto px-4 sm:px-0 py-6 sm:py-8">
     <ShareDetail client:load share={share} comments={comments || []} />
   </div>
 </BaseLayout>
