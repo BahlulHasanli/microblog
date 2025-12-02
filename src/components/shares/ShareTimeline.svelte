@@ -260,9 +260,9 @@
     </div>
   </div>
 {:else}
-  <div class="w-full space-y-3">
-    {#each shares as share (share.id)}
-      <ShareCard {share} />
+  <div class="w-full">
+    {#each shares as share, index (share.id)}
+      <ShareCard {share} isLast={index === shares.length - 1} />
     {/each}
 
     <!-- Loading more indicator -->

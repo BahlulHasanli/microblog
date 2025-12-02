@@ -67,7 +67,7 @@
         <img
           src={image}
           alt={`Gallery image ${index + 1}`}
-          class={`w-full object-cover hover:opacity-90 transition-opacity ${images.length === 1 ? 'h-[450px]' : 'h-44'}`}
+          class={`w-full object-cover aspect-auto hover:opacity-90 transition-opacity `}
         />
 
         <!-- 4+ overlay -->

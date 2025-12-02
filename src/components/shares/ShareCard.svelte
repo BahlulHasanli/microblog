@@ -27,9 +27,10 @@
   interface Props {
     share: Share;
     onLikeChange?: (shareId: string, isLiked: boolean) => void;
+    isLast?: boolean;
   }
 
-  let { share, onLikeChange }: Props = $props();
+  let { share, onLikeChange, isLast = false }: Props = $props();
 
   const user = share.user;
   let isLiked = $state(false);
@@ -118,7 +119,7 @@
   };
 </script>
 
-<div class="p-4 sm:p-6 border-b border-slate-100 last:border-b-0!">
+<div class={`p-4 sm:p-6 ${isLast ? "" : "border-b border-slate-100"}`}>
   <div class="flex gap-3 sm:gap-4">
     <!-- Avatar -->
     <div class="shrink-0">
