@@ -53,7 +53,7 @@
 {#if images.length > 0}
   <!-- Gallery Grid -->
   <div class={`mt-3 grid ${getGridClass()} gap-1`}>
-    {#each displayImages as image, index}
+    {#each displayImages as image, index} 
       <button
         type="button"
         class={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(
@@ -67,7 +67,7 @@
         <img
           src={image}
           alt={`Gallery image ${index + 1}`}
-          class="w-full h-44 object-cover hover:opacity-90 transition-opacity"
+          class={`w-full object-cover hover:opacity-90 transition-opacity ${images.length === 1 ? 'h-[450px]' : 'h-44'}`}
         />
 
         <!-- 4+ overlay -->
@@ -117,10 +117,21 @@
             </button>
           {/if}
 
-          <!-- Image counter -->
-          <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-            {currentIndex + 1} / {images.length}
-          </div>
+          <!-- Dots indicator -->
+          {#if images.length > 1}
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
+              {#each images as _, index}
+                <button
+                  type="button"
+                  onclick={() => (currentIndex = index)}
+                  class={`w-2 h-2 rounded-full cursor-pointer transition-all ${
+                    index === currentIndex ? 'bg-white w-6' : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                  }`}
+                  aria-label={`Go to image ${index + 1}`}
+                ></button>
+              {/each}
+            </div>
+          {/if}
         </div>
       </div>
     </div>

@@ -240,7 +240,7 @@
       console.error("Comment like xətası:", error);
       // Xəta varsa, toggle-u geri al
       likedComments = new Set(
-        wasLiked
+        isLiked
           ? [...likedComments, commentId]
           : [...likedComments].filter((id) => id !== commentId)
       );
@@ -445,7 +445,7 @@
     <!-- Comments List -->
     <div class="space-y-6">
       {#if parentComments.length === 0}
-        <div class="text-center py-8 text-slate-500">
+        <div class="text-center py-8 text-slate-500 text-[13px]">
           Hələ şərh yoxdur
         </div>
       {:else}

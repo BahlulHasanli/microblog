@@ -1,0 +1,109 @@
+---
+interface Props {
+  activeTab?: 'weekly' | 'gossip' | 'window';
+}
+
+const { activeTab = 'weekly' } = Astro.props;
+---
+
+<div id="fixed-tabs" class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100 py-3 px-4 opacity-0 -translate-y-full transition-all duration-300 pointer-events-none">
+  <ul class="flex justify-between w-full max-w-3xl mx-auto gap-2">
+    <li data-tab="weekly" data-fixed="true" class={`cursor-pointer text-sm sm:text-lg transition-colors duration-200 ${activeTab === 'weekly' ? 'text-slate-900' : 'font-light font-display text-slate-200'}`}>
+      <div class="font-nouvelr-semibold">Həftəbécər</div>
+    </li>
+    <li data-tab="gossip" data-fixed="true" class={`cursor-pointer text-sm sm:text-lg transition-colors duration-200 ${activeTab === 'gossip' ? 'text-slate-900' : 'font-light font-display text-slate-200'}`}>
+      <div class="font-nouvelr-semibold">Dédi-qodu</div>
+    </li>
+    <li data-tab="window" data-fixed="true" class={`cursor-pointer text-sm sm:text-lg transition-colors duration-200 ${activeTab === 'window' ? 'text-slate-900' : 'font-light font-display text-slate-200'}`}>
+      <div class="font-nouvelr-semibold">Pəncərələr</div>
+    </li>
+  </ul>
+</div>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const mainTabs = document.getElementById('main-tabs');
+    const fixedTabs = document.getElementById('fixed-tabs');
+    const fixedTabItems = document.querySelectorAll('[data-tab][data-fixed]');
+    
+    if (!mainTabs || !fixedTabs) return;
+
+    // Aktif tab-ı tap
+    let activeTabId = 'weekly';
+    const currentPath = window.location.pathname;
+    if (currentPath === '/shares') {
+      activeTabId = 'gossip';
+    } else if (currentPath === '/windows') {
+      activeTabId = 'window';
+    }
+
+    // Scroll handler - fixed tabs göstər/gizlət
+    const handleScroll = () => {
+      const mainTabsRect = mainTabs.getBoundingClientRect();
+      const shouldShowFixed = mainTabsRect.bottom < 0;
+      
+      if (shouldShowFixed) {
+        fixedTabs.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
+        fixedTabs.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
+      } else {
+        fixedTabs.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
+        fixedTabs.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Tab click handler
+    const handleTabClick = (tabId: string) => {
+      let url = '/';
+      if (tabId === 'gossip') {
+        url = '/shares';
+      } else if (tabId === 'window') {
+        url = '/windows';
+      }
+      window.location.href = url;
+    };
+
+    // Hover handler
+    const handleHover = (hoveredTabId: string) => {
+      fixedTabItems.forEach(t => {
+        if (t.getAttribute('data-tab') === hoveredTabId) {
+          t.classList.remove('text-slate-200', 'font-light', 'font-display');
+          t.classList.add('text-slate-900');
+        } else {
+          t.classList.add('text-slate-200', 'font-light', 'font-display');
+          t.classList.remove('text-slate-900');
+        }
+      });
+    };
+
+    // Mouseleave handler
+    const handleMouseLeave = () => {
+      fixedTabItems.forEach(t => {
+        const tabId = t.getAttribute('data-tab');
+        if (tabId === activeTabId) {
+          t.classList.remove('text-slate-200', 'font-light', 'font-display');
+          t.classList.add('text-slate-900');
+        } else {
+          t.classList.add('text-slate-200', 'font-light', 'font-display');
+          t.classList.remove('text-slate-900');
+        }
+      });
+    };
+
+    // Event listeners
+    fixedTabItems.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        if (tabId) handleTabClick(tabId);
+      });
+
+      tab.addEventListener('mouseenter', () => {
+        const tabId = tab.getAttribute('data-tab');
+        if (tabId) handleHover(tabId);
+      });
+
+      tab.addEventListener('mouseleave', handleMouseLeave);
+    });
+  });
+</script>
