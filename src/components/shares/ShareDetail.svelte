@@ -61,6 +61,9 @@
   let commentLikesCounts = $state<Map<string, number>>(
     new Map(initialComments.map((c) => [c.id, c.likes_count || 0]))
   );
+  let displayLimit = $state(10);
+  let isLoadingMore = $state(false);
+  let commentsContainer: HTMLDivElement | undefined = $state();
 
   onMount(() => {
     // Like sayını hesabla
@@ -282,7 +285,7 @@
         if (!newComment.user_id && currentUser) {
           newComment.user_id = currentUser;
         }
-        allComments = [...allComments, newComment];
+        allComments = [newComment, ...allComments];
         commentText = "";
       } else {
         console.error("Comment xətası:", data.message);
@@ -294,8 +297,9 @@
     }
   };
 
-  // Parent comments-ləri filter et
-  const parentComments = $derived(allComments.filter((c) => !c.parent_id));
+  // Parent comments-ləri filter et və limit ilə göstər
+  const allParentComments = $derived(allComments.filter((c) => !c.parent_id));
+  const parentComments = $derived(allParentComments.slice(0, displayLimit));
 
   // Hər comment üçün replies-ləri tap
   const getReplies = (commentId: string) => {
@@ -314,6 +318,41 @@
       isNested: depth > 0,
     };
   };
+
+  // Infinity scroll handler
+  const handleLoadMore = () => {
+    if (isLoadingMore || displayLimit >= allParentComments.length) return;
+    isLoadingMore = true;
+    
+    // Simulate loading delay
+    setTimeout(() => {
+      displayLimit += 10;
+      isLoadingMore = false;
+    }, 300);
+  };
+
+  // Intersection Observer for infinite scroll
+  $effect(() => {
+    if (!commentsContainer) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayLimit < allParentComments.length) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const sentinel = commentsContainer.querySelector('[data-sentinel]');
+    if (sentinel) {
+      observer.observe(sentinel);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  });
 </script>
 
 <div>
@@ -327,8 +366,8 @@
   </a>
 
   <!-- Share Detail -->
-  <div class="border border-slate-200 rounded-lg overflow-hidden">
-    <div class="p-4 sm:p-6">
+  <div class="p-4 sm:p-6 border-b border-slate-100">
+    <div>
       <div class="flex gap-3 sm:gap-4">
         <!-- Avatar -->
         <div class="shrink-0">
@@ -357,7 +396,7 @@
           </div>
 
           <!-- Share Content -->
-          <p class="mt-2 text-slate-900 text-[14px] wrap-break-word whitespace-pre-wrap">
+          <p class="mt-2 text-slate-900 text-[13px] wrap-break-word whitespace-pre-wrap">
             {share.content}
           </p>
 
@@ -381,7 +420,7 @@
           {/if}
 
           <!-- Actions -->
-          <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between text-slate-500 text-sm">
+          <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
             <button class="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors">
               <MessageCircle size={16} />
               <span>{allComments.length}</span>
@@ -443,75 +482,87 @@
     {/if}
 
     <!-- Comments List -->
-    <div class="space-y-6">
+    <div class="space-y-6" bind:this={commentsContainer}>
       {#if parentComments.length === 0}
         <div class="text-center py-8 text-slate-500 text-[13px]">
           Hələ şərh yoxdur
         </div>
       {:else}
-        <div class="border border-slate-200 rounded-lg p-4 sm:p-6 space-y-4">
-          {#each parentComments as comment (comment.id)}
-            {@const { commentUser, replies, isNested } = renderCommentThread(comment, 0)}
-            <div>
-              <div class="flex gap-3">
-                <img
-                  src={commentUser?.avatar}
-                  alt={commentUser?.fullname}
-                  class="squircle object-cover shrink-0 w-12! h-12!"
-                />
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-baseline gap-2 flex-wrap">
-                    <a
-                      href={`/user/@${commentUser?.username}`}
-                      class="font-semibold text-slate-900 hover:underline text-[14px]"
-                    >
-                      {commentUser?.fullname}
-                    </a>
-                    <span class="text-slate-500 text-[13px]">
-                      @{commentUser?.username}
-                    </span>
-                    <span class="text-slate-500 text-[13px]">·</span>
-                    <a
-                      href={`/shares/${share.id}/comment/${comment.id}`}
-                      class="text-slate-500 hover:text-slate-900 text-[13px]"
-                    >
-                      {formatDistanceToNow(new Date(comment.created_at), {
-                        locale: az,
-                        addSuffix: true,
-                      })}
-                    </a>
-                  </div>
-                  <p class="mt-1 text-slate-900 whitespace-pre-wrap text-sm">
-                    {comment.content}
-                  </p>
-                  <div class="mt-4 pt-2 border-t border-slate-200 flex justify-between text-slate-500 text-sm">
-                    <a
-                      href={`/shares/${share.id}/comment/${comment.id}`}
-                      class="hover:text-blue-500 transition-colors inline-flex items-center gap-1"
-                    >
-                      <MessageCircle size={16} />
-                      <span>{replies.length || 0}</span>
-                    </a>
-                    <button
-                      onclick={() => handleCommentLike(comment.id)}
-                      class={`transition-colors inline-flex items-center gap-1 ${
-                        likedComments.has(comment.id)
-                          ? "text-red-500"
-                          : "hover:text-red-500"
-                      }`}
-                    >
-                      <Heart
-                        size={16}
-                        fill={likedComments.has(comment.id) ? "currentColor" : "none"}
-                      />
-                      <span>{commentLikesCounts.get(comment.id) || 0}</span>
-                    </button>
-                  </div>
+        {#each parentComments as comment (comment.id)}
+          {@const { commentUser, replies, isNested } = renderCommentThread(comment, 0)}
+          <div class="p-4 sm:p-6 border-b border-slate-100 last:border-b-0!">
+            <div class="flex gap-3 sm:gap-4">
+              <img
+                src={commentUser?.avatar}
+                alt={commentUser?.fullname}
+                class="squircle object-cover shrink-0 w-10! sm:w-12! h-10! sm:h-12!"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-baseline gap-2 flex-wrap">
+                  <a
+                    href={`/user/@${commentUser?.username}`}
+                    class="font-semibold text-slate-900 hover:underline text-[14px]"
+                  >
+                    {commentUser?.fullname}
+                  </a>
+                  <span class="text-slate-500 text-[13px]">
+                    @{commentUser?.username}
+                  </span>
+                  <span class="text-slate-500 text-[13px]">·</span>
+                  <a
+                    href={`/shares/${share.id}/comment/${comment.id}`}
+                    class="text-slate-500 hover:text-slate-900 text-[13px]"
+                  >
+                    {formatDistanceToNow(new Date(comment.created_at), {
+                      locale: az,
+                      addSuffix: true,
+                    })}
+                  </a>
+                </div>
+                <p class="mt-2 text-slate-900 whitespace-pre-wrap text-[13px]">
+                  {comment.content}
+                </p>
+                <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
+                  <a
+                    href={`/shares/${share.id}/comment/${comment.id}`}
+                    class="hover:text-blue-500 transition-colors inline-flex items-center gap-1"
+                  >
+                    <MessageCircle size={16} />
+                    <span>{replies.length || 0}</span>
+                  </a>
+                  <button
+                    onclick={() => handleCommentLike(comment.id)}
+                    class={`transition-colors inline-flex items-center gap-1 ${
+                      likedComments.has(comment.id)
+                        ? "text-red-500"
+                        : "hover:text-red-500"
+                    }`}
+                  >
+                    <Heart
+                      size={16}
+                      fill={likedComments.has(comment.id) ? "currentColor" : "none"}
+                    />
+                    <span>{commentLikesCounts.get(comment.id) || 0}</span>
+                  </button>
                 </div>
               </div>
             </div>
-          {/each}
-        </div>
+          </div>
+        {/each}
+
+        <!-- Loading indicator -->
+        {#if isLoadingMore}
+          <div class="text-center py-4">
+            <div class="inline-block">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-900"></div>
+            </div>
+          </div>
+        {/if}
+
+        <!-- Sentinel for infinite scroll -->
+        {#if displayLimit < allParentComments.length}
+          <div data-sentinel class="h-4"></div>
+        {/if}
       {/if}
     </div>
   </div>
