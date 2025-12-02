@@ -358,7 +358,7 @@
 <div>
   <!-- Back Button -->
   <a
-    href="/"
+    href="/shares"
     class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
   >
     <ArrowLeft size={18} />

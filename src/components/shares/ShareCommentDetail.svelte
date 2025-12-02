@@ -51,6 +51,9 @@
   let replyLikesCounts = $state<Map<string, number>>(
     new Map(initialReplies.map((r) => [r.id, r.likes_count || 0]))
   );
+  let displayLimit = $state(10);
+  let isLoadingMore = $state(false);
+  let repliesContainer: HTMLDivElement | undefined = $state();
 
   onMount(() => {
     const checkCurrentUser = async () => {
@@ -174,9 +177,9 @@
   };
 
   const handleReplyLike = async (replyId: string) => {
+    const wasLiked = likedReplies.has(replyId);
+    
     try {
-      const wasLiked = likedReplies.has(replyId);
-
       // Əvvəlcə UI-ı güncəllə
       likedReplies = new Set(
         wasLiked
@@ -272,16 +275,47 @@
       parentCommentLikesCount = isParentCommentLiked ? parentCommentLikesCount + 1 : parentCommentLikesCount - 1;
     }
   };
+
+  // Infinity scroll handler
+  const handleLoadMore = () => {
+    if (isLoadingMore || displayLimit >= allReplies.length) return;
+    isLoadingMore = true;
+    
+    // Simulate loading delay
+    setTimeout(() => {
+      displayLimit += 10;
+      isLoadingMore = false;
+    }, 300);
+  };
+
+  // Intersection Observer for infinite scroll
+  $effect(() => {
+    if (!repliesContainer) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && displayLimit < allReplies.length) {
+          handleLoadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const sentinel = repliesContainer.querySelector('[data-sentinel]');
+    if (sentinel) {
+      observer.observe(sentinel);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  });
 </script>
 
 <div>
   <!-- Back Button -->
   <a
-    href={
-      comment.parent_id
-        ? `/shares/${share.id}/comment/${comment.parent_id}`
-        : `/shares/${share.id}`
-    }
+    href={`/shares/${share.id}`}
     class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
   >
     <ArrowLeft size={18} />
@@ -289,12 +323,12 @@
   </a>
 
   <!-- Parent Comment -->
-  <div class="border border-slate-200 rounded-lg p-4 sm:p-6 mb-6">
+  <div class="p-4 sm:p-6 border-b border-slate-100">
     <div class="flex gap-3 sm:gap-4">
       <img
         src={commentUser?.avatar}
         alt={commentUser?.fullname}
-        class="squircle w-12! h-12! object-cover shrink-0"
+        class="squircle w-10! sm:w-12! h-10! sm:h-12! object-cover shrink-0"
       />
       <div class="flex-1 min-w-0">
         <div class="flex items-baseline gap-2 flex-wrap">
@@ -315,10 +349,10 @@
             })}
           </span>
         </div>
-        <p class="mt-2 text-slate-900 text-sm whitespace-pre-wrap">
+        <p class="mt-2 text-slate-900 text-[13px] whitespace-pre-wrap">
           {comment.content}
         </p>
-        <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between text-slate-500 text-xs">
+        <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
           <button class="hover:text-blue-500 transition-colors inline-flex items-center gap-1">
             <MessageCircle size={16} />
             <span>{comment.reply_count || 0}</span>
@@ -342,7 +376,7 @@
 
   <!-- Reply Form -->
   {#if isAuthenticated}
-    <form onsubmit={handleReplySubmit} class="mb-6">
+    <form onsubmit={handleReplySubmit} class="mt-6">
       <div class="flex gap-3 sm:gap-4">
         <img
           src={currentUserAvatar}
@@ -379,20 +413,20 @@
   {/if}
 
   <!-- Replies List -->
-  <div class="space-y-4">
+  <div class="space-y-6" bind:this={repliesContainer}>
     {#if allReplies.length === 0}
-      <div class="text-center text-[14px] py-8 text-slate-500">
+      <div class="text-center text-[13px] py-8 text-slate-500">
         Hələ cavab yoxdur
       </div>
     {:else}
-      {#each allReplies as reply (reply.id)}
+      {#each allReplies.slice(0, displayLimit) as reply (reply.id)}
         {@const replyUser = typeof reply.user_id === "object" ? reply.user_id : null}
-        <div class="border border-slate-200 rounded-lg p-4 sm:p-6">
+        <div class="p-4 sm:p-6 border-b border-slate-100 last:border-b-0!">
           <div class="flex gap-3 sm:gap-4">
             <img
               src={replyUser?.avatar}
               alt={replyUser?.fullname}
-              class="squircle w-12! h-12! object-cover shrink-0"
+              class="squircle w-10! sm:w-12! h-10! sm:h-12! object-cover shrink-0"
             />
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2 flex-wrap">
@@ -413,10 +447,10 @@
                   })}
                 </span>
               </div>
-              <p class="mt-2 text-slate-900 text-sm whitespace-pre-wrap">
+              <p class="mt-2 text-slate-900 text-[13px] whitespace-pre-wrap">
                 {reply.content}
               </p>
-              <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between text-slate-500 text-xs">
+              <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
                 <a
                   href={`/shares/${share.id}/comment/${reply.id}`}
                   class="hover:text-blue-500 transition-colors inline-flex items-center gap-1"
@@ -445,6 +479,20 @@
           </div>
         </div>
       {/each}
+
+      <!-- Loading indicator -->
+      {#if isLoadingMore}
+        <div class="text-center py-4">
+          <div class="inline-block">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-slate-900"></div>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Sentinel for infinite scroll -->
+      {#if displayLimit < allReplies.length}
+        <div data-sentinel class="h-4"></div>
+      {/if}
     {/if}
   </div>
 </div>
