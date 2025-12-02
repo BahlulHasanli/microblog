@@ -63,11 +63,22 @@ export default function PostEditor({ post, content, slug, author }: any) {
     }
   }, [content, title, description, isContentProcessed]);
 
-  const handleCoverImageChange = (file: File | null) => {
+  const handleCoverImageChange = (
+    file: File | null,
+    clearExisting?: boolean
+  ) => {
     setCoverImage(file);
     if (!file) {
-      setCoverImagePreview(existingImageUrl);
+      if (clearExisting) {
+        // İstifadəçi şəkli sildi - existingImageUrl-i də sıfırla
+        setExistingImageUrl("");
+        setCoverImagePreview("");
+      } else {
+        setCoverImagePreview(existingImageUrl);
+      }
     } else {
+      // Yeni şəkil seçildi - köhnə şəkil URL-ini sıfırla
+      setExistingImageUrl("");
       // Create a preview URL for the new image
       const previewUrl = URL.createObjectURL(file);
       setCoverImagePreview(previewUrl);

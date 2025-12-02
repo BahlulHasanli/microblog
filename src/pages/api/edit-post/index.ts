@@ -107,6 +107,7 @@ export const POST: APIRoute = async (context) => {
     const bunnyApiKey = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
     const storageZoneName = "the99-storage";
     const hostname = "storage.bunnycdn.com";
+    const pullZoneId = "3979498"; // Cache purge üçün Pull Zone ID
 
     // Slug dəyişibsə folder əməliyyatları
     let shouldMoveFolder = oldSlug !== newSlug;
@@ -379,10 +380,10 @@ export const POST: APIRoute = async (context) => {
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error(`❌ Bunny CDN yükleme hatası: ${response.status}`);
-            console.error(`Xəta detayı: ${errorText}`);
+            console.error(`❌ Bunny CDN yükləmə xətası: ${response.status}`);
+            console.error(`Xəta: ${errorText}`);
             throw new Error(
-              `Bunny CDN yükleme hatası: ${response.status} - ${response.statusText}`
+              `Bunny CDN yükləmə xətası: ${response.status} - ${response.statusText}`
             );
           }
 
@@ -391,6 +392,30 @@ export const POST: APIRoute = async (context) => {
           // Başarılı yükleme sonrası CDN URL'sini oluştur
           coverImageUrl = `https://the99.b-cdn.net/${folder}/${imageFileName}`;
           console.log("Bunny CDN'e yüklendi, URL:", coverImageUrl);
+
+          // Cache purge - köhnə şəkli cache-dən sil
+          try {
+            const purgeUrl = `https://the99.b-cdn.net/${folder}/${imageFileName}`;
+            console.log(`Cache purge edilir: ${purgeUrl}`);
+
+            const purgeResponse = await fetch(
+              `https://api.bunny.net/purge?url=${encodeURIComponent(purgeUrl)}`,
+              {
+                method: "POST",
+                headers: {
+                  AccessKey: bunnyApiKey,
+                },
+              }
+            );
+
+            if (purgeResponse.ok) {
+              console.log(`✅ Cache purge edildi: ${purgeUrl}`);
+            } else {
+              console.error(`❌ Cache purge xətası: ${purgeResponse.status}`);
+            }
+          } catch (purgeError) {
+            console.error(`Cache purge xətası:`, purgeError);
+          }
         } catch (uploadError) {
           throw new Error(`Bunny CDN yükleme hatası: ${uploadError.message}`);
         }

@@ -288,7 +288,7 @@ interface SimpleEditorProps {
   onTitleChange?: (title: string) => void;
   onDescriptionChange?: (description: string) => void;
   coverImage?: File | null;
-  onCoverImageChange?: (file: File | null) => void;
+  onCoverImageChange?: (file: File | null, clearExisting?: boolean) => void;
   onCategoriesChange?: (categories: string[]) => void;
   initialContent?: string;
   initialCoverImageUrl?: string;
@@ -321,7 +321,8 @@ export function SimpleEditor({
   const [categories, setCategories] = React.useState<string[]>(
     selectedCategories || []
   );
-  const [supabaseCategories, setSupabaseCategories] = React.useState<any[]>(CATEGORIES);
+  const [supabaseCategories, setSupabaseCategories] =
+    React.useState<any[]>(CATEGORIES);
 
   // Supabase-dən kategoriyaları çək
   React.useEffect(() => {
@@ -330,7 +331,10 @@ export function SimpleEditor({
         const cats = await getCategories();
         setSupabaseCategories(cats);
       } catch (error) {
-        console.warn("Kategoriyalar çəkilərkən xəta, fallback istifadə edilir:", error);
+        console.warn(
+          "Kategoriyalar çəkilərkən xəta, fallback istifadə edilir:",
+          error
+        );
         setSupabaseCategories(CATEGORIES);
       }
     };
@@ -576,9 +580,9 @@ export function SimpleEditor({
 
   // Kapak resmini kaldırma
   const handleRemoveCoverImage = () => {
-    // Cover image silmə - artıq BunnyCDN-dən silmə lazım deyil
+    // Cover image silmə - clearExisting=true ilə çağır ki, köhnə URL sıfırlansın
     if (onCoverImageChange) {
-      onCoverImageChange(null);
+      onCoverImageChange(null, true);
     }
     setCoverImagePreview("");
     if (fileInputRef.current) {
