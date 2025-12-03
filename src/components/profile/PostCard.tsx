@@ -19,17 +19,17 @@ interface PostCardProps {
 
 export default function PostCard({ post, isOwner = false }: PostCardProps) {
   return (
-    <article className="flex flex-col h-full group relative">
+    <article className="flex flex-col h-full group relative bg-white rounded-2xl border border-base-200 overflow-hidden hover:border-base-300 transition-all duration-300">
       {/* Gözləmə rejimi göstəricisi */}
       {!post.approved && isOwner && (
-        <div className="absolute top-3 right-3 z-10 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-md text-xs font-semibold flex items-center gap-1">
+        <div className="absolute top-3 right-3 z-10 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-amber-200">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth="1.5"
             stroke="currentColor"
-            className="size-4"
+            className="size-3.5"
           >
             <path
               strokeLinecap="round"
@@ -44,20 +44,20 @@ export default function PostCard({ post, isOwner = false }: PostCardProps) {
       <a
         href={`/posts/${post.slug}`}
         title={post.title}
-        className="block overflow-hidden rounded-xl border border-base-200 hover:border-base-300 transition-colors"
+        className="block overflow-hidden"
       >
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-base-100">
+        <div className="relative w-full aspect-16/10 overflow-hidden bg-base-100">
           <img
             src={post.image}
             alt={post.title}
-            className="object-cover w-full h-full"
+            className="object-cover w-full h-full group-hover:scale-105 transition-all duration-500"
           />
         </div>
       </a>
 
-      <div className="mt-4">
+      <div className="p-4 sm:p-5 flex flex-col flex-1">
         {post.categories && post.categories.length > 0 && (
-          <div className="flex items-center gap-1 text-xs text-base-500 mb-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-xs mb-3 flex-wrap">
             {post.categories.map((categorySlug, index) => {
               const categoryObj = CATEGORIES.find(
                 (cat) => cat.slug === categorySlug
@@ -66,7 +66,7 @@ export default function PostCard({ post, isOwner = false }: PostCardProps) {
                 <a
                   key={categorySlug}
                   href={`/category/${categorySlug}`}
-                  className="text-yellow-700 hover:text-yellow-800 transition-colors"
+                  className="text-amber-600 hover:text-amber-700 font-medium transition-colors"
                 >
                   {categoryObj ? categoryObj.name : categorySlug}
                   {index < post.categories!.length - 1 && ","}
@@ -76,7 +76,7 @@ export default function PostCard({ post, isOwner = false }: PostCardProps) {
           </div>
         )}
 
-        <h3 className="text-base font-semibold text-base-900 text-balance mb-2 leading-snug line-clamp-2">
+        <h3 className="text-base font-semibold text-base-900 mb-2 leading-snug line-clamp-2 flex-1">
           <a
             href={`/posts/${post.slug}`}
             className="hover:text-rose-600 transition-colors"
@@ -85,18 +85,18 @@ export default function PostCard({ post, isOwner = false }: PostCardProps) {
           </a>
         </h3>
 
-        <p className="text-xs text-base-600 line-clamp-2 leading-relaxed mb-3">
+        <p className="text-sm text-base-500 line-clamp-2 leading-relaxed mb-4">
           {post.description}
         </p>
 
-        <div className="flex items-center gap-2 text-xs text-base-500">
+        <div className="flex items-center gap-2 text-xs text-base-400 pt-3 border-t border-base-100">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={1.5}
             stroke="currentColor"
-            className="size-3.5"
+            className="size-4"
           >
             <path
               strokeLinecap="round"
@@ -104,7 +104,7 @@ export default function PostCard({ post, isOwner = false }: PostCardProps) {
               d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
             />
           </svg>
-          <span className="font-medium" suppressHydrationWarning>
+          <span className="font-medium text-base-500" suppressHydrationWarning>
             {formatSimpleDate(post.created_at)}
           </span>
         </div>
