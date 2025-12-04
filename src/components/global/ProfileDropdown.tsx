@@ -31,35 +31,35 @@ export default function ProfileDropdown({
   const isSaveBtnState = useStore(isSaveBtn);
   const currentAvatar = useStore(userAvatar);
 
-  // Supabase'den kullanıcı bilgilerini al
+  // API-dən istifadəçi məlumatlarını al
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // Önce auth kullanıcısını al
-        const { data: authData } = await supabase.auth.getUser();
-        if (!authData?.user) return;
+        const response = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
 
-        // Kullanıcı bilgilerini users tablosundan al
-        const { data, error } = await supabase
-          .from("users")
-          .select("id, fullname, username, avatar, email")
-          .eq("email", authData.user.email)
-          .single();
-
-        if (error) {
-          console.error("Kullanıcı bilgileri alınamadı:", error);
+        if (!response.ok) {
+          console.error("User məlumatları alına bilmədi");
+          setLoading(false);
           return;
         }
 
-        if (data) {
+        const result = await response.json();
+
+        if (result.authenticated && result.user) {
+          console.log("User data from API:", result.user);
           setUserData({
-            avatar: data.avatar || userImage,
-            fullname: data.fullname || userName,
-            username: data.username || userUsername || "",
+            avatar: result.user.avatar || userImage,
+            fullname: result.user.name || userName,
+            username: result.user.username || userUsername || "",
           });
+        } else {
+          console.log("User not authenticated");
         }
       } catch (err) {
-        console.error("Kullanıcı bilgileri alınırken hata oluştu:", err);
+        console.error("User məlumatları alınarkən xəta:", err);
       } finally {
         setLoading(false);
       }
@@ -190,7 +190,7 @@ export default function ProfileDropdown({
       <div className="relative z-50" ref={dropdownRef}>
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className="overflow-hidden !size-11 squircle ml-4 cursor-pointer"
+          className="overflow-hidden size-11! squircle ml-4 cursor-pointer"
         >
           <img
             src={currentAvatar || userData.avatar || userImage}

@@ -10,7 +10,13 @@
     fullname: string;
     username: string;
     avatar: string;
-    is_admin: boolean;
+    role_id: number;
+    roles?: {
+      id: number;
+      name: string;
+      is_admin: boolean;
+      is_moderator: boolean;
+    };
     created_at: string;
   }
 
@@ -109,7 +115,7 @@
           fullname: editingUser.fullname,
           email: editingUser.email,
           username: editingUser.username,
-          is_admin: editingUser.is_admin,
+          role_id: editingUser.role_id,
         }),
       });
 
@@ -205,12 +211,15 @@
                   <div class="flex lg:hidden items-center gap-3 text-xs">
                     <span class="text-base-700 font-medium">@{user.username}</span>
                     <div class="flex items-center gap-1.5">
-                      {#if user.is_admin}
-                        <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                        <span class="font-medium text-green-700">Admin</span>
+                      {#if user.roles?.is_admin}
+                        <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                        <span class="font-medium text-red-700">Admin</span>
+                      {:else if user.roles?.is_moderator}
+                        <div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
+                        <span class="font-medium text-yellow-700">Moderator</span>
                       {:else}
                         <div class="w-1.5 h-1.5 rounded-full bg-base-300"></div>
-                        <span class="font-medium text-base-600">İstifadəçi</span>
+                        <span class="font-medium text-base-600">{user.roles?.name || 'İstifadəçi'}</span>
                       {/if}
                     </div>
                   </div>
@@ -224,15 +233,20 @@
               </td>
               <td class="hidden lg:table-cell px-4 sm:px-6 py-4 sm:py-5 whitespace-nowrap">
                 <div class="flex items-center gap-2">
-                  {#if user.is_admin}
-                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span class="text-xs font-medium text-green-700">
+                  {#if user.roles?.is_admin}
+                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                    <span class="text-xs font-medium text-red-700">
                       Admin
+                    </span>
+                  {:else if user.roles?.is_moderator}
+                    <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                    <span class="text-xs font-medium text-yellow-700">
+                      Moderator
                     </span>
                   {:else}
                     <div class="w-2 h-2 rounded-full bg-base-300"></div>
                     <span class="text-xs font-medium text-base-600">
-                      İstifadəçi
+                      {user.roles?.name || 'İstifadəçi'}
                     </span>
                   {/if}
                 </div>
@@ -361,23 +375,18 @@
             </div>
           </div>
           <div class="pt-4 pb-2">
-            <label for="is_admin" class="flex items-center gap-3 cursor-pointer group">
-              <div class="relative">
-                <input
-                  type="checkbox"
-                  bind:checked={editingUser.is_admin}
-                  class="w-5 h-5 text-slate-900 border-base-300 rounded focus:ring-slate-900 cursor-pointer"
-                />
-              </div>
-              <div>
-                <span class="text-sm font-medium text-slate-900 group-hover:text-slate-700">
-                  Admin hüququ
-                </span>
-                <p class="text-xs text-base-500">
-                  Bu istifadəçiyə admin hüququ verin
-                </p>
-              </div>
+            <label for="role_id" class="block text-sm font-medium text-base-700 mb-2">
+              Rol
             </label>
+            <select
+              bind:value={editingUser.role_id}
+              class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+            >
+              <option value={4}>Sadə istifadəçi</option>
+              <option value={3}>Redator</option>
+              <option value={2}>Moderator</option>
+              <option value={1}>Admin</option>
+            </select>
           </div>
         </div>
 

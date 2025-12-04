@@ -18,12 +18,13 @@ if (isLoggedIn && user) {
   if (currentUser) {
     const { data: userData } = await supabase
       .from("users")
-      .select("is_admin, is_moderator")
+      .select("role_id, roles(is_admin, is_moderator)")
       .eq("email", currentUser.email)
       .single();
     
-    isAdmin = userData?.is_admin || false;
-    isModerator = userData?.is_moderator || false;
+    const role = Array.isArray(userData?.roles) ? userData?.roles[0] : userData?.roles;
+    isAdmin = role?.is_admin || false;
+    isModerator = role?.is_moderator || false;
   }
 }
 

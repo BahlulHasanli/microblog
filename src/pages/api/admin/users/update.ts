@@ -10,7 +10,7 @@ export const POST: APIRoute = async (context) => {
       return adminCheck;
     }
 
-    const { userId, fullname, email, username, is_admin } =
+    const { userId, fullname, email, username, role_id } =
       await context.request.json();
 
     if (!userId) {
@@ -31,7 +31,7 @@ export const POST: APIRoute = async (context) => {
     if (fullname !== undefined) updateData.fullname = fullname;
     if (email !== undefined) updateData.email = email;
     if (username !== undefined) updateData.username = username;
-    if (is_admin !== undefined) updateData.is_admin = is_admin;
+    if (role_id !== undefined) updateData.role_id = role_id;
 
     // İstifadəçini yenilə
     const { error } = await supabaseAdmin

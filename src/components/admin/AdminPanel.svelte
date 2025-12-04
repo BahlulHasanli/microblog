@@ -5,14 +5,15 @@
   import UsersTab from './UsersTab.svelte';
   import SettingsTab from './SettingsTab.svelte';
   import CommentsTab from './CommentsTab.svelte';
+  import RolesTab from './RolesTab.svelte';
 
   export let user: any;
 
-  let activeTab: 'posts' | 'users' | 'comments' | 'settings' = 'posts';
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' = 'posts';
   
   // Moderator yalnız Posts tabını görə bilər
-  $: isAdmin = user?.is_admin === true;
-  $: isModerator = user?.is_moderator === true;
+  $: isAdmin = user?.roles?.is_admin === true;
+  $: isModerator = user?.roles?.is_moderator === true;
   $: canViewUsers = isAdmin;
   $: canViewComments = isAdmin;
   $: canViewSettings = isAdmin;
@@ -342,6 +343,32 @@
               {/if}
             </button>
           {/if}
+          {#if isAdmin}
+            <button
+              on:click={() => activeTab = 'roles'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'roles' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg
+                  class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={2}
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                  />
+                </svg>
+                Rollər
+              </span>
+              {#if activeTab === 'roles'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+          {/if}
         </nav>
       </div>
 
@@ -353,8 +380,10 @@
           <UsersTab />
         {:else if activeTab === 'comments'}
           <CommentsTab />
-        {:else}
+        {:else if activeTab === 'settings'}
           <SettingsTab />
+        {:else if activeTab === 'roles'}
+          <RolesTab />
         {/if}
       </div>
     </div>

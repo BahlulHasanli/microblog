@@ -10,10 +10,10 @@ export const GET: APIRoute = async (context) => {
       return modCheck;
     }
 
-    // İstifadəçiləri çək
+    // İstifadəçiləri çək (roles ilə birlikdə)
     const { data, error } = await supabase
       .from("users")
-      .select("*")
+      .select("*, roles(id, name, is_admin, is_moderator)")
       .order("created_at", { ascending: false });
 
     if (error) {

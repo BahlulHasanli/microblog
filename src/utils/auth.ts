@@ -43,8 +43,9 @@ export async function getUserFromCookies(
       !accessToken.value ||
       !refreshToken ||
       !refreshToken.value
-    )
+    ) {
       return null;
+    }
 
     let session: any;
 
@@ -53,18 +54,51 @@ export async function getUserFromCookies(
         refresh_token: refreshToken.value,
         access_token: accessToken.value,
       });
-      if (session.error) {
+
+      // Session xətası və ya user yoxdursa
+      if (session.error || !session.data?.user) {
+        console.log("Session error:", session.error?.message);
+
+        // Cookie-ləri sil
         cookies.delete("sb-access-token", {
           path: "/",
         });
-
         cookies.delete("sb-refresh-token", {
           path: "/",
         });
 
-        return redirect("/signin");
+        // Redirect funksiyası varsa, istifadə et
+        if (redirect && typeof redirect === "function") {
+          return redirect("/signin");
+        }
+
+        return null;
+      }
+
+      // Yeni token-lar varsa, cookie-ləri yenilə
+      if (session.data.session) {
+        const { access_token, refresh_token } = session.data.session;
+
+        cookies.set("sb-access-token", access_token, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7, // 7 gün
+        });
+
+        cookies.set("sb-refresh-token", refresh_token, {
+          path: "/",
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 30, // 30 gün
+        });
       }
     } catch (error) {
+      console.log("Session set error:", error);
+
+      // Cookie-ləri sil
       cookies.delete("sb-access-token", {
         path: "/",
       });
@@ -72,7 +106,12 @@ export async function getUserFromCookies(
         path: "/",
       });
 
-      return redirect("/signin");
+      // Redirect funksiyası varsa, istifadə et
+      if (redirect && typeof redirect === "function") {
+        return redirect("/signin");
+      }
+
+      return null;
     }
 
     const findUser = await supabase
@@ -80,6 +119,11 @@ export async function getUserFromCookies(
       .select("*")
       .eq("email", session.data.user?.email)
       .single();
+
+    if (findUser.error) {
+      console.log("User not found in database:", findUser.error);
+      return null;
+    }
 
     return findUser.data;
   } catch (error) {
@@ -206,13 +250,14 @@ export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
     // Supabase-dən istifadəçi məlumatlarını yoxla
     const { data, error } = await supabase
       .from("users")
-      .select("is_admin")
+      .select("role_id, roles(is_admin)")
       .eq("email", user.email)
       .single();
 
     if (error || !data) return false;
 
-    return data.is_admin === true;
+    const role = Array.isArray(data.roles) ? data.roles[0] : data.roles;
+    return role?.is_admin === true;
   } catch (error) {
     console.error("Admin yoxlama xətası:", error);
     return false;
@@ -230,14 +275,15 @@ export async function isModerator(cookies: AstroCookies): Promise<boolean> {
     // Supabase-dən istifadəçi məlumatlarını yoxla
     const { data, error } = await supabase
       .from("users")
-      .select("is_moderator, is_admin")
+      .select("role_id, roles(is_moderator, is_admin)")
       .eq("email", user.email)
       .single();
 
     if (error || !data) return false;
 
     // Admin və ya moderator ola bilər
-    return data.is_moderator === true || data.is_admin === true;
+    const role = Array.isArray(data.roles) ? data.roles[0] : data.roles;
+    return role?.is_moderator === true || role?.is_admin === true;
   } catch (error) {
     console.error("Moderator yoxlama xətası:", error);
     return false;

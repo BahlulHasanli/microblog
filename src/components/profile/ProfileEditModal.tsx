@@ -121,7 +121,7 @@ export default function ProfileEditModal({
               viewBox="0 0 24 24"
               strokeWidth={2}
               stroke="currentColor"
-              className="size-5 flex-shrink-0"
+              className="size-5 shrink-0"
             >
               <path
                 strokeLinecap="round"
@@ -143,7 +143,7 @@ export default function ProfileEditModal({
                   viewBox="0 0 24 24"
                   strokeWidth={2}
                   stroke="currentColor"
-                  className="size-5 flex-shrink-0"
+                  className="size-5 shrink-0"
                 >
                   <path
                     strokeLinecap="round"

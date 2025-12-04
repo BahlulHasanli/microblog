@@ -119,7 +119,7 @@
   };
 </script>
 
-<div class={`p-4 sm:p-6 ${isLast ? "" : "border-b border-slate-100"}`}>
+<div class={`p-4 sm:p-6 border-b border-slate-100`}>
   <div class="flex gap-3 sm:gap-4">
     <!-- Avatar -->
     <div class="shrink-0">
