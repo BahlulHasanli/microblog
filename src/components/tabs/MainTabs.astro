@@ -19,6 +19,8 @@ const { activeTab = 'weekly' } = Astro.props;
 </ul>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
+
   document.addEventListener('astro:page-load', () => {
     const tabs = document.querySelectorAll('#main-tabs [data-tab]');
     
@@ -39,7 +41,7 @@ const { activeTab = 'weekly' } = Astro.props;
       } else if (tabId === 'window') {
         url = '/windows';
       }
-      window.location.href = url;
+      navigate(url);
     };
 
     // Hover handler

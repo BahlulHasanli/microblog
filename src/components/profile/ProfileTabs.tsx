@@ -103,6 +103,40 @@ export default function ProfileTabs({
     fetchShares();
   }, [userId]);
 
+  // Handle like change from child component
+  const handleLikeChange = useCallback(
+    (shareId: string, isLiked: boolean) => {
+      setShares((prevShares) =>
+        prevShares.map((share) => {
+          if (share.id === shareId) {
+            if (isLiked && currentUserId) {
+              // Add like
+              return {
+                ...share,
+                likes_count: (share.likes_count || 0) + 1,
+                share_likes: [
+                  ...(share.share_likes || []),
+                  { id: `temp-${Date.now()}`, user_id: currentUserId },
+                ],
+              };
+            } else if (!isLiked && currentUserId) {
+              // Remove like
+              return {
+                ...share,
+                likes_count: Math.max((share.likes_count || 1) - 1, 0),
+                share_likes: (share.share_likes || []).filter(
+                  (like) => like.user_id !== currentUserId
+                ),
+              };
+            }
+          }
+          return share;
+        })
+      );
+    },
+    [currentUserId]
+  );
+
   // Intersection Observer for infinite scroll
   useEffect(() => {
     if (observerRef.current) {
@@ -218,7 +252,7 @@ export default function ProfileTabs({
                 <div className="w-8 h-8 border-2 border-base-200 border-t-rose-500 rounded-full animate-spin"></div>
               </div>
             ) : shares.length > 0 ? (
-              <div className="bg-white rounded-2xl border border-base-200 divide-y divide-base-100">
+              <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100">
                 {shares.map((share, index) => (
                   <div
                     key={share.id}
@@ -228,6 +262,7 @@ export default function ProfileTabs({
                       share={share}
                       isLast={index === shares.length - 1 && !hasMoreShares}
                       currentUserId={currentUserId}
+                      onLikeChange={handleLikeChange}
                     />
                   </div>
                 ))}
@@ -289,37 +324,34 @@ export default function ProfileTabs({
                 ))}
               </div>
             ) : isOwner ? (
-              <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
+              <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      strokeWidth={1.5}
+                      stroke-width="1.5"
                       stroke="currentColor"
-                      className="size-8 text-base-400"
+                      className="size-8 text-slate-400"
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-base-900 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     Hələ heç bir məqalə yazmamısınız
                   </h3>
-                  <p className="text-base-600 mb-6">
+                  <p className="text-slate-600 text-[14px] mb-6">
                     İlk məqalənizi yazmaq üçün "Yeni məqalə yaz" düyməsinə
                     klikləyin
                   </p>
                   <a
                     href="/studio"
-                    className="py-3 px-6 border focus:ring-2 text-sm font-medium rounded-xl 
-                    border-transparent bg-rose-500 hover:bg-rose-600 text-white 
-                    transition-all duration-200 focus:ring-offset-2 focus:ring-rose-500 inline-flex 
-                    items-center justify-center gap-2 shadow-sm"
+                    className="inline-flex items-center justify-center gap-2 py-3 px-6 text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 rounded-xl border border-transparent focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-all duration-200"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

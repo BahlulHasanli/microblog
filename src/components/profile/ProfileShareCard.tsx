@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { az } from "date-fns/locale";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface Share {
   id: string;
@@ -18,21 +18,32 @@ interface ProfileShareCardProps {
   share: Share;
   isLast?: boolean;
   currentUserId?: string;
+  onLikeChange?: (shareId: string, isLiked: boolean) => void;
 }
 
 export default function ProfileShareCard({
   share,
   isLast = false,
   currentUserId,
+  onLikeChange,
 }: ProfileShareCardProps) {
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [likesCount, setLikesCount] = useState(share.likes_count || 0);
 
   // Check if current user liked this share
   const isLiked = useMemo(() => {
     if (!currentUserId || !share.share_likes) return false;
     return share.share_likes.some((like) => like.user_id === currentUserId);
   }, [currentUserId, share.share_likes]);
+
+  // Local like state for optimistic updates
+  const [isLikedLocal, setIsLikedLocal] = useState(isLiked);
+
+  // Sync local state when share data changes
+  useEffect(() => {
+    setIsLikedLocal(isLiked);
+  }, [isLiked]);
 
   const createdDate = new Date(share.created_at);
   const timeAgo = formatDistanceToNow(createdDate, {
@@ -92,11 +103,42 @@ export default function ProfileShareCard({
     );
   };
 
+  const handleLike = async () => {
+    if (!currentUserId) return;
+
+    const newLikedState = !isLikedLocal;
+
+    try {
+      const response = await fetch(`/api/shares/toggle-like`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          shareId: share.id,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsLikedLocal(newLikedState);
+        setLikesCount((prev) =>
+          data.action === "added" ? prev + 1 : prev - 1
+        );
+
+        // Notify parent component about like change
+        if (onLikeChange) {
+          onLikeChange(share.id, newLikedState);
+        }
+      }
+    } catch (error) {
+      console.error("Like error:", error);
+    }
+  };
+
   return (
     <>
-      <div
-        className={`p-4 sm:p-6 ${isLast ? "" : "border-b border-slate-100"}`}
-      >
+      <div className={`p-4 sm:p-6`}>
         {/* Time */}
         <span className="text-slate-500 text-[13px]">{timeAgo}</span>
 
@@ -116,7 +158,7 @@ export default function ProfileShareCard({
                   setCurrentImageIndex(index);
                   setIsGalleryOpen(true);
                 }}
-                className={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(index)} border-0 p-0`}
+                className={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(index)} p-0`}
               >
                 <img
                   src={url}
@@ -162,7 +204,7 @@ export default function ProfileShareCard({
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="size-4"
+              className="size-5"
             >
               <path
                 strokeLinecap="round"
@@ -172,16 +214,22 @@ export default function ProfileShareCard({
             </svg>
             <span>{share.comments_count || 0}</span>
           </a>
-          <span
-            className={`flex items-center gap-2 ${isLiked ? "text-red-500" : ""}`}
+          <button
+            onClick={handleLike}
+            disabled={!currentUserId}
+            className={`cursor-pointer flex items-center gap-2 transition-colors ${
+              isLiked || isLikedLocal
+                ? "text-red-500 hover:text-red-600"
+                : "hover:text-red-500"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill={isLiked ? "currentColor" : "none"}
+              fill={isLiked || isLikedLocal ? "currentColor" : "none"}
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className="size-4"
+              className="size-5"
             >
               <path
                 strokeLinecap="round"
@@ -189,8 +237,8 @@ export default function ProfileShareCard({
                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
               />
             </svg>
-            <span>{share.likes_count || 0}</span>
-          </span>
+            <span>{likesCount}</span>
+          </button>
         </div>
       </div>
 

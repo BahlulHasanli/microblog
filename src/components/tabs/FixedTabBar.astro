@@ -21,6 +21,8 @@ const { activeTab = 'weekly' } = Astro.props;
 </div>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
+
   document.addEventListener('astro:page-load', () => {
     const mainTabs = document.getElementById('main-tabs');
     const fixedTabs = document.getElementById('fixed-tabs');
@@ -61,7 +63,7 @@ const { activeTab = 'weekly' } = Astro.props;
       } else if (tabId === 'window') {
         url = '/windows';
       }
-      window.location.href = url;
+      navigate(url);
     };
 
     // Hover handler
