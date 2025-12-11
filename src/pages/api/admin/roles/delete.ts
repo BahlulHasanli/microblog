@@ -14,17 +14,14 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    // Check if user is admin
+    // Check if user is admin (role_id = 1)
     const { data: userData } = await supabase
       .from("users")
-      .select("role_id, roles(is_admin)")
+      .select("role_id")
       .eq("id", user.id)
       .single();
 
-    const role = Array.isArray(userData?.roles)
-      ? userData?.roles[0]
-      : userData?.roles;
-    if (!role?.is_admin) {
+    if (userData?.role_id !== 1) {
       return new Response(
         JSON.stringify({
           success: false,

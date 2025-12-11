@@ -47,85 +47,38 @@ export async function getUserFromCookies(
       return null;
     }
 
-    let session: any;
+    // Supabase client-i yarat və session-u qur
+    const supabaseAuth = supabase.auth;
 
-    try {
-      session = await supabase.auth.setSession({
+    // Session-u qur
+    const { data: sessionData, error: sessionError } =
+      await supabaseAuth.setSession({
         refresh_token: refreshToken.value,
         access_token: accessToken.value,
       });
 
-      // Session xətası və ya user yoxdursa
-      if (session.error || !session.data?.user) {
-        console.log("Session error:", session.error?.message);
-
-        // Cookie-ləri sil
-        cookies.delete("sb-access-token", {
-          path: "/",
-        });
-        cookies.delete("sb-refresh-token", {
-          path: "/",
-        });
-
-        // Redirect funksiyası varsa, istifadə et
-        if (redirect && typeof redirect === "function") {
-          return redirect("/signin");
-        }
-
-        return null;
-      }
-
-      // Yeni token-lar varsa, cookie-ləri yenilə
-      if (session.data.session) {
-        const { access_token, refresh_token } = session.data.session;
-
-        cookies.set("sb-access-token", access_token, {
-          path: "/",
-          httpOnly: true,
-          secure: true,
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 7, // 7 gün
-        });
-
-        cookies.set("sb-refresh-token", refresh_token, {
-          path: "/",
-          httpOnly: true,
-          secure: true,
-          sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 30, // 30 gün
-        });
-      }
-    } catch (error) {
-      console.log("Session set error:", error);
-
+    if (sessionError || !sessionData?.user) {
+      console.log("Session error:", sessionError?.message);
       // Cookie-ləri sil
-      cookies.delete("sb-access-token", {
-        path: "/",
-      });
-      cookies.delete("sb-refresh-token", {
-        path: "/",
-      });
-
-      // Redirect funksiyası varsa, istifadə et
-      if (redirect && typeof redirect === "function") {
-        return redirect("/signin");
-      }
-
+      cookies.delete("sb-access-token", { path: "/" });
+      cookies.delete("sb-refresh-token", { path: "/" });
       return null;
     }
 
-    const findUser = await supabase
+    // İstifadəçini verilənlər bazasından al
+    const userEmail = sessionData.user.email;
+    const { data: userData, error: userError } = await supabase
       .from("users")
       .select("*")
-      .eq("email", session.data.user?.email)
+      .eq("email", userEmail)
       .single();
 
-    if (findUser.error) {
-      console.log("User not found in database:", findUser.error);
+    if (userError) {
+      console.log("User not found in database:", userError);
       return null;
     }
 
-    return findUser.data;
+    return userData;
   } catch (error) {
     console.log("getUserFromCookies - error:", error);
     return null;
@@ -241,23 +194,14 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
 
 /**
  * Admin yoxlaması - istifadəçinin admin olub-olmadığını yoxlayır
+ * role_id: 1 = Admin
  */
 export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
   try {
     const user = await getUserFromCookies(cookies, () => null);
     if (!user) return false;
 
-    // Supabase-dən istifadəçi məlumatlarını yoxla
-    const { data, error } = await supabase
-      .from("users")
-      .select("role_id, roles(is_admin)")
-      .eq("email", user.email)
-      .single();
-
-    if (error || !data) return false;
-
-    const role = Array.isArray(data.roles) ? data.roles[0] : data.roles;
-    return role?.is_admin === true;
+    return user.role_id === 1;
   } catch (error) {
     console.error("Admin yoxlama xətası:", error);
     return false;
@@ -266,26 +210,34 @@ export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
 
 /**
  * Moderator yoxlaması - istifadəçinin moderator olub-olmadığını yoxlayır
+ * role_id: 1 = Admin, 2 = Moderator
+ * Admin də moderator hüquqlarına malikdir
  */
 export async function isModerator(cookies: AstroCookies): Promise<boolean> {
   try {
     const user = await getUserFromCookies(cookies, () => null);
     if (!user) return false;
 
-    // Supabase-dən istifadəçi məlumatlarını yoxla
-    const { data, error } = await supabase
-      .from("users")
-      .select("role_id, roles(is_moderator, is_admin)")
-      .eq("email", user.email)
-      .single();
-
-    if (error || !data) return false;
-
-    // Admin və ya moderator ola bilər
-    const role = Array.isArray(data.roles) ? data.roles[0] : data.roles;
-    return role?.is_moderator === true || role?.is_admin === true;
+    return user.role_id === 1 || user.role_id === 2;
   } catch (error) {
     console.error("Moderator yoxlama xətası:", error);
+    return false;
+  }
+}
+
+/**
+ * Editor yoxlaması - istifadəçinin editor olub-olmadığını yoxlayır
+ * role_id: 1 = Admin, 2 = Moderator, 3 = Editor
+ * Admin və Moderator da editor hüquqlarına malikdir
+ */
+export async function isEditor(cookies: AstroCookies): Promise<boolean> {
+  try {
+    const user = await getUserFromCookies(cookies, () => null);
+    if (!user) return false;
+
+    return user.role_id === 1 || user.role_id === 2 || user.role_id === 3;
+  } catch (error) {
+    console.error("Editor yoxlama xətası:", error);
     return false;
   }
 }

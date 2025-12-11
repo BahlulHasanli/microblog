@@ -17,6 +17,8 @@ let user = null;
 
 if (isLoggedIn) {
   user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+
+  console.log('User ::::::::>', user)
   
   // Əgər cookie var amma user null-dursa (token vaxtı bitib), cookie-ləri sil
   if (!user) {
@@ -26,8 +28,8 @@ if (isLoggedIn) {
 }
 
 // Settings-dən sayt başlığı və təsvirini al
-let siteTitle = "The 99";
-let siteDescription = "Azərbaycan texnoloji bloqu";
+let siteTitle = "";
+let siteDescription = "";
 
 try {
   const { data: settings } = await supabase

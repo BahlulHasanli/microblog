@@ -6,18 +6,36 @@
   import SettingsTab from './SettingsTab.svelte';
   import CommentsTab from './CommentsTab.svelte';
   import RolesTab from './RolesTab.svelte';
+  import SharesTab from './SharesTab.svelte';
+  import { hasPermission, Permissions, DefaultRolePermissions } from '@/utils/permissions';
 
-  export let user: any;
+  interface Props {
+    user: any;
+  }
 
-  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' = 'posts';
+  const { user }: Props = $props();
+
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' = $state('posts');
+  let userPermissions: string[] = $state([]);
   
-  // Moderator yalnız Posts tabını görə bilər
-  $: isAdmin = user?.roles?.is_admin === true;
-  $: isModerator = user?.roles?.is_moderator === true;
-  $: canViewUsers = isAdmin;
-  $: canViewComments = isAdmin;
-  $: canViewSettings = isAdmin;
-  let stats = {
+  // Permission əsaslı yoxlamalar
+  const roleId = $derived(user?.role_id);
+  const isAdmin = $derived(roleId === 1);
+  const isModerator = $derived(roleId === 1 || roleId === 2);
+  const canViewUsers = $derived(hasPermission(roleId, Permissions.USERS_VIEW, userPermissions));
+  const canEditUsers = $derived(hasPermission(roleId, Permissions.USERS_EDIT, userPermissions));
+  const canDeleteUsers = $derived(hasPermission(roleId, Permissions.USERS_DELETE, userPermissions));
+  const canViewPosts = $derived(hasPermission(roleId, Permissions.POSTS_VIEW, userPermissions));
+  const canEditPosts = $derived(hasPermission(roleId, Permissions.POSTS_EDIT, userPermissions));
+  const canDeletePosts = $derived(hasPermission(roleId, Permissions.POSTS_DELETE, userPermissions));
+  const canPublishPosts = $derived(hasPermission(roleId, Permissions.POSTS_PUBLISH, userPermissions));
+  const canViewComments = $derived(hasPermission(roleId, Permissions.COMMENTS_VIEW, userPermissions));
+  const canDeleteComments = $derived(hasPermission(roleId, Permissions.COMMENTS_DELETE, userPermissions));
+  const canViewRoles = $derived(hasPermission(roleId, Permissions.ROLES_VIEW, userPermissions));
+  const canEditRoles = $derived(hasPermission(roleId, Permissions.ROLES_EDIT, userPermissions));
+  const canViewSettings = $derived(hasPermission(roleId, Permissions.SETTINGS_VIEW, userPermissions));
+  const canEditSettings = $derived(hasPermission(roleId, Permissions.SETTINGS_EDIT, userPermissions));
+  let stats = $state({
     totalPosts: 0,
     pendingPosts: 0,
     totalUsers: 0,
@@ -25,17 +43,42 @@
     totalComments: 0,
     parentComments: 0,
     replyComments: 0,
-  };
+    totalShares: 0,
+    totalLikes: 0,
+    shareComments: 0,
+  });
 
   onMount(() => {
     loadStats();
+    loadUserPermissions();
+    
+    // Permission-lər yenilənəndə userPermissions-ı yenidən yüklə
+    window.addEventListener('permissions-updated', loadUserPermissions);
+    
+    return () => {
+      window.removeEventListener('permissions-updated', loadUserPermissions);
+    };
   });
+
+  async function loadUserPermissions() {
+    try {
+      const response = await fetch('/api/admin/permissions/user-permissions');
+      const data = await response.json();
+      if (data.success && data.permissions) {
+        userPermissions = data.permissions;
+      }
+    } catch (e) {
+      console.error('User permissions yüklənərkən xəta:', e);
+    }
+  }
 
   async function loadStats() {
     try {
       // Postları yüklə
       const postsResponse = await fetch("/api/admin/posts/list?status=all");
       const postsData = await postsResponse.json();
+
+      console.log('Posts data:', postsData);
 
       // İstifadəçiləri yüklə
       let usersData = { success: false, users: [] };
@@ -57,6 +100,58 @@
         }
       } catch (e) {
         // Moderator üçün xəta olacaq, amma stats yüklənməyə davam edəcək
+        console.error("Comments yüklənərkən xəta:", e);
+      }
+
+      // Shares-ləri yüklə
+      let totalShares = 0;
+
+      try {
+        const sharesResponse = await fetch("/api/admin/shares/list");
+        if (sharesResponse.ok) {
+          const sharesData = await sharesResponse.json();
+
+          if (sharesData.success && sharesData.shares) {
+            totalShares = sharesData.shares.length;
+          }
+        }
+      } catch (e) {
+        // Xəta olsa, davam edəcək
+      }
+
+      // Likes-ləri yüklə (posts cədvəlindən likes_count-u cəmləyərək)
+      let totalLikes = 0;
+
+      try {
+        const likesResponse = await fetch("/api/admin/likes/list");
+        if (likesResponse.ok) {
+          const likesData = await likesResponse.json();
+
+          if (likesData.success && typeof likesData.totalLikes === 'number') {
+            totalLikes = likesData.totalLikes;
+
+          }
+        } else {
+          console.warn("Likes API status:", likesResponse.status);
+        }
+      } catch (e) {
+        console.error("Likes yüklənərkən xəta:", e);
+      }
+
+      // Share comments cədvəlindən şərhlər al
+      let shareComments = 0;
+      try {
+        const shareCommentsResponse = await fetch("/api/admin/share-comments/list");
+        if (shareCommentsResponse.ok) {
+          const shareCommentsData = await shareCommentsResponse.json();
+          console.log("Share comments API response:", shareCommentsData);
+          if (shareCommentsData.success && Array.isArray(shareCommentsData.shareComments)) {
+            shareComments = shareCommentsData.shareComments.length;
+            console.log("Share comments count:", shareComments);
+          }
+        }
+      } catch (e) {
+        console.error("Share comments yüklənərkən xəta:", e);
       }
 
       if (postsData.success) {
@@ -86,6 +181,9 @@
           totalComments: commentsData.success ? commentsData.comments.length : 0,
           parentComments: parentComments,
           replyComments: replyComments,
+          totalShares: totalShares,
+          totalLikes: totalLikes,
+          shareComments: shareComments,
         };
       }
     } catch (error) {
@@ -94,13 +192,13 @@
   }
 </script>
 
-<div class="min-h-screen bg-gradient-to-br from-base-50 to-white">
+<div class="min-h-screen bg-linear-to-br from-base-50 to-white">
   <!-- Header -->
   <header class="bg-white/80 backdrop-blur-sm border-b border-base-200/50 sticky top-0 z-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-3 sm:gap-4">
-          <div class="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-br from-slate-900 to-slate-700 rounded-lg flex items-center justify-center">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 bg-linear-to-br from-slate-900 to-slate-700 rounded-lg flex items-center justify-center">
             <svg
               class="w-5 h-5 sm:w-6 sm:h-6 text-white"
               fill="none"
@@ -229,6 +327,33 @@
           </div>
         </div>
       </div>
+
+      <!-- Paylaşımlar Bloku - Ümumi Statistika -->
+      <div class="bg-white rounded-xl p-4 sm:p-6 border border-base-100 lg:col-span-3">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+            <svg  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5 text-orange-600">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122" />
+           </svg>
+
+          </div>
+          <h3 class="text-sm font-semibold text-slate-900">Paylaşım statistikası</h3>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="flex flex-col items-center p-3 bg-orange-50 rounded-lg">
+            <span class="text-xs text-base-600 mb-1">Paylaşımlar</span>
+            <span class="text-lg sm:text-xl font-medium text-slate-900">{stats.totalShares}</span>
+          </div>
+          <div class="flex flex-col items-center p-3 bg-red-50 rounded-lg">
+            <span class="text-xs text-base-600 mb-1">Bəyənmələr</span>
+            <span class="text-lg sm:text-xl font-medium text-slate-900">{stats.totalLikes}</span>
+          </div>
+          <div class="flex flex-col items-center p-3 bg-pink-50 rounded-lg">
+            <span class="text-xs text-base-600 mb-1">Paylaşım şərhlər</span>
+            <span class="text-lg sm:text-xl font-medium text-slate-900">{stats.shareComments || 0}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -236,7 +361,7 @@
       <div class="border-b border-base-100 bg-base-50/50">
         <nav class="flex px-4 sm:px-6 overflow-x-auto">
           <button
-            on:click={() => activeTab = 'posts'}
+            onclick={() => activeTab = 'posts'}
             class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'posts' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
           >
             <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
@@ -261,7 +386,7 @@
           </button>
           {#if canViewUsers}
             <button
-              on:click={() => activeTab = 'users'}
+              onclick={() => activeTab = 'users'}
               class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'users' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
             >
               <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
@@ -287,7 +412,7 @@
           {/if}
           {#if canViewComments}
             <button
-              on:click={() => activeTab = 'comments'}
+              onclick={() => activeTab = 'comments'}
               class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'comments' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
             >
               <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
@@ -313,7 +438,7 @@
           {/if}
           {#if canViewSettings}
             <button
-              on:click={() => activeTab = 'settings'}
+              onclick={() => activeTab = 'settings'}
               class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'settings' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
             >
               <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
@@ -343,9 +468,9 @@
               {/if}
             </button>
           {/if}
-          {#if isAdmin}
+          {#if canViewRoles}
             <button
-              on:click={() => activeTab = 'roles'}
+              onclick={() => activeTab = 'roles'}
               class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'roles' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
             >
               <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
@@ -362,28 +487,44 @@
                     d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
                   />
                 </svg>
-                Rollər
+                Rollar
               </span>
               {#if activeTab === 'roles'}
                 <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
               {/if}
             </button>
           {/if}
+          <button
+            onclick={() => activeTab = 'shares'}
+            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'shares' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+          >
+            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+              <svg  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"   class="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 4.5 9v.878m13.5-3A2.25 2.25 0 0 1 19.5 9v.878m0 0a2.246 2.246 0 0 0-.75-.128H5.25c-.263 0-.515.045-.75.128m15 0A2.25 2.25 0 0 1 21 12v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6c0-.98.626-1.813 1.5-2.122" />
+             </svg>
+              Paylaşımlar
+            </span>
+            {#if activeTab === 'shares'}
+              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+            {/if}
+          </button>
         </nav>
       </div>
 
       <!-- Tab Content -->
       <div>
         {#if activeTab === 'posts'}
-          <PostsTab />
+          <PostsTab canEdit={canEditPosts} canDelete={canDeletePosts} canPublish={canPublishPosts} />
         {:else if activeTab === 'users'}
-          <UsersTab />
+          <UsersTab canEdit={canEditUsers} canDelete={canDeleteUsers} />
         {:else if activeTab === 'comments'}
-          <CommentsTab />
+          <CommentsTab canDelete={canDeleteComments} />
         {:else if activeTab === 'settings'}
-          <SettingsTab />
+          <SettingsTab canEdit={canEditSettings} />
         {:else if activeTab === 'roles'}
-          <RolesTab />
+          <RolesTab canEdit={canEditRoles} />
+        {:else if activeTab === 'shares'}
+          <SharesTab />
         {/if}
       </div>
     </div>

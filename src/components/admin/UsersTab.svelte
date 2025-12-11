@@ -4,6 +4,13 @@
   import ConfirmModal from './ConfirmModal.svelte';
   import AlertModal from './AlertModal.svelte';
 
+  interface Props {
+    canEdit?: boolean;
+    canDelete?: boolean;
+  }
+
+  const { canEdit = false, canDelete = false }: Props = $props();
+
   interface User {
     id: string;
     email: string;
@@ -11,13 +18,36 @@
     username: string;
     avatar: string;
     role_id: number;
-    roles?: {
-      id: number;
-      name: string;
-      is_admin: boolean;
-      is_moderator: boolean;
-    };
     created_at: string;
+  }
+
+  // Rol helper funksiyaları
+  // 1 = Admin, 2 = Moderator, 3 = Editor, 4 = User
+  function getRoleName(roleId: number): string {
+    switch (roleId) {
+      case 1: return 'Admin';
+      case 2: return 'Moderator';
+      case 3: return 'Redaktor';
+      default: return 'İstifadəçi';
+    }
+  }
+
+  function getRoleDotColor(roleId: number): string {
+    switch (roleId) {
+      case 1: return 'bg-red-500';
+      case 2: return 'bg-yellow-500';
+      case 3: return 'bg-green-500';
+      default: return 'bg-base-300';
+    }
+  }
+
+  function getRoleTextColor(roleId: number): string {
+    switch (roleId) {
+      case 1: return 'text-red-700';
+      case 2: return 'text-yellow-700';
+      case 3: return 'text-green-700';
+      default: return 'text-base-600';
+    }
   }
 
   let users: User[] = $state([]);
@@ -136,6 +166,12 @@
 </script>
 
 <div class="p-4 sm:p-6 lg:p-8">
+    <!-- Header -->
+  <div class="mb-6">
+    <h2 class="text-xl font-semibold text-slate-900 mb-2">İstifadəçilər idarəetməsi</h2>
+    <p class="text-sm text-base-600">Sistem istifadəçilərinin idarə etməsi</p>
+  </div>
+
   <!-- Users Table -->
   {#if loading}
     <div class="flex items-center justify-center py-16">
@@ -211,16 +247,8 @@
                   <div class="flex lg:hidden items-center gap-3 text-xs">
                     <span class="text-base-700 font-medium">@{user.username}</span>
                     <div class="flex items-center gap-1.5">
-                      {#if user.roles?.is_admin}
-                        <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                        <span class="font-medium text-red-700">Admin</span>
-                      {:else if user.roles?.is_moderator}
-                        <div class="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-                        <span class="font-medium text-yellow-700">Moderator</span>
-                      {:else}
-                        <div class="w-1.5 h-1.5 rounded-full bg-base-300"></div>
-                        <span class="font-medium text-base-600">{user.roles?.name || 'İstifadəçi'}</span>
-                      {/if}
+                      <div class="w-1.5 h-1.5 rounded-full {getRoleDotColor(user.role_id)}"></div>
+                      <span class="font-medium {getRoleTextColor(user.role_id)}">{getRoleName(user.role_id)}</span>
                     </div>
                   </div>
                 </div>
@@ -233,22 +261,10 @@
               </td>
               <td class="hidden lg:table-cell px-4 sm:px-6 py-4 sm:py-5 whitespace-nowrap">
                 <div class="flex items-center gap-2">
-                  {#if user.roles?.is_admin}
-                    <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                    <span class="text-xs font-medium text-red-700">
-                      Admin
-                    </span>
-                  {:else if user.roles?.is_moderator}
-                    <div class="w-2 h-2 rounded-full bg-yellow-500"></div>
-                    <span class="text-xs font-medium text-yellow-700">
-                      Moderator
-                    </span>
-                  {:else}
-                    <div class="w-2 h-2 rounded-full bg-base-300"></div>
-                    <span class="text-xs font-medium text-base-600">
-                      {user.roles?.name || 'İstifadəçi'}
-                    </span>
-                  {/if}
+                  <div class="w-2 h-2 rounded-full {getRoleDotColor(user.role_id)}"></div>
+                  <span class="text-xs font-medium {getRoleTextColor(user.role_id)}">
+                    {getRoleName(user.role_id)}
+                  </span>
                 </div>
               </td>
               <td class="hidden xl:table-cell px-4 sm:px-6 py-4 sm:py-5 whitespace-nowrap text-xs text-base-500">
@@ -256,44 +272,48 @@
               </td>
               <td class="px-4 sm:px-6 py-4 sm:py-5">
                 <div class="flex flex-row flex-wrap items-center gap-2">
-                  <button
-                    onclick={() => editingUser = user}
-                    class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  {#if canEdit}
+                    <button
+                      onclick={() => editingUser = user}
+                      class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
-                    <span class="hidden sm:inline">Düzəliş</span>
-                  </button>
-                  <button
-                    onclick={() => handleDelete(user.id)}
-                    class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition-colors whitespace-nowrap"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      <span class="hidden sm:inline">Düzəliş</span>
+                    </button>
+                  {/if}
+                  {#if canDelete}
+                    <button
+                      onclick={() => handleDelete(user.id)}
+                      class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition-colors whitespace-nowrap"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                    <span class="hidden sm:inline">Sil</span>
-                  </button>
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      <span class="hidden sm:inline">Sil</span>
+                    </button>
+                  {/if}
                 </div>
               </td>
             </tr>

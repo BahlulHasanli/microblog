@@ -99,14 +99,14 @@
         <button
           type="button"
           onclick={handleCancel}
-          class="flex-1 px-4 py-2.5 text-sm font-medium text-base-700 bg-white border border-base-300 rounded-lg hover:bg-base-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+          class="cursor-pointer flex-1 px-4 py-2.5 text-sm font-medium text-base-700 bg-white border border-base-300 rounded-lg hover:bg-base-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
         >
           {cancelText}
         </button>
         <button
           type="button"
           onclick={handleConfirm}
-          class="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors {variantClasses[confirmVariant]}"
+          class="cursor-pointer flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors {variantClasses[confirmVariant]}"
         >
           {confirmText}
         </button>

@@ -4,6 +4,12 @@
   import ConfirmModal from './ConfirmModal.svelte';
   import AlertModal from './AlertModal.svelte';
 
+  interface Props {
+    canDelete?: boolean;
+  }
+
+  const { canDelete = false }: Props = $props();
+
   interface Comment {
     id: number;
     content: string;
@@ -207,21 +213,26 @@
 </script>
 
 <div class="p-4 sm:p-6 lg:p-8">
+ <div class="flex items-center justify-between">
+     <!-- Header -->
+  <div class="mb-6">
+    <h2 class="text-xl font-semibold text-slate-900 mb-2">Şərhlər idarəetməsi</h2>
+    <p class="text-sm text-base-600">Şərhlərinin idarə etməsi</p>
+  </div>
+
+    <button
+      onclick={loadComments}
+      class="inline-flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
+    >
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Yenilə
+    </button>
+ </div>
+
   <!-- Header & Filters -->
   <div class="mb-6 space-y-4">
-    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-      <h2 class="text-xl font-nouvelr-bold text-slate-900">Şərhlər</h2>
-      <button
-        onclick={loadComments}
-        class="inline-flex cursor-pointer items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors"
-      >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-        </svg>
-        Yenilə
-      </button>
-    </div>
-
     <!-- Search & Filter -->
     <div class="flex flex-col sm:flex-row gap-3">
       <div class="flex-1">
@@ -387,15 +398,17 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     </a>
-                    <button
-                      onclick={(e) => { e.stopPropagation(); confirmDelete(comment); }}
-                      class="text-red-600 hover:text-red-900"
-                      title="Sil"
-                    >
-                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                    {#if canDelete}
+                      <button
+                        onclick={(e) => { e.stopPropagation(); confirmDelete(comment); }}
+                        class="text-red-600 hover:text-red-900"
+                        title="Sil"
+                      >
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    {/if}
                   </div>
                 </td>
               </tr>

@@ -126,7 +126,7 @@
                 : "cursor-pointer active:scale-95"
             }
           `}
-          on:click={() => handleReactionClick(type)}
+          onclick={() => handleReactionClick(type)}
           disabled={loading}
           title={reactionLabels[type]}
           aria-label={`${reactionLabels[type]} - ${count} reaction`}

@@ -8,25 +8,23 @@ const { isLoggedIn, user } = Astro.props;
 // Studio veya edit-post sayfalarında kaydet butonunu göster
 const isStudioRoutePath = Astro.url.pathname === '/studio' || Astro.url.pathname.includes('/edit-post/');
 
-// Admin və Moderator yoxlaması
+// Admin və Moderator yoxlaması (role_id əsaslı)
+// 1 = Admin, 2 = Moderator, 3 = Editor, 4 = User
 let isAdmin = false;
 let isModerator = false;
+let isEditor = false;
 let enableRegistration = true;
 
 if (isLoggedIn && user) {
-  const currentUser = await getUserFromCookies(Astro.cookies, () => null);
-  if (currentUser) {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role_id, roles(is_admin, is_moderator)")
-      .eq("email", currentUser.email)
-      .single();
-    
-    const role = Array.isArray(userData?.roles) ? userData?.roles[0] : userData?.roles;
-    isAdmin = role?.is_admin || false;
-    isModerator = role?.is_moderator || false;
-  }
+  // user artıq BaseLayout-dan gəlir, role_id orada olmalıdır
+  const roleId = user.role_id;
+  console.log("Navigation - user.role_id:", roleId);
+  isAdmin = roleId === 1;
+  isModerator = roleId === 1 || roleId === 2;
+  isEditor = roleId === 1 || roleId === 2 || roleId === 3;
 }
+
+console.log('ROLE::>>>', isLoggedIn)
 
 // Settings-dən qeydiyyat aktivliyini al
 try {

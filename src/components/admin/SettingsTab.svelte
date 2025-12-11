@@ -2,6 +2,12 @@
   import { onMount } from 'svelte';
   import AlertModal from './AlertModal.svelte';
 
+  interface Props {
+    canEdit?: boolean;
+  }
+
+  const { canEdit = false }: Props = $props();
+
   interface Settings {
     site_title: string;
     site_description: string;
@@ -382,21 +388,22 @@
   </div>
 
   <!-- Saxla Düyməsi -->
-  <div class="mt-6 flex justify-end">
-    <button
-      onclick={handleSave}
-      disabled={saving}
-      class="inline-flex cursor-pointer text-[13px] items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {#if saving}
-        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-        Saxlanılır...
-      {:else}
-
-        Dəyişiklikləri Saxla
-      {/if}
-    </button>
-  </div>
+  {#if canEdit}
+    <div class="mt-6 flex justify-end">
+      <button
+        onclick={handleSave}
+        disabled={saving}
+        class="inline-flex cursor-pointer text-[13px] items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {#if saving}
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          Saxlanılır...
+        {:else}
+          Dəyişiklikləri Saxla
+        {/if}
+      </button>
+    </div>
+  {/if}
 
   {/if}
 </div>
