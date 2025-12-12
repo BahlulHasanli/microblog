@@ -1,0 +1,197 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+// Premyeralar siyahısı - aylara görə qruplaşdırılmış
+const premieres = [
+  // 2025
+  {
+    title: "The Last of Us Season 2",
+    category: "Serial",
+    month: "Yanvar",
+    year: 2025,
+    day: null,
+    hot: true
+  },
+  {
+    title: "Captain America: Brave New World",
+    category: "Film",
+    month: "Fevral",
+    year: 2025,
+    day: 14,
+    hot: false
+  },
+  {
+    title: "Stranger Things Season 5",
+    category: "Serial",
+    month: "Yay",
+    year: 2025,
+    day: null,
+    hot: true
+  },
+  {
+    title: "GTA VI",
+    category: "Oyun",
+    month: "Payız",
+    year: 2025,
+    day: null,
+    hot: true
+  },
+  {
+    title: "Avatar 3",
+    category: "Film",
+    month: "Dekabr",
+    year: 2025,
+    day: 19,
+    hot: true
+  },
+  // 2026
+  {
+    title: "The Witcher 4",
+    category: "Oyun",
+    month: null,
+    year: 2026,
+    day: null,
+    hot: false
+  },
+  {
+    title: "Dune: Part Three",
+    category: "Film",
+    month: null,
+    year: 2026,
+    day: null,
+    hot: false
+  }
+];
+
+// Kateqoriya ikonları
+const categoryIcons: Record<string, string> = {
+  "Oyun": "🎮",
+  "Film": "🎬",
+  "Serial": "📺"
+};
+
+// İllərə görə qruplaşdır
+const years = [...new Set(premieres.map(p => p.year))].sort();
+
+// Ay sırası
+const monthOrder = ["Yanvar", "Fevral", "Mart", "Aprel", "May", "İyun", "İyul", "Avqust", "Sentyabr", "Oktyabr", "Noyabr", "Dekabr", "Yaz", "Yay", "Payız", "Qış"];
+
+// Vaxtı keçən premyeraları yoxlamaq
+const isPassedPremiere = (year: number, month: string | null): boolean => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  
+  // Əgər il keçibsə
+  if (year < currentYear) return true;
+  
+  // Əgər il eyni amma ay keçibsə
+  if (year === currentYear && month) {
+    const monthIndex = monthOrder.indexOf(month);
+    if (monthIndex !== -1 && monthIndex < currentMonth) {
+      return true;
+    }
+  }
+  
+  return false;
+};
+---
+
+<BaseLayout title="Bir Şey-Mir Şey Var?">
+  <section class="max-w-3xl mx-auto py-8 px-4 sm:px-0">
+    <div class="bg-white rounded-lg p-4">
+      <!-- Başlıq -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-big-shoulders font-bold text-base-900 mb-2">
+          Bir Şey-Mir Şey Var?
+        </h1>
+        <p class="text-sm text-base-500">
+          Gözlənilən premyeralar təqvimi
+        </p>
+      </div>
+
+      <!-- Təqvim -->
+      <div class="space-y-6">
+        {years.map(year => {
+          const yearPremieres = premieres.filter(p => p.year === year);
+          const months = [...new Set(yearPremieres.map(p => p.month))].sort((a, b) => {
+            if (a === null) return 1;
+            if (b === null) return -1;
+            return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+          });
+          
+          return (
+            <div class="bg-base-50 rounded-lg border border-base-100 overflow-hidden">
+              <!-- İl başlığı -->
+              <div class="px-4 py-3 bg-base-100 border-b border-base-200">
+                <h2 class="text-lg font-big-shoulders font-bold text-base-800">
+                  {year}
+                </h2>
+              </div>
+              
+              <!-- Aylar -->
+              <div class="divide-y divide-base-100">
+                {months.map(month => {
+                  const monthPremieres = yearPremieres.filter(p => p.month === month);
+                  return (
+                    <div class="flex">
+                      <!-- Ay -->
+                      <div class="w-20 sm:w-24 shrink-0 bg-base-50 px-3 py-3 flex flex-col justify-center border-r border-base-100">
+                        <span class="text-xs sm:text-sm font-semibold text-base-700">
+                          {month || "TBA"}
+                        </span>
+                      </div>
+                      
+                      <!-- Premyeralar -->
+                      <div class="flex-1 px-4 py-3 space-y-2">
+                        {monthPremieres.map(premiere => {
+                          const isPassed = isPassedPremiere(year, month);
+                          return (
+                            <div class={`flex items-start gap-3 transition-all duration-300 ${isPassed ? 'opacity-40 blur-[0.5px]' : ''}`}>
+                              <div class="shrink-0 pt-0.5">
+                                <span class="text-sm">{categoryIcons[premiere.category]}</span>
+                              </div>
+                              <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                  <h3 class="font-semibold text-base-800 text-sm">
+                                    {premiere.title}
+                                  </h3>
+                                  {premiere.hot && !isPassed && (
+                                    <span class="text-xs text-base-400 bg-base-100 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                      HOT
+                                    </span>
+                                  )}
+                                </div>
+                                <div class="flex items-center gap-2 mt-1">
+                                  <span class="text-[11px] text-base-500">
+                                    {premiere.category}
+                                  </span>
+                                  {premiere.day && (
+                                    <span class="text-[11px] text-base-400">
+                                      • {premiere.day} {month}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <!-- Alt qeyd -->
+      <div class="mt-8 text-center">
+        <p class="text-xs text-base-400">
+          * Tarixlər dəyişə bilər. Son məlumatlar üçün rəsmi mənbələri izləyin.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

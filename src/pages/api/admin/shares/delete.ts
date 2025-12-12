@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
-import { requireModerator } from "@/utils/auth";
-import { supabaseAdmin } from "@/db/supabase";
+import { supabase } from "@/db/supabase";
+import { getUserFromCookies } from "@/utils/auth";
 
 const BUNNY_STORAGE_ZONE = "the99-storage";
 const BUNNY_HOSTNAME = "storage.bunnycdn.com";
@@ -16,6 +16,10 @@ async function deleteBunnyCDNFolder(
       : `${folderPath}/`;
 
     console.log(`[BunnyCDN] Folder silinməsi başladı: ${normalizedPath}`);
+
+    const BUNNY_API_KEY = import.meta.env.BUNNY_API_KEY;
+
+    console.log("BUNNY_API_KEY", BUNNY_API_KEY);
 
     // Əvvəlcə folder içindəki faylları listə
     const listUrl = `https://${BUNNY_HOSTNAME}/${BUNNY_STORAGE_ZONE}/${normalizedPath}`;
@@ -103,84 +107,90 @@ async function deleteBunnyCDNFolder(
   }
 }
 
-export const POST: APIRoute = async (context) => {
+export const DELETE: APIRoute = async ({ cookies, request }) => {
   try {
-    // Moderator yoxlaması (admin və moderator)
-    const modCheck = await requireModerator(context);
-    if (modCheck instanceof Response) {
-      return modCheck;
-    }
+    const user = await getUserFromCookies(cookies, null);
 
-    const { postId, slug } = await context.request.json();
-
-    if (!postId && !slug) {
+    if (!user) {
       return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Post ID və ya slug tələb olunur",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        JSON.stringify({ success: false, message: "Giriş tələb olunur" }),
+        { headers: { "Content-Type": "application/json" }, status: 401 }
       );
     }
 
-    const postSlug = slug || postId;
+    const { shareId } = await request.json();
 
-    // Supabase-dən postu sil
-    const { error: deleteError } = await supabaseAdmin
-      .from("posts")
+    if (!shareId) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Paylaşım ID tələb olunur" }),
+        { headers: { "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    // Paylaşımı al - şəkil URL-i olub olmadığını yoxla
+    const { data: share, error: fetchError } = await supabase
+      .from("shares")
+      .select("*")
+      .eq("id", shareId)
+      .single();
+
+    if (fetchError || !share) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Paylaşım tapılmadı" }),
+        { headers: { "Content-Type": "application/json" }, status: 404 }
+      );
+    }
+
+    // Bunny CDN-dən shares folderini sil (shares/{shareId}/)
+    console.log(`[DELETE API] share.id: ${share.id}`);
+    console.log(
+      `[DELETE API] BUNNY_API_KEY mövcud: ${import.meta.env.BUNNY_API_KEY}`
+    );
+
+    if (share.id && import.meta.env.BUNNY_API_KEY) {
+      const shareFolder = `shares/${share.id}`;
+      console.log(
+        `[DELETE API] Share folder silinməsi başladı: ${shareFolder}`
+      );
+      await deleteBunnyCDNFolder(shareFolder, import.meta.env.BUNNY_API_KEY);
+      console.log(
+        `[DELETE API] Share folder silinməsi tamamlandı: ${shareFolder}`
+      );
+    } else {
+      console.warn(
+        `[DELETE API] BunnyCDN folder silinməsi atlandı - share.id: ${share.id}, API Key: ${!!import.meta.env.BUNNY_API_KEY}`
+      );
+    }
+
+    // Paylaşımla bağlı şərhlər sil
+    await supabase.from("share_comments").delete().eq("share_id", shareId);
+
+    // Paylaşımla bağlı bəyənmələr sil
+    await supabase.from("share_likes").delete().eq("share_id", shareId);
+
+    // // Paylaşımı sil
+    const { error: deleteError } = await supabase
+      .from("shares")
       .delete()
-      .eq("slug", postSlug);
+      .eq("id", shareId);
 
     if (deleteError) {
-      console.error("Supabase delete xətası:", deleteError);
+      console.error("Share delete error:", deleteError);
       return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Post silinə bilmədi",
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
+        JSON.stringify({ success: false, message: "Silmə xətası baş verdi" }),
+        { headers: { "Content-Type": "application/json" }, status: 500 }
       );
     }
 
-    // BunnyCDN-dən şəkilləri sil
-    if (import.meta.env.BUNNY_API_KEY) {
-      try {
-        const folder = `posts/${postSlug}`;
-        console.log(`[DELETE API] Post folder silinməsi başladı: ${folder}`);
-        await deleteBunnyCDNFolder(folder, import.meta.env.BUNNY_API_KEY);
-        console.log(`[DELETE API] Post folder silinməsi tamamlandı: ${folder}`);
-      } catch (cdnError) {
-        console.error("BunnyCDN silmə xətası:", cdnError);
-      }
-    }
-
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Post uğurla silindi",
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: true, message: "Paylaşım silindi" }),
+      { headers: { "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {
-    console.error("Post silmə xətası:", error);
+    console.error("Share delete error:", error);
     return new Response(
-      JSON.stringify({
-        success: false,
-        message: "Xəta baş verdi",
-      }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({ success: false, message: "Server xətası" }),
+      { headers: { "Content-Type": "application/json" }, status: 500 }
     );
   }
 };

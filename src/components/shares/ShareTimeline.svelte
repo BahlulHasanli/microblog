@@ -255,7 +255,7 @@
         Paylaşım yoxdur
       </p>
       <p class="text-slate-500 text-sm">
-        Redaktorlar tərəfindən paylaşım edilməyib
+        Hələki paylaşım edilməyib
       </p>
     </div>
   </div>

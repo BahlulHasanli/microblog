@@ -27,6 +27,9 @@
   const itemsPerPage = 5;
   let totalPages = $state(1);
   let totalCount = $state(0);
+  let deleteLoading = $state(false);
+  let deleteConfirmOpen = $state(false);
+  let shareToDelete: ShareWithStats | null = $state(null);
 
   $effect(() => {
     loadShares();
@@ -44,6 +47,53 @@
   function closeModal() {
     modalOpen = false;
     selectedShare = null;
+  }
+
+  function openDeleteConfirm(share: ShareWithStats) {
+    shareToDelete = share;
+    deleteConfirmOpen = true;
+  }
+
+  function closeDeleteConfirm() {
+    deleteConfirmOpen = false;
+    shareToDelete = null;
+  }
+
+  async function deleteShare() {
+    if (!shareToDelete) return;
+
+    try {
+      deleteLoading = true;
+      const response = await fetch('/api/admin/shares/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ shareId: shareToDelete.id })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Paylaşımı siyahıdan sil
+        shares = shares.filter(s => s.id !== shareToDelete!.id);
+        totalCount--;
+        
+        // Modal açıqsa bağla
+        if (modalOpen && selectedShare?.id === shareToDelete.id) {
+          closeModal();
+        }
+        
+        closeDeleteConfirm();
+      } else {
+        alert('Silmə xətası: ' + (data.message || 'Bilinməyən xəta'));
+      }
+    } catch (err) {
+      console.error('Paylaşım silərkən xəta:', err);
+      alert('Silmə xətası baş verdi');
+    } finally {
+      deleteLoading = false;
+    }
   }
 
   onMount(() => {
@@ -121,19 +171,6 @@
     </div>
   {:else if shares.length === 0}
     <div class="flex flex-col items-center justify-center py-16">
-      <svg
-        class="w-16 h-16 text-base-300 mb-4"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width={1.5}
-          d="M8.684 13.342C9.589 12.938 10 12.502 10 12c0-.502-.411-.938-1.316-1.342m0 2.684a3 3 0 110-2.684m9.032-6.348a9.998 9.998 0 01-9.709 5.348m9.709-5.348a10 10 0 010 9.532m0-9.532a10.009 10.009 0 01-9.709 5.348m9.709-5.348L19.5 7.5M3 13.5a9.98 9.98 0 018.684-4.992m0 0a.75.75 0 100-1.5m0 1.5a.75.75 0 110-1.5"
-        />
-      </svg>
       <p class="text-base-500 font-medium">Paylaşım tapılmadı</p>
     </div>
   {:else}
@@ -237,32 +274,55 @@
 
                 <!-- Əməliyyatlar -->
                 <td class="px-4 sm:px-6 py-4 sm:py-5">
-                  <button
-                    onclick={() => openModal(share)}
-                    class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
-                    title="Ətraflı məlumat"
-                  >
-                    <svg
-                      class="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  <div class="flex items-center gap-2">
+                    <button
+                      onclick={() => openModal(share)}
+                      class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors whitespace-nowrap"
+                      title="Ətraflı məlumat"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                    <span class="hidden sm:inline">Bax</span>
-                  </button>
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      <span class="hidden sm:inline">Bax</span>
+                    </button>
+                    <button
+                      onclick={() => openDeleteConfirm(share)}
+                      disabled={deleteLoading}
+                      class="cursor-pointer inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 sm:py-1.5 text-xs font-medium text-red-700 bg-red-50 rounded-md hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      title="Sil"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                      <span class="hidden sm:inline">Sil</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             {/each}
@@ -422,6 +482,73 @@
             </div>
           </div>
         {/if}
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Delete Confirm Modal -->
+{#if deleteConfirmOpen && shareToDelete}
+  <div 
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
+    onclick={(e) => {
+      if (e.target === e.currentTarget && !deleteLoading) {
+        closeDeleteConfirm();
+      }
+    }}
+    onkeydown={(e) => {
+      if (e.key === 'Escape' && !deleteLoading) {
+        closeDeleteConfirm();
+      }
+    }}
+    role="dialog"
+    aria-modal="true"
+    tabindex="0"
+  >
+    <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all animate-in zoom-in-95 duration-200">
+      <!-- Modal Header -->
+      <div class="px-6 pt-6 pb-4">
+        <div class="flex items-start gap-4">
+          <div class="shrink-0 w-12 h-12 rounded-full flex items-center justify-center bg-red-100">
+            <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-lg font-semibold text-slate-900">Paylaşımı sil?</h3>
+            <p class="text-sm text-base-600 mt-1">Bu əməliyyat geri alına bilməz. Paylaşım və bütün şərhlər silinəcəkdir.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="px-6 py-4 border-t border-base-200">
+        <div class="bg-base-50 rounded-lg p-3">
+          <p class="text-sm text-slate-700 line-clamp-3">{shareToDelete.content}</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-base-50 border-t border-base-200 px-6 py-4 flex justify-end gap-2 rounded-b-xl">
+        <button
+          onclick={closeDeleteConfirm}
+          disabled={deleteLoading}
+          class="cursor-pointer inline-flex items-center justify-center px-4 py-2 text-xs font-medium text-slate-900 bg-white border border-base-200 rounded-lg hover:bg-base-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          Ləğv et
+        </button>
+        <button
+          onclick={deleteShare}
+          disabled={deleteLoading}
+          class="cursor-pointer inline-flex items-center justify-center px-4 py-2 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {#if deleteLoading}
+            <svg class="w-4 h-4 animate-spin mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          {/if}
+          Sil
+        </button>
       </div>
     </div>
   </div>
