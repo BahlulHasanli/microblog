@@ -284,14 +284,14 @@ export default function ProfileTabs({
             ) : (
               <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="size-8 text-base-400"
+                      className="size-8 text-slate-400"
                     >
                       <path
                         strokeLinecap="round"
@@ -300,7 +300,7 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-base-900 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     Heç bir paylaşım yoxdur
                   </h3>
                   <p className="text-base-600">

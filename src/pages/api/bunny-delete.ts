@@ -10,7 +10,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Bu işlem için giriş yapmanız gerekiyor",
+          message: "Keçərsiz daxil olma",
         }),
         {
           status: 401,
@@ -24,13 +24,27 @@ export const POST: APIRoute = async (context) => {
     const BASE_HOSTNAME = "storage.bunnycdn.com";
     const HOSTNAME = REGION ? `${REGION}.${BASE_HOSTNAME}` : BASE_HOSTNAME;
     const STORAGE_ZONE_NAME = "the99-storage";
-    const ACCESS_KEY = "a3571a42-cb98-4dce-9b81d75e2c8c-5263-4043";
-    
+    const ACCESS_KEY = import.meta.env.BUNNY_API_KEY;
+
+    if (!ACCESS_KEY) {
+      console.error("[BunnyCDN] API Key mövcud deyil");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "BunnyCDN API Key konfigurasyonu yoxdur",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     let filePath: string | null = null;
-    
+
     // İstek formatını kontrol et (JSON veya FormData)
     const contentType = context.request.headers.get("content-type") || "";
-    
+
     if (contentType.includes("application/json")) {
       // JSON formatı için
       const body = await context.request.json();
@@ -43,13 +57,13 @@ export const POST: APIRoute = async (context) => {
 
     if (!filePath) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
-          message: "Dosya yolu belirtilmedi" 
+          message: "Dosya yolu belirtilmedi",
         }),
-        { 
+        {
           status: 400,
-          headers: { "Content-Type": "application/json" } 
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -115,9 +129,9 @@ export const POST: APIRoute = async (context) => {
             success: true,
             message: "Dosya zaten mevcut değil",
           }),
-          { 
+          {
             status: 200,
-            headers: { "Content-Type": "application/json" } 
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
@@ -129,21 +143,21 @@ export const POST: APIRoute = async (context) => {
         success: true,
         message: "Dosya başarıyla silindi",
       }),
-      { 
+      {
         status: 200,
-        headers: { "Content-Type": "application/json" } 
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
     console.error("Bunny CDN silme hatası:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         success: false,
-        message: "Dosya silme işlemi başarısız oldu" 
+        message: "Dosya silme işlemi başarısız oldu",
       }),
-      { 
+      {
         status: 500,
-        headers: { "Content-Type": "application/json" } 
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -184,8 +198,7 @@ function deleteFromBunny(
         console.log(`Yanıt: ${responseData}`);
 
         if (
-          res.statusCode &&
-          (res.statusCode >= 200 && res.statusCode < 300) ||
+          (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) ||
           res.statusCode === 404 // 404 de başarılı kabul edilir (dosya zaten yok)
         ) {
           console.log(`Dosya başarıyla silindi veya zaten yoktu: ${filePath}`);
