@@ -104,10 +104,8 @@ export const POST: APIRoute = async (context) => {
     const pubDate = existingPost.pub_date;
 
     // BunnyCDN məlumatları
-    const bunnyApiKey = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
-    const storageZoneName = "the99-storage";
-    const hostname = "storage.bunnycdn.com";
-    const pullZoneId = "3979498"; // Cache purge üçün Pull Zone ID
+    const bunnyApiKey = import.meta.env.BUNNY_API_KEY;
+    const storageZoneName = import.meta.env.BUNNY_STORAGE_ZONE;
 
     // Slug dəyişibsə folder əməliyyatları
     let shouldMoveFolder = oldSlug !== newSlug;
@@ -121,7 +119,7 @@ export const POST: APIRoute = async (context) => {
 
         // Köhnə folder-dəki şəkilləri al
         const checkOldFolderResponse = await fetch(
-          `https://${hostname}/${storageZoneName}/${oldFolder}/`,
+          `https://storage.bunnycdn.com/${storageZoneName}/${oldFolder}/`,
           {
             method: "GET",
             headers: {
@@ -156,7 +154,7 @@ export const POST: APIRoute = async (context) => {
       console.log(`\n1️⃣ Yeni folder yaradılır: ${newFolder}`);
       try {
         const createFolderResponse = await fetch(
-          `https://${hostname}/${storageZoneName}/${newFolder}/`,
+          `https://storage.bunnycdn.com/${storageZoneName}/${newFolder}/`,
           {
             method: "PUT",
             headers: {
@@ -189,7 +187,7 @@ export const POST: APIRoute = async (context) => {
 
               // Faylı endir
               const downloadResponse = await fetch(
-                `https://${hostname}/${storageZoneName}/${oldFolder}/${file.ObjectName}`,
+                `https://storage.bunnycdn.com/${storageZoneName}/${oldFolder}/${file.ObjectName}`,
                 {
                   method: "GET",
                   headers: {
@@ -229,7 +227,7 @@ export const POST: APIRoute = async (context) => {
 
               // Yeni folder-ə yüklə
               const uploadResponse = await fetch(
-                `https://${hostname}/${storageZoneName}/${newFolder}/${newFileName}`,
+                `https://storage.bunnycdn.com/${storageZoneName}/${newFolder}/${newFileName}`,
                 {
                   method: "PUT",
                   headers: {
@@ -313,7 +311,7 @@ export const POST: APIRoute = async (context) => {
             try {
               // Folder yoxla
               const checkFolderResponse = await fetch(
-                `https://${hostname}/${storageZoneName}/${folder}/`,
+                `https://storage.bunnycdn.com/${storageZoneName}/${folder}/`,
                 {
                   method: "GET",
                   headers: {
@@ -328,7 +326,7 @@ export const POST: APIRoute = async (context) => {
                 console.log(`Folder tapılmadı, yaradılır: ${folder}`);
 
                 const createFolderResponse = await fetch(
-                  `https://${hostname}/${storageZoneName}/${folder}/`,
+                  `https://storage.bunnycdn.com/${storageZoneName}/${folder}/`,
                   {
                     method: "PUT",
                     headers: {
@@ -361,11 +359,11 @@ export const POST: APIRoute = async (context) => {
           console.log(`Fayl yolu: ${filePath}`);
           console.log(`Fayl ölçüsü: ${arrayBuffer.byteLength} bytes`);
           console.log(
-            `URL: https://${hostname}/${storageZoneName}/${filePath}`
+            `URL: https://storage.bunnycdn.com/${storageZoneName}/${filePath}`
           );
 
           const response = await fetch(
-            `https://${hostname}/${storageZoneName}/${filePath}`,
+            `https://storage.bunnycdn.com/${storageZoneName}/${filePath}`,
             {
               method: "PUT",
               headers: {
@@ -473,7 +471,7 @@ export const POST: APIRoute = async (context) => {
           const filePath = imageUrl.replace(cdnPrefix, "");
 
           const response = await fetch(
-            `https://${hostname}/${storageZoneName}/${filePath}`,
+            `https://storage.bunnycdn.com/${storageZoneName}/${filePath}`,
             {
               method: "DELETE",
               headers: {
@@ -637,7 +635,7 @@ export const POST: APIRoute = async (context) => {
 
       // Klasör içeriğini kontrol et
       const response = await fetch(
-        `https://${hostname}/${storageZoneName}/${folderPath}/`,
+        `https://storage.bunnycdn.com/${storageZoneName}/${folderPath}/`,
         {
           method: "GET",
           headers: {
@@ -816,7 +814,7 @@ export const POST: APIRoute = async (context) => {
             for (const file of oldFolderImages) {
               if (!file.IsDirectory) {
                 const deleteFileResponse = await fetch(
-                  `https://${hostname}/${storageZoneName}/${oldFolder}/${file.ObjectName}`,
+                  `https://storage.bunnycdn.com/${storageZoneName}/${oldFolder}/${file.ObjectName}`,
                   {
                     method: "DELETE",
                     headers: {
@@ -835,7 +833,7 @@ export const POST: APIRoute = async (context) => {
 
           // 2. images folder-i sil
           const deleteImagesResponse = await fetch(
-            `https://${hostname}/${storageZoneName}/${oldFolder}/`,
+            `https://storage.bunnycdn.com/${storageZoneName}/${oldFolder}/`,
             {
               method: "DELETE",
               headers: {
@@ -849,7 +847,7 @@ export const POST: APIRoute = async (context) => {
 
           // 3. Ana folder-i sil (posts/oldSlug/)
           const deleteParentResponse = await fetch(
-            `https://${hostname}/${storageZoneName}/posts/${oldSlug}/`,
+            `https://storage.bunnycdn.com/${storageZoneName}/posts/${oldSlug}/`,
             {
               method: "DELETE",
               headers: {

@@ -84,14 +84,13 @@ export const POST: APIRoute = async (context) => {
         try {
           const arrayBuffer = await uploadedImage.arrayBuffer();
 
-          const bunnyApiKey = "af6f5531-5cdf-4883-a86e72649daa-6727-4657";
-          const storageZoneName = "the99-storage";
-          const hostname = "storage.bunnycdn.com";
+          const bunnyApiKey = import.meta.env.BUNNY_API_KEY;
+          const storageZoneName = import.meta.env.BUNNY_STORAGE_ZONE;
 
           const filePath = `${folder}/${imageFileName}`;
 
           const response = await fetch(
-            `https://${hostname}/${storageZoneName}/${filePath}`,
+            `https://storage.bunnycdn.com/${storageZoneName}/${filePath}`,
             {
               method: "PUT",
               headers: {

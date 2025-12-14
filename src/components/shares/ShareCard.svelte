@@ -69,16 +69,26 @@
   // Parse image_urls əgər string olarsa
   let imageUrls = $state<string[]>([]);
   
+  const normalizeImageUrl = (url: string): string => {
+    // Əgər tam URL-i olarsa, olduğu kimi qaytarırıq
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    // Əgər yalnız fayl adı olarsa, CDN URL-i əlavə edirik
+    return `https://the99.b-cdn.net/${url}`;
+  };
+  
   $effect(() => {
     if (share.image_urls) {
       if (typeof share.image_urls === "string") {
         try {
-          imageUrls = JSON.parse(share.image_urls);
+          const parsed = JSON.parse(share.image_urls);
+          imageUrls = Array.isArray(parsed) ? parsed.map(normalizeImageUrl) : [];
         } catch {
           imageUrls = [];
         }
       } else if (Array.isArray(share.image_urls)) {
-        imageUrls = share.image_urls;
+        imageUrls = share.image_urls.map(normalizeImageUrl);
       }
     } else {
       imageUrls = [];

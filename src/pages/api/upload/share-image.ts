@@ -90,7 +90,6 @@ export const POST: APIRoute = async (context) => {
 
     // BunnyCDN-ə yüklə
     const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
 
     const uploadResponse = await fetch(
       `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${fileName}`,
@@ -100,7 +99,7 @@ export const POST: APIRoute = async (context) => {
           AccessKey: BUNNY_API_KEY,
           "Content-Type": file.type,
         },
-        body: buffer,
+        body: arrayBuffer,
       }
     );
 
@@ -119,7 +118,10 @@ export const POST: APIRoute = async (context) => {
     }
 
     // CDN URL-i yaratırıq (pull zone istifadə edərək)
-    const imageUrl = `${BUNNY_PULL_ZONE}/${fileName}`;
+    // BUNNY_PULL_ZONE: https://storage.bunnycdn.com/the99-storage
+    // Pull zone URL-i: https://the99.b-cdn.net
+    const pullZoneUrl = "https://the99.b-cdn.net";
+    const imageUrl = `${pullZoneUrl}/${fileName}`;
 
     return new Response(
       JSON.stringify({
