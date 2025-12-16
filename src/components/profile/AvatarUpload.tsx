@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from "react";
-import { supabase } from "../../db/supabase";
+import { useState, useRef } from "react";
 import AvatarSelector from "./AvatarSelector";
 import { updateUserAvatar } from "@/store/userStore";
 import { extractAvatarPathFromUrl, isDefaultAvatar } from "@/utils/avatarUtils";
@@ -184,25 +183,22 @@ export default function AvatarUpload({
     setError("");
 
     try {
-      console.log("Avatar Supabase-də güncəllənir:", {
-        userId: user.id,
-        avatarUrl,
+      console.log("Avatar API ilə güncəllənir:", { avatarUrl });
+
+      // API endpoint ilə update et (server-side supabaseAdmin istifadə edir)
+      const response = await fetch("/api/user/update-avatar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ avatarUrl }),
       });
 
-      // Kullanıcı bilgilerini güncelle (əvvəl update et, sonra eski avatarı sil)
-      console.log("Update parametrləri:", { userId: user.id, avatarUrl });
+      const result = await response.json();
+      console.log("API cavabı:", result);
 
-      const { data: updateData, error } = await supabase
-        .from("users")
-        .update({ avatar: avatarUrl })
-        .eq("id", user.id)
-        .select("id, avatar");
-
-      console.log("Supabase update cavabı:", { data: updateData, error });
-
-      if (error) {
-        console.error("Supabase update xətası:", error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(result.error || "Avatar yenilənərkən xəta baş verdi");
       }
 
       // Eski avatarı sil (update-dən sonra)
@@ -215,14 +211,7 @@ export default function AvatarUpload({
         }
       }
 
-      // Update-dən sonra verify et
-      const { data: verifyData } = await supabase
-        .from("users")
-        .select("id, avatar")
-        .eq("id", user.id)
-        .single();
-
-      console.log("Supabase verify cavabı:", { verifyData });
+      console.log("Avatar uğurla yeniləndi");
 
       // Başarılı mesajını göster və ana bileşeni güncelle
       setSuccess(true);

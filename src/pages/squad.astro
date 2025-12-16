@@ -5,13 +5,15 @@ import { supabase } from "@/db/supabase";
 // Supabase-dən role_id 1, 2, 3 olan istifadəçiləri çək
 const { data: teamMembers, error } = await supabase
   .from("users")
-  .select("id, fullname, avatar, role_id, roles(description)")
+  .select("id, fullname, avatar, username, role_id, roles(description)")
   .in("role_id", [1, 2, 3])
   .order("role_id", { ascending: true });
 
 if (error) {
   console.error("Squad üzvlərini çəkərkən xəta:", error);
 }
+
+console.log(teamMembers)
 
  
 // Avatar şəkilləri optimize et 
@@ -26,6 +28,7 @@ const optimizedMembers = await Promise.all(
       name: member.fullname,
       avatar: member.avatar,
       role: roleName,
+      username: member.username
     };
   })
 );
