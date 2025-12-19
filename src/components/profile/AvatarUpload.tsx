@@ -42,9 +42,9 @@ export default function AvatarUpload({
       return;
     }
 
-    // Dosya boyutunu kontrol et (2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Şəkil faylı 2MB-dan böyük olmamalıdır");
+    // Dosya boyutunu kontrol et (15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      setError("Şəkil faylı 15MB-dan böyük olmamalıdır");
       return;
     }
 
@@ -349,7 +349,7 @@ export default function AvatarUpload({
                     />
                   </label>
                   <p className="text-xs text-base-500 mt-2">
-                    PNG, JPG və ya GIF. Maksimum 2MB.
+                    PNG, JPG və ya GIF. Maksimum 15MB.
                   </p>
                 </div>
               </div>
