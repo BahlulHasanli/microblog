@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import AvatarSelector from "./AvatarSelector";
 import { updateUserAvatar } from "@/store/userStore";
 import { extractAvatarPathFromUrl, isDefaultAvatar } from "@/utils/avatarUtils";
+import imageCompression from "browser-image-compression";
 
 interface User {
   id: string;
@@ -84,9 +85,44 @@ export default function AvatarUpload({
 
     try {
       console.log("Avatar yüklənməsi başlayır...");
+      console.log(
+        "Orijinal fayl ölçüsü:",
+        (file.size / 1024 / 1024).toFixed(2),
+        "MB"
+      );
+
+      // Şəkili compress et
+      const compressOptions = {
+        maxSizeMB: 1, // Maksimum 1MB
+        maxWidthOrHeight: 800, // Maksimum 800px
+        useWebWorker: true,
+        fileType: "image/jpeg" as const,
+      };
+
+      let compressedFile: File = file;
+
+      // Əgər fayl 1MB-dan böyükdürsə compress et
+      if (file.size > 1 * 1024 * 1024) {
+        console.log("Şəkil compress edilir...");
+        const compressedBlob = await imageCompression(file, compressOptions);
+        // Blob-u düzgün fayl adı ilə File-a çevir
+        compressedFile = new File(
+          [compressedBlob],
+          `compressed-${Date.now()}.jpg`,
+          { type: "image/jpeg" }
+        );
+        console.log(
+          "Compress olunmuş fayl ölçüsü:",
+          (compressedFile.size / 1024 / 1024).toFixed(2),
+          "MB"
+        );
+      }
 
       // Kullanıcı ID'sini kullanarak benzersiz bir dosya adı oluştur
-      const fileExt = file.name.split(".").pop();
+      const fileExt =
+        compressedFile.type === "image/jpeg"
+          ? "jpg"
+          : file.name.split(".").pop();
       // Benzersiz dosya adı oluştur (sadece dosya adı, path değil)
       const uniqueFileName = `${user.id}-${Date.now()}.${fileExt}`;
       // Bunny CDN için tam dosya yolu oluştur
@@ -94,7 +130,7 @@ export default function AvatarUpload({
 
       // Dosyayı FormData olarak hazırla
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile, uniqueFileName);
       formData.append("fileName", uniqueFileName);
       formData.append("filePath", filePath);
       formData.append("uploadType", "avatar");

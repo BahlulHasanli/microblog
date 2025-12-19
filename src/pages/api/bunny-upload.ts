@@ -76,6 +76,17 @@ export const POST: APIRoute = async ({ request }) => {
     // Storage > [Storage Zone Adı] > FTP & API Access > Storage API Password
     const ACCESS_KEY = import.meta.env.BUNNY_API_KEY;
 
+    if (!ACCESS_KEY) {
+      console.error("BUNNY_API_KEY environment variable tapılmadı");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Server konfiqurasiya xətası: BUNNY_API_KEY təyin edilməyib",
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("BunnyCDN ayarları:", {
       hostname: HOSTNAME,
       storageZone: STORAGE_ZONE_NAME,
