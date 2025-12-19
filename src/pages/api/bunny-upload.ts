@@ -76,6 +76,8 @@ export const POST: APIRoute = async ({ request }) => {
     // Storage > [Storage Zone Adı] > FTP & API Access > Storage API Password
     const ACCESS_KEY = import.meta.env.BUNNY_API_KEY;
 
+    console.log("BUNNY_API_KEY", ACCESS_KEY);
+
     if (!ACCESS_KEY) {
       console.error("BUNNY_API_KEY environment variable tapılmadı");
       return new Response(
