@@ -1,27 +1,14 @@
 import type { APIRoute } from "astro";
-import { supabase, supabaseAdmin } from "../../../db/supabase";
+import { supabaseAdmin } from "../../../db/supabase";
+import { getUserFromCookies } from "@/utils/auth";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    // Access token ilə session yoxla
-    const accessToken = cookies.get("sb-access-token")?.value;
-    const refreshToken = cookies.get("sb-refresh-token")?.value;
+    // getUserFromCookies ilə istifadəçini al
+    const user = await getUserFromCookies(cookies, () => null);
 
-    if (!accessToken) {
+    if (!user) {
       return new Response(JSON.stringify({ error: "İcazəsiz giriş" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Token ilə istifadəçini yoxla
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(accessToken);
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "İstifadəçi tapılmadı" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
