@@ -145,7 +145,7 @@
           fullname: editingUser.fullname,
           email: editingUser.email,
           username: editingUser.username,
-          role_id: editingUser.role_id,
+          role_id: Number(editingUser.role_id),
         }),
       });
 

@@ -11,6 +11,7 @@ interface ProfileDropdownProps {
   userName: string;
   userUsername?: string;
   isStudioRoutePath: boolean;
+  canWrite?: boolean;
 }
 
 export default function ProfileDropdown({
@@ -18,6 +19,7 @@ export default function ProfileDropdown({
   userName,
   userUsername,
   isStudioRoutePath,
+  canWrite = false,
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -164,7 +166,7 @@ export default function ProfileDropdown({
         </button>
       )}
 
-      {!isStudioRoutePath && (
+      {!isStudioRoutePath && canWrite && (
         <a
           href="/studio"
           className="flex gap-1 items-center text-[15px] text-base-700 hover:text-base-900 transition-all cursor-pointer"

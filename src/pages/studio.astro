@@ -12,8 +12,13 @@ if (!isLoggedIn) {
 
 const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
 
-
 if (!user) return Astro.redirect("/");
+
+// Yalnız Admin (1), Moderator (2) və Editor (3) rolları yazı yaza bilər
+const canWrite = user.role_id === 1 || user.role_id === 2 || user.role_id === 3;
+if (!canWrite) {
+  return Astro.redirect("/");
+}
 ---
 
 <BaseLayout title="Studio">

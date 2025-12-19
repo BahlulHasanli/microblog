@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireAdmin } from "@/utils/auth";
-import { supabaseAdmin } from "@/db/supabase";
+import { supabase, supabaseAdmin } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -31,22 +31,61 @@ export const POST: APIRoute = async (context) => {
     if (fullname !== undefined) updateData.fullname = fullname;
     if (email !== undefined) updateData.email = email;
     if (username !== undefined) updateData.username = username;
-    if (role_id !== undefined) updateData.role_id = role_id;
+    if (role_id !== undefined) updateData.role_id = Number(role_id);
 
-    // İstifadəçini yenilə
-    const { error } = await supabaseAdmin
+    console.log("Update data:", updateData, "userId:", userId);
+
+    // Əvvəlcə istifadəçinin mövcudluğunu yoxla
+    const { data: existingUser } = await supabase
       .from("users")
-      .update(updateData)
-      .eq("id", userId);
+      .select("id")
+      .eq("id", userId)
+      .single();
 
-    if (error) {
+    console.log("Existing user:", existingUser);
+
+    if (!existingUser) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "İstifadəçi yenilənərkən xəta baş verdi",
+          message: "Bu ID ilə istifadəçi tapılmadı",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // İstifadəçini yenilə - supabase istifadə et (RLS ilə)
+    const { data, error } = await supabase
+      .from("users")
+      .update(updateData)
+      .eq("id", userId)
+      .select();
+
+    if (error) {
+      console.error("Supabase update error:", error);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "İstifadəçi yenilənərkən xəta baş verdi: " + error.message,
         }),
         {
           status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "İstifadəçi tapılmadı və ya yenilənmədi",
+        }),
+        {
+          status: 404,
           headers: { "Content-Type": "application/json" },
         }
       );
