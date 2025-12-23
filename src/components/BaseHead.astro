@@ -101,6 +101,19 @@ const {
 
 <ClientRouter fallback="none" />
 
+{settings.google_analytics_id && (
+  <>
+    <!-- Google tag (gtag.js) -->
+    <script is:inline src={`https://www.googletagmanager.com/gtag/js?id=${settings.google_analytics_id}`}></script>
+    <script is:inline define:vars={{ gaId: settings.google_analytics_id }}>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){window.dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', gaId);
+    </script>
+  </>
+)}
+
 <script>
   import { initNavigationLoader } from '@/scripts/navigationLoader';
   initNavigationLoader();
