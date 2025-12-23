@@ -281,9 +281,10 @@
                   class:cursor-not-allowed={uploadingOgImage}
                 >
                   <div class="text-center">
-                    <svg class="mx-auto h-8 w-8 text-base-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                      <path d="M28 8H12a4 4 0 00-4 4v20a4 4 0 004 4h24a4 4 0 004-4V20m-8-12l-3.172-3.172a4 4 0 00-5.656 0L28 20M20 32h8m-16-8h4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto h-8 w-8 text-base-400 mb-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15" />
                     </svg>
+
                     <p class="text-sm font-medium text-slate-900">
                       {#if uploadingOgImage}
                         Yüklənir... {ogImageUploadProgress}%
