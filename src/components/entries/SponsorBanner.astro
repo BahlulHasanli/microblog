@@ -4,13 +4,21 @@ interface Props {
   description: string;
   image: string;
   url: string;
+  id?: number;
 }
 
-const { title, description, image, url } = Astro.props;
+const { title, description, image, url, id } = Astro.props;
 ---
 
 <article class="flex flex-col flex-1 h-full group">
-  <a href={url} target="_blank" rel="noopener noreferrer" title={title} class="block">
+  <a 
+    href={url} 
+    target="_blank" 
+    rel="noopener noreferrer" 
+    title={title} 
+    class="block"
+    onclick={id ? `fetch('/api/admin/sponsor-banners/track-click', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ${id} }) }).catch(e => console.error(e))` : undefined}
+  >
     <div class="block w-full">
       <img
         src={image}

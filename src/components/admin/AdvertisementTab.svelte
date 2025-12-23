@@ -17,7 +17,7 @@
     image_url: string;
     banner_url: string;
     is_active: boolean;
-    position: number;
+    click_count: number;
   }
 
   let banners: SponsorBanner[] = $state([]);
@@ -27,7 +27,7 @@
     image_url: '',
     banner_url: '',
     is_active: true,
-    position: 0,
+    click_count: 0,
   });
 
   let loading = $state(true);
@@ -64,9 +64,10 @@
 
       if (data.success && Array.isArray(data.banners)) {
         banners = data.banners;
+      } else {
+        showAlert('Bannerləri yükləmə xətası: ' + (data.message || 'Bilinməyən xəta'), 'error', 'Xəta');
       }
     } catch (error) {
-      console.error('Reklam bannerləri yüklənərkən xəta:', error);
       showAlert('Reklam bannerləri yüklənərkən xəta baş verdi', 'error', 'Xəta');
     } finally {
       loading = false;
@@ -162,6 +163,14 @@
     } finally {
       saving = false;
     }
+  }
+
+  function copyBannerUrl(url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      showAlert('Link kopyalandı', 'success', 'Uğurlu');
+    }).catch(() => {
+      showAlert('Link kopyalama xətası', 'error', 'Xəta');
+    });
   }
 
   async function handleDeleteBanner(id: number) {
@@ -260,7 +269,7 @@
 
               <div>
                 <label for="new_url" class="block text-xs font-medium text-base-700 mb-1">
-                  Bağlantı URL
+                  URL
                 </label>
                 <input
                   type="url"
@@ -325,11 +334,18 @@
                 </div>
               {/if}
 
+              <!-- <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-blue-600 flex-shrink-0">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+                </svg>
+                <p class="text-blue-700">Kliklənmə sayı avtomatik olaraq artacaq</p>
+              </div> -->
+
               <button
                 type="button"
                 onclick={handleAddBanner}
                 disabled={saving || !canEdit}
-                class="w-full px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                class="cursor-pointer w-full px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 {#if saving}
                   Əlavə edilir...
@@ -368,29 +384,46 @@
                           <p class="text-xs text-base-600 mt-1 line-clamp-2">{banner.description}</p>
                         {/if}
                       </div>
-                      <button
-                        type="button"
-                        onclick={() => handleToggleBanner(banner.id || 0, banner.is_active)}
-                        class="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
-                        class:bg-green-100={banner.is_active}
-                        class:text-green-700={banner.is_active}
-                        class:bg-base-100={!banner.is_active}
-                        class:text-base-600={!banner.is_active}
-                      >
-                        {banner.is_active ? 'Aktiv' : 'Deaktiv'}
-                      </button>
                     </div>
-                    
-                    <p class="text-xs text-base-500 truncate mb-3">{banner.banner_url}</p>
                     
                     <button
                       type="button"
-                      onclick={() => handleDeleteBanner(banner.id || 0)}
-                      disabled={saving}
-                      class="text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                      onclick={() => copyBannerUrl(banner.banner_url)}
+                      class="text-xs text-blue-600 hover:text-blue-700 hover:underline font-medium mb-2 block cursor-pointer"
                     >
-                      Sil
+                      Linki kopyala
                     </button>
+                    
+                    <div class="flex items-center gap-4 mb-3">
+                      <div class="flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 text-base-400">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
+                        </svg>
+                        <span class="text-xs font-medium text-base-600">{banner.click_count} kliklənmə</span>
+                      </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onclick={() => handleToggleBanner(banner.id || 0, banner.is_active)}
+                        class="px-3 py-1 cursor-pointer rounded-lg text-xs font-medium transition-colors"
+                        class:bg-green-100={!banner.is_active}
+                        class:text-green-700={!banner.is_active}
+                        class:bg-slate-300={banner.is_active}
+                        class:text-slate-700={banner.is_active}
+                      >
+                        {banner.is_active ? 'Deaktiv et' : 'Aktiv et'}
+                      </button>
+                      <button
+                        type="button"
+                        onclick={() => handleDeleteBanner(banner.id || 0)}
+                        disabled={saving}
+                        class="cursor-pointer text-xs bg-red-600 hover:bg-red-700 text-white font-medium disabled:opacity-50 px-3 py-1 rounded-lg"
+                      >
+                        Sil
+                      </button>
+                    </div>
                   </div>
                 </div>
               {/each}

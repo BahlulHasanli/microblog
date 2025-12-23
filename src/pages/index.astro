@@ -25,14 +25,22 @@ if (categoriesError) {
 
 // Supabase-dən sponsor bannerləri al
 let sponsorBanners: any[] = [];
-const { data: bannersData } = await supabase
+const { data: bannersData, error: bannersError } = await supabase
   .from("sponsor_banners")
   .select("*")
   .eq("is_active", true)
-  .order("position", { ascending: true });
+  .order("click_count", { ascending: false });
+
+console.log('=== SPONSOR BANNERS INDEX DEBUG ===');
+console.log('Error:', bannersError);
+console.log('Data:', bannersData);
+console.log('Data count:', bannersData?.length);
 
 if (bannersData && Array.isArray(bannersData)) {
   sponsorBanners = bannersData;
+  console.log('✓ Sponsor banners loaded:', sponsorBanners.length);
+} else {
+  console.log('✗ No sponsor banners found');
 }
 
 
@@ -97,33 +105,63 @@ const posts = (postsData || []).map(post => {
         <div class="grid grid-cols-1 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">
           {
             posts.length > 0 ? (
-              posts.slice(0, 10).map((post, index) => {
-                const bannerIndex = Math.floor(index / 2);
-                const showBanner = (index + 1) % 2 === 0 && bannerIndex < sponsorBanners.length;
+              (() => {
+                const items: any[] = [];
+                let bannerIdx = 0;
                 
-                return (
-                  <>
-                    <BlogEntries
-                      url={"/posts/" + post.slug} 
-                      alt={post.data.title}
-                      categories={post.data.categories}
-                      title={post.data.title}
-                      image={post.data.image.url}
-                      description={post.data.description}
-                      pubDate={post.data.pubDate}
-                      author={post.data.author}
-                    />
-                    {showBanner && (
+                posts.slice(0, 10).forEach((post, index) => {
+                  const isIcmal = post.data.categories?.includes('icmal') || false;
+                  
+                  // İcmal postları 2 sütun tutur
+                  if (isIcmal) {
+                    items.push(
+                      <div class="sm:col-span-2">
+                        <BlogEntries
+                          url={"/posts/" + post.slug} 
+                          alt={post.data.title}
+                          categories={post.data.categories}
+                          title={post.data.title}
+                          image={post.data.image.url}
+                          description={post.data.description}
+                          pubDate={post.data.pubDate}
+                          author={post.data.author}
+                        />
+                      </div>
+                    );
+                  } else {
+                    items.push(
+                      <div>
+                        <BlogEntries
+                          url={"/posts/" + post.slug} 
+                          alt={post.data.title}
+                          categories={post.data.categories}
+                          title={post.data.title}
+                          image={post.data.image.url}
+                          description={post.data.description}
+                          pubDate={post.data.pubDate}
+                          author={post.data.author}
+                        />
+                      </div>
+                    );
+                  }
+                  
+                  // Hər 2 postdan sonra sponsor banner göstər
+                  if ((index + 1) % 2 === 0 && bannerIdx < sponsorBanners.length) {
+                    items.push(
                       <SponsorBanner
-                        title={sponsorBanners[bannerIndex].title}
-                        description={sponsorBanners[bannerIndex].description}
-                        image={sponsorBanners[bannerIndex].image_url}
-                        url={sponsorBanners[bannerIndex].banner_url}
+                        id={sponsorBanners[bannerIdx].id}
+                        title={sponsorBanners[bannerIdx].title}
+                        description={sponsorBanners[bannerIdx].description}
+                        image={sponsorBanners[bannerIdx].image_url}
+                        url={sponsorBanners[bannerIdx].banner_url}
                       />
-                    )}
-                  </>
-                );
-              })
+                    );
+                    bannerIdx++;
+                  }
+                });
+                
+                return items;
+              })()
             ) : (
               <div class="col-span-1 sm:col-span-2 py-16 sm:py-24">
                 <div class="flex flex-col items-center justify-center text-center">
