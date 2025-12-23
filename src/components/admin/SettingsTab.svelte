@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import AlertModal from './AlertModal.svelte';
+  import { uploadToBunny } from '@/lib/bunny-cdn';
+  import { deleteFromBunny } from '@/lib/bunny-delete';
 
   interface Props {
     canEdit?: boolean;
@@ -13,7 +15,8 @@
     site_description: string;
     site_keywords: string;
     og_image: string;
-    twitter_handle: string;
+    x_handle: string;
+    facebook_handle: string;
     google_analytics_id: string;
     posts_per_page: number;
     enable_comments: boolean;
@@ -25,7 +28,8 @@
     site_description: '',
     site_keywords: '',
     og_image: '',
-    twitter_handle: '',
+    x_handle: '',
+    facebook_handle: '',
     google_analytics_id: '',
     posts_per_page: 10,
     enable_comments: true,
@@ -34,6 +38,10 @@
 
   let loading = $state(true);
   let saving = $state(false);
+  let uploadingOgImage = $state(false);
+  let ogImageUploadProgress = $state(0);
+  let deletingOgImage = $state(false);
+  let ogMediaFiles: string[] = $state([]);
 
   // Modal state
   let alertModal = $state({
@@ -45,6 +53,7 @@
 
   onMount(() => {
     loadSettings();
+    loadOgMediaFiles();
   });
 
   async function loadSettings() {
@@ -63,6 +72,19 @@
     }
   }
 
+  async function loadOgMediaFiles() {
+    try {
+      const response = await fetch("/api/bunny-list-files?folder=og-media");
+      const data = await response.json();
+
+      if (data.success && data.files) {
+        ogMediaFiles = data.files.map((file: any) => file.url);
+      }
+    } catch (error) {
+      console.error("OG media faylları yüklənərkən xəta:", error);
+    }
+  }
+
   function showAlert(message: string, variant: 'success' | 'error' | 'info' | 'warning' = 'info', title?: string) {
     alertModal = {
       isOpen: true,
@@ -71,6 +93,62 @@
       variant
     };
   }
+
+  async function handleOgImageUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (!file) return;
+
+    try {
+      uploadingOgImage = true;
+      ogImageUploadProgress = 0;
+
+      const imageUrl = await uploadToBunny({
+        file,
+        folder: 'og-media',
+        onProgress: (progress) => {
+          ogImageUploadProgress = progress;
+        }
+      });
+
+      settings.og_image = imageUrl;
+      showAlert('OG şəkli uğurla yükləndi', 'success', 'Uğurlu');
+      await loadOgMediaFiles();
+    } catch (error) {
+      console.error('OG şəkli yükləmə xətası:', error);
+      showAlert(error instanceof Error ? error.message : 'Şəkil yükləmə xətası', 'error', 'Xəta');
+    } finally {
+      uploadingOgImage = false;
+      ogImageUploadProgress = 0;
+      input.value = '';
+    }
+  }
+
+  async function handleDeleteOgImage(imageUrl: string) {
+    try {
+      deletingOgImage = true;
+      const success = await deleteFromBunny({
+        imageUrl,
+        onSuccess: () => {
+          ogMediaFiles = ogMediaFiles.filter(url => url !== imageUrl);
+          if (settings.og_image === imageUrl) {
+            settings.og_image = '';
+          }
+          showAlert('Şəkil uğurla silindi', 'success', 'Uğurlu');
+        },
+        onError: (error) => {
+          showAlert(error || 'Şəkil silmə xətası', 'error', 'Xəta');
+        }
+      });
+    } catch (error) {
+      console.error('Şəkil silmə xətası:', error);
+      showAlert(error instanceof Error ? error.message : 'Şəkil silmə xətası', 'error', 'Xəta');
+    } finally {
+      deletingOgImage = false;
+    }
+  }
+
 
   async function handleSave() {
     try {
@@ -186,13 +264,115 @@
             <label for="og_image" class="block text-sm font-medium text-base-700 mb-2">
               Sosial Media Şəkli (OG Image)
             </label>
-            <input
-              type="url"
-              id="og_image"
-              bind:value={settings.og_image}
-              placeholder="https://example.com/image.jpg"
-              class="block w-full border border-base-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-            />
+            <div class="space-y-3">
+              <div class="relative">
+                <input
+                  type="file"
+                  id="og_image"
+                  accept="image/*"
+                  onchange={handleOgImageUpload}
+                  disabled={uploadingOgImage}
+                  class="hidden"
+                />
+                <label
+                  for="og_image"
+                  class="flex items-center justify-center w-full border-2 border-dashed border-base-300 rounded-lg px-4 py-6 cursor-pointer hover:border-slate-900 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  class:opacity-50={uploadingOgImage}
+                  class:cursor-not-allowed={uploadingOgImage}
+                >
+                  <div class="text-center">
+                    <svg class="mx-auto h-8 w-8 text-base-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20a4 4 0 004 4h24a4 4 0 004-4V20m-8-12l-3.172-3.172a4 4 0 00-5.656 0L28 20M20 32h8m-16-8h4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="text-sm font-medium text-slate-900">
+                      {#if uploadingOgImage}
+                        Yüklənir... {ogImageUploadProgress}%
+                      {:else}
+                        Şəkil seçmək üçün klikləyin
+                      {/if}
+                    </p>
+                    <p class="text-xs text-base-500 mt-1">PNG, JPG, GIF (Max 5MB)</p>
+                  </div>
+                </label>
+              </div>
+
+              {#if settings.og_image}
+                <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <img
+                    src={settings.og_image}
+                    alt=""
+                    class="w-16 h-16 object-cover rounded-lg border border-base-200"
+                  />
+                  <div class="flex-1">
+                    <p class="text-xs font-medium text-base-700 mb-1">Seçilmiş şəkil:</p>
+                    <p class="text-xs text-base-500 break-all">{settings.og_image}</p>
+                    <button
+                      type="button"
+                      onclick={() => { settings.og_image = ''; }}
+                      class="text-xs text-red-600 hover:text-red-700 mt-2 font-medium"
+                    >
+                      Seçimi Sil
+                    </button>
+                  </div>
+                </div>
+              {/if}
+
+              {#if ogMediaFiles.length > 0}
+                <div class="mt-4">
+                  <p class="text-xs font-medium text-base-700 mb-3">Yüklənmiş Şəkillər:</p>
+                  <div class="grid grid-cols-3 gap-3">
+                    {#each ogMediaFiles as imageUrl (imageUrl)}
+                      <div class="relative group">
+                        <button
+                          type="button"
+                          class="w-full h-24 p-0 border-0 rounded-lg overflow-hidden cursor-pointer hover:border-slate-900 transition-all"
+                          class:ring-2={settings.og_image === imageUrl}
+                          class:ring-blue-500={settings.og_image === imageUrl}
+                        >
+                          <img
+                            src={imageUrl}
+                            alt=""
+                            class="w-full h-full object-cover"
+                          />
+                        </button>
+                        <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <a
+                            href={imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Blank səhifədə aç"
+                            class="bg-blue-500 text-white p-1 rounded hover:bg-blue-600 transition-colors"
+                          >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                          <button
+                            type="button"
+                            onclick={() => handleDeleteOgImage(imageUrl)}
+                            disabled={deletingOgImage}
+                            title="Şəkili sil"
+                            aria-label="Şəkili sil"
+                            class="bg-red-500 text-white p-1 rounded hover:bg-red-600 transition-colors disabled:opacity-50"
+                          >
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                        {#if settings.og_image === imageUrl}
+                          <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-lg pointer-events-none">
+                            <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                          </div>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+            </div>
             <p class="text-xs text-base-500 mt-1.5">
               Facebook, Twitter və s. paylaşımlarda göstəriləcək
             </p>
@@ -230,8 +410,8 @@
 
         <div class="space-y-5">
           <div>
-            <label for="twitter_handle" class="block text-sm font-medium text-base-700 mb-2">
-              Twitter İstifadəçi Adı
+            <label for="x_handle" class="block text-sm font-medium text-base-700 mb-2">
+              X.com İstifadəçi Adı
             </label>
             <div class="relative">
               <span class="absolute left-4 top-1/2 -translate-y-1/2 text-base-500">
@@ -239,8 +419,26 @@
               </span>
               <input
                 type="text"
-                id="twitter_handle"
-                bind:value={settings.twitter_handle}
+                id="x_handle"
+                bind:value={settings.x_handle}
+                placeholder="username"
+                class="block w-full border border-base-300 rounded-lg pl-8 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="facebook_handle" class="block text-sm font-medium text-base-700 mb-2">
+              Facebook İstifadəçi Adı
+            </label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 text-base-500">
+                @
+              </span>
+              <input
+                type="text"
+                id="facebook_handle"
+                bind:value={settings.facebook_handle}
                 placeholder="username"
                 class="block w-full border border-base-300 rounded-lg pl-8 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
               />

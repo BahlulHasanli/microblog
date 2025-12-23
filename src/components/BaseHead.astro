@@ -10,7 +10,8 @@ export interface Props {
   canonical?: string;
   image?: string;
   keywords?: string;
-  twitterHandle?: string;
+  xHandle?: string;
+  facebookHandle?: string;
   siteName?: string;
 }
 
@@ -37,7 +38,8 @@ const {
   canonical = Astro.url.origin,
   image = settings.og_image || `${Astro.url.origin}/og-image.jpg`,
   keywords = settings.site_keywords,
-  twitterHandle = settings.twitter_handle,
+  xHandle = settings.x_handle,
+  facebookHandle = settings.facebook_handle,
   siteName = settings.site_title
 } = Astro.props;
 ---
@@ -61,10 +63,18 @@ const {
   }}
   twitter={{
     card: "summary_large_image",
-    site: twitterHandle,
-    creator: twitterHandle,
+    site: xHandle,
+    creator: xHandle,
   }}
 />
+
+{facebookHandle && (
+  <meta property="og:url" content={canonical} />
+)}
+
+{xHandle && (
+  <meta name="twitter:creator" content={`@${xHandle}`} />
+)}
 
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />

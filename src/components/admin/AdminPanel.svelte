@@ -194,7 +194,7 @@
 
 <div class="min-h-screen bg-linear-to-br from-base-50 to-white">
   <!-- Header -->
-  <header class="bg-white/80 backdrop-blur-sm border-b border-base-200/50 sticky top-0 z-10">
+  <header class="bg-white/80 backdrop-blur-sm border-b border-base-200/50 sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-3 sm:gap-4">
