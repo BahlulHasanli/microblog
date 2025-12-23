@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
+import SponsorBanner from "@/components/entries/SponsorBanner.astro";
 import Slider from "@/components/entries/HomeSlider.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
@@ -22,8 +23,18 @@ if (categoriesError) {
   console.warn('Kategoriyalar yüklənərkən xəta:', categoriesError);
 }
 
-// Autentifikasiya yoxlaması
-const isUserAuthenticated = isAuthenticated(Astro.cookies);
+// Supabase-dən sponsor bannerləri al
+let sponsorBanners: any[] = [];
+const { data: bannersData } = await supabase
+  .from("sponsor_banners")
+  .select("*")
+  .eq("is_active", true)
+  .order("position", { ascending: true });
+
+if (bannersData && Array.isArray(bannersData)) {
+  sponsorBanners = bannersData;
+}
+
 
 // Supabase-dən postları al
 const { data: postsData, error: postsError } = await supabase
@@ -86,18 +97,33 @@ const posts = (postsData || []).map(post => {
         <div class="grid grid-cols-1 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">
           {
             posts.length > 0 ? (
-              posts.map((post) => (
-                <BlogEntries
-                  url={"/posts/" + post.slug} 
-                  alt={post.data.title}
-                  categories={post.data.categories}
-                  title={post.data.title}
-                  image={post.data.image.url}
-                  description={post.data.description}
-                  pubDate={post.data.pubDate}
-                  author={post.data.author}
-                />
-              )).slice(0, 10)
+              posts.slice(0, 10).map((post, index) => {
+                const bannerIndex = Math.floor(index / 2);
+                const showBanner = (index + 1) % 2 === 0 && bannerIndex < sponsorBanners.length;
+                
+                return (
+                  <>
+                    <BlogEntries
+                      url={"/posts/" + post.slug} 
+                      alt={post.data.title}
+                      categories={post.data.categories}
+                      title={post.data.title}
+                      image={post.data.image.url}
+                      description={post.data.description}
+                      pubDate={post.data.pubDate}
+                      author={post.data.author}
+                    />
+                    {showBanner && (
+                      <SponsorBanner
+                        title={sponsorBanners[bannerIndex].title}
+                        description={sponsorBanners[bannerIndex].description}
+                        image={sponsorBanners[bannerIndex].image_url}
+                        url={sponsorBanners[bannerIndex].banner_url}
+                      />
+                    )}
+                  </>
+                );
+              })
             ) : (
               <div class="col-span-1 sm:col-span-2 py-16 sm:py-24">
                 <div class="flex flex-col items-center justify-center text-center">

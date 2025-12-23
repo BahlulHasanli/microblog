@@ -7,6 +7,7 @@
   import CommentsTab from './CommentsTab.svelte';
   import RolesTab from './RolesTab.svelte';
   import SharesTab from './SharesTab.svelte';
+  import AdvertisementTab from './AdvertisementTab.svelte';
   import { hasPermission, Permissions, DefaultRolePermissions } from '@/utils/permissions';
 
   interface Props {
@@ -15,7 +16,7 @@
 
   const { user }: Props = $props();
 
-  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' = $state('posts');
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' = $state('posts');
   let userPermissions: string[] = $state([]);
   
   // Permission əsaslı yoxlamalar
@@ -508,6 +509,20 @@
               <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
             {/if}
           </button>
+          <button
+            onclick={() => activeTab = 'advertisement'}
+            class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'advertisement' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+          >
+            <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 sm:w-4 sm:h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Reklam
+            </span>
+            {#if activeTab === 'advertisement'}
+              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+            {/if}
+          </button>
         </nav>
       </div>
 
@@ -525,6 +540,8 @@
           <RolesTab canEdit={canEditRoles} />
         {:else if activeTab === 'shares'}
           <SharesTab />
+        {:else if activeTab === 'advertisement'}
+          <AdvertisementTab canEdit={canEditSettings} />
         {/if}
       </div>
     </div>
