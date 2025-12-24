@@ -84,8 +84,16 @@ export const POST: APIRoute = async (context) => {
         try {
           const arrayBuffer = await uploadedImage.arrayBuffer();
 
-          const bunnyApiKey = import.meta.env.BUNNY_API_KEY;
-          const storageZoneName = import.meta.env.BUNNY_STORAGE_ZONE;
+          const runtime = (context.locals as any).runtime;
+          const bunnyApiKey =
+            runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+          const storageZoneName =
+            runtime?.env?.BUNNY_STORAGE_ZONE ||
+            import.meta.env.BUNNY_STORAGE_ZONE;
+
+          if (!bunnyApiKey) {
+            throw new Error("BUNNY_API_KEY environment variable tapılmadı");
+          }
 
           const filePath = `${folder}/${imageFileName}`;
 
@@ -102,7 +110,10 @@ export const POST: APIRoute = async (context) => {
           );
 
           if (!response.ok) {
-            throw new Error(`Bunny CDN yükleme hatası: ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(
+              `Bunny CDN yükleme hatası: ${response.status} ${response.statusText} - ${errorText}`
+            );
           }
 
           coverImageUrl = `https://the99.b-cdn.net/${folder}/${imageFileName}`;
