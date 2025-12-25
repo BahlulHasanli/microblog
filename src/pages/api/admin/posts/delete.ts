@@ -35,6 +35,11 @@ async function deleteBunnyCDNFolder(
       console.error(
         `[BunnyCDN] List xətası - Status: ${listResponse.status}, Body: ${errorText}`
       );
+      // Folder mövcud deyilsə, xəta qeyd et amma davam et
+      if (listResponse.status === 404) {
+        console.log(`[BunnyCDN] Folder artıq mövcud deyil: ${normalizedPath}`);
+        return;
+      }
       return;
     }
 
@@ -97,6 +102,7 @@ async function deleteBunnyCDNFolder(
       console.error(
         `[BunnyCDN] Folder silmə xətası: ${normalizedPath}, Status: ${deleteFolderResponse.status}, Body: ${errorText}`
       );
+      // Xətaya baxmayaraq davam et, çünki fayllar artıq silinib
     }
   } catch (error) {
     console.error("[BunnyCDN] Folder silmə xətası:", error);
