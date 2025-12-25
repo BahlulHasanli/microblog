@@ -1,0 +1,84 @@
+---
+import { Image } from "astro:assets";
+
+interface Props {
+  src: string;
+  alt: string;
+  blurhash?: string | null;
+  width: number;
+  height: number;
+  class?: string;
+}
+
+const { src, alt, blurhash, width, height, class: className = "" } = Astro.props;
+---
+
+<div class={`blurhash-container relative overflow-hidden ${className}`} data-blurhash={blurhash}>
+  {blurhash && (
+    <canvas 
+      class="blurhash-canvas absolute inset-0 w-full h-full object-cover" 
+      aria-hidden="true"
+    />
+  )}
+  <Image
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    class="blurhash-img w-full h-full object-cover"
+    loading="lazy"
+  />
+</div>
+
+<script>
+  import { decode } from "blurhash";
+
+  function initBlurhash() {
+    const containers = document.querySelectorAll('.blurhash-container[data-blurhash]');
+    
+    containers.forEach((container) => {
+      const blurhash = container.getAttribute('data-blurhash');
+      const canvas = container.querySelector('.blurhash-canvas') as HTMLCanvasElement;
+      const img = container.querySelector('.blurhash-img') as HTMLImageElement;
+      
+      if (!blurhash || !canvas) return;
+      
+      try {
+        const width = 32;
+        const height = 32;
+        const pixels = decode(blurhash, width, height);
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          const imageData = ctx.createImageData(width, height);
+          imageData.data.set(pixels);
+          ctx.putImageData(imageData, 0, 0);
+        }
+        
+        if (img) {
+          if (img.complete) {
+            canvas.style.opacity = '0';
+          } else {
+            img.addEventListener('load', () => {
+              canvas.style.opacity = '0';
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Blurhash decode xətası:', error);
+      }
+    });
+  }
+  
+  initBlurhash();
+  document.addEventListener('astro:after-swap', initBlurhash);
+</script>
+
+<style>
+  .blurhash-canvas {
+    transition: opacity 0.3s ease-out;
+  }
+</style>

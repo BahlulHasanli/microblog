@@ -47,6 +47,7 @@ const sortedPosts = (filteredPosts || []).map(post => ({
       url: post.image_url || '',
       alt: post.image_alt || post.title
     },
+    blurhash: post.image_blurhash || null,
     categories: post.categories || [],
     author: post.users
   }
@@ -85,6 +86,7 @@ const sortedPosts = (filteredPosts || []).map(post => ({
               description={post.data.description}
               pubDate={post.data.pubDate}
               author={post.data.author}
+              blurhash={post.data.blurhash}
             />
           ))}
         </div>

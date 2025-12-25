@@ -15,6 +15,7 @@
     user_id: string;
     content: string;
     image_urls?: string[] | null;
+    image_blurhashes?: string[] | null;
     youtube_video_id?: string | null;
     created_at: string;
     updated_at: string;
@@ -68,6 +69,7 @@
 
   // Parse image_urls əgər string olarsa
   let imageUrls = $state<string[]>([]);
+  let imageBlurhashes = $state<(string | null)[]>([]);
   
   const normalizeImageUrl = (url: string): string => {
     // Əgər tam URL-i olarsa, olduğu kimi qaytarırıq
@@ -92,6 +94,22 @@
       }
     } else {
       imageUrls = [];
+    }
+    
+    // Blurhash-ləri parse et
+    if (share.image_blurhashes) {
+      if (typeof share.image_blurhashes === "string") {
+        try {
+          const parsed = JSON.parse(share.image_blurhashes);
+          imageBlurhashes = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          imageBlurhashes = [];
+        }
+      } else if (Array.isArray(share.image_blurhashes)) {
+        imageBlurhashes = share.image_blurhashes;
+      }
+    } else {
+      imageBlurhashes = [];
     }
   });
 
@@ -164,7 +182,7 @@
 
       <!-- Share Images -->
       {#if imageUrls.length > 0}
-        <ImageGallery images={imageUrls} />
+        <ImageGallery images={imageUrls} blurhashes={imageBlurhashes} />
       {/if}
 
       <!-- YouTube Video -->

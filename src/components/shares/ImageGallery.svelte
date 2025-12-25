@@ -1,36 +1,99 @@
 <script lang="ts">
   import { ChevronLeft, ChevronRight, X } from "lucide-svelte";
+  import { decode } from "blurhash";
+  import { onMount } from "svelte";
 
-  interface Props {
-    images: string[];
+  interface ImageWithBlurhash {
+    url: string;
+    blurhash?: string | null;
   }
 
-  let { images }: Props = $props();
+  interface Props {
+    images: string[] | ImageWithBlurhash[];
+    blurhashes?: (string | null)[];
+  }
+
+  let { images, blurhashes = [] }: Props = $props();
+
+  // Normalize images to always have url and optional blurhash
+  const normalizedImages = $derived(() => {
+    if (images.length === 0) return [];
+    
+    // Check if first item is string or object
+    if (typeof images[0] === 'string') {
+      return (images as string[]).map((url, index) => ({
+        url,
+        blurhash: blurhashes[index] || null
+      }));
+    }
+    return images as ImageWithBlurhash[];
+  });
+
+  let blurhashDataUrls = $state<Map<number, string>>(new Map());
+
+  onMount(() => {
+    const imgs = normalizedImages();
+    imgs.forEach((img, index) => {
+      if (img.blurhash) {
+        try {
+          const width = 32;
+          const height = 32;
+          const pixels = decode(img.blurhash, width, height);
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const imageData = ctx.createImageData(width, height);
+            imageData.data.set(pixels);
+            ctx.putImageData(imageData, 0, 0);
+            blurhashDataUrls.set(index, canvas.toDataURL());
+            blurhashDataUrls = new Map(blurhashDataUrls);
+          }
+        } catch (error) {
+          console.error('Blurhash decode xətası:', error);
+        }
+      }
+    });
+  });
+
+  let loadedImages = $state<Set<number>>(new Set());
+
+  const handleImageLoad = (index: number) => {
+    loadedImages.add(index);
+    loadedImages = new Set(loadedImages);
+  };
 
   let isOpen = $state(false);
   let currentIndex = $state(0);
 
   const handlePrev = () => {
-    currentIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+    const imgs = normalizedImages();
+    currentIndex = currentIndex === 0 ? imgs.length - 1 : currentIndex - 1;
   };
 
   const handleNext = () => {
-    currentIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
+    const imgs = normalizedImages();
+    currentIndex = currentIndex === imgs.length - 1 ? 0 : currentIndex + 1;
   };
 
   // 4 şəkilə qədər göstər
-  const displayImages = images.slice(0, 4);
-  const remainingCount = images.length > 4 ? images.length - 4 : 0;
+  const displayImages = $derived(() => normalizedImages().slice(0, 4));
+  const remainingCount = $derived(() => {
+    const imgs = normalizedImages();
+    return imgs.length > 4 ? imgs.length - 4 : 0;
+  });
 
   // Grid layout hesabla
   const getGridClass = () => {
-    if (displayImages.length === 1) return "grid-cols-1";
+    const imgs = displayImages();
+    if (imgs.length === 1) return "grid-cols-1";
     return "grid-cols-2";
   };
 
   // Border radius class-ları
   const getBorderRadiusClass = (index: number) => {
-    const length = displayImages.length;
+    const length = displayImages().length;
 
     if (length === 1) return "rounded-lg";
     if (length === 2) {
@@ -50,10 +113,10 @@
   };
 </script>
 
-{#if images.length > 0}
+{#if normalizedImages().length > 0}
   <!-- Gallery Grid -->
   <div class={`mt-3 grid ${getGridClass()} gap-1`}>
-    {#each displayImages as image, index} 
+    {#each displayImages() as image, index} 
       <button
         type="button"
         class={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(
@@ -64,16 +127,25 @@
           isOpen = true;
         }}
       >
+        {#if image.blurhash && blurhashDataUrls.get(index) && !loadedImages.has(index)}
+          <img
+            src={blurhashDataUrls.get(index)}
+            alt=""
+            class="absolute inset-0 w-full h-full object-cover"
+            aria-hidden="true"
+          />
+        {/if}
         <img
-          src={image}
+          src={image.url}
           alt={`Gallery image ${index + 1}`}
-          class={`w-full object-cover aspect-auto hover:opacity-90 transition-opacity `}
+          class={`w-full object-cover aspect-auto transition-opacity ${loadedImages.has(index) ? 'opacity-100' : 'opacity-0'}`}
+          onload={() => handleImageLoad(index)}
         />
 
         <!-- 4+ overlay -->
-        {#if index === 3 && remainingCount > 0}
+        {#if index === 3 && remainingCount() > 0}
           <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span class="text-white text-2xl">+{remainingCount}</span>
+            <span class="text-white text-2xl">+{remainingCount()}</span>
           </div>
         {/if}
       </button>
@@ -95,13 +167,13 @@
         <!-- Main image -->
         <div class="relative w-full max-w-2xl px-4">
           <img
-            src={images[currentIndex]}
+            src={normalizedImages()[currentIndex]?.url}
             alt={`Full view ${currentIndex + 1}`}
             class="w-full h-auto rounded-lg"
           />
 
           <!-- Navigation buttons -->
-          {#if images.length > 1}
+          {#if normalizedImages().length > 1}
             <button
               onclick={handlePrev}
               class="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors"
@@ -118,9 +190,9 @@
           {/if}
 
           <!-- Dots indicator -->
-          {#if images.length > 1}
+          {#if normalizedImages().length > 1}
             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
-              {#each images as _, index}
+              {#each normalizedImages() as _, index}
                 <button
                   type="button"
                   onclick={() => (currentIndex = index)}

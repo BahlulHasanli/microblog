@@ -3,6 +3,7 @@ import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
 import { slugifyCategory } from "@/data/categories";
+import { generateBlurhash } from "@/utils/blurhash";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -73,6 +74,7 @@ export const POST: APIRoute = async (context) => {
     const slug = slugify(title);
 
     let coverImageUrl = "";
+    let coverImageBlurhash: string | null = null;
 
     if (uploadedImage) {
       try {
@@ -83,6 +85,9 @@ export const POST: APIRoute = async (context) => {
 
         try {
           const arrayBuffer = await uploadedImage.arrayBuffer();
+
+          // Blurhash generasiya et
+          coverImageBlurhash = await generateBlurhash(arrayBuffer);
 
           const runtime = (context.locals as any).runtime;
           const bunnyApiKey =
@@ -184,6 +189,7 @@ export const POST: APIRoute = async (context) => {
         author_id: user.id,
         image_url: coverImageUrl || null,
         image_alt: imageAlt || title,
+        image_blurhash: coverImageBlurhash,
         categories: categoriesData,
         approved: false,
         featured: false,

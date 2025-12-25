@@ -68,19 +68,20 @@ const backgroundImage = featuredPost?.data.image.url;
         />
         <div class="absolute inset-0 px-4 sm:ml-15 flex flex-col justify-between pt-4 sm:pt-24 pb-4 sm:mb-10">
             <div class="text-white flex flex-col gap-1 w-full sm:w-[470px]">
-                <h2 class="text-lg sm:text-2xl md:text-3xl font-semibold font-display m-0 break-words tracking-wide line-clamp-2">
+                <h2 class="text-lg sm:text-2xl md:text-3xl font-semibold font-display m-0 wrap-break-word tracking-wide line-clamp-3">
                   {featuredPost && featuredPost.data.title}
                 </h2>
-                <p class="text-xs sm:text-sm md:text-md font-light opacity-70 mt-2 sm:mt-5 break-words font-display tracking-wide line-clamp-2 sm:line-clamp-none">
+                <p class="text-xs sm:text-sm md:text-md font-light opacity-70 mt-2 sm:mt-5 wrap-break-word font-display tracking-wide line-clamp-2 sm:line-clamp-none">
                   {featuredPost && featuredPost.data.description}
                 </p>
             </div>
   
             <div class="flex w-full sm:w-[320px] flex-row items-center justify-between mt-3 sm:mt-10 gap-2">
                <button type="button" id="user-profile" class="cursor-pointer flex flex-row gap-1 sm:gap-2 items-center hover:opacity-90 transition-opacity min-w-0">
-                    <img src={featuredPost.data.author?.avatar} 
-                    alt={featuredPost.data.author?.fullname} 
-                    class="squircle w-10! sm:w-[80px]! h-10! sm:h-[78px]! shrink-0" />
+                    <div class="w-10! sm:w-[80px]! h-10! sm:h-[78px]!">
+                      <img src={featuredPost.data.author?.avatar}  alt={featuredPost.data.author?.fullname} 
+                    class="squircle w-full h-full object-cover" />
+                    </div>
                    <div class="flex flex-col ml-1 sm:ml-4 min-w-0">
                     <span data-username={featuredPost.data.author?.username} class="text-white/80 font-medium text-[11px] sm:text-[15px] truncate">
                       {featuredPost.data.author?.fullname}

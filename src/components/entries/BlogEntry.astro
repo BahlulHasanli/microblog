@@ -3,7 +3,7 @@ import { Image } from "astro:assets";
 import { categories as CATEGORIES } from "@/data/categories";
 import { formatSimpleDate } from "@/utils/date";
 
-const { title, url, description, image, categories, author, pubDate } = Astro.props;
+const { title, url, description, image, categories, author, pubDate, blurhash } = Astro.props;
 
 const isIcmal = categories?.includes('icmal') || false;
 
@@ -19,13 +19,19 @@ const isIcmal = categories?.includes('icmal') || false;
     
     <div class="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center">
       <a href={url} title={title} class="block w-full sm:w-1/2 shrink-0">
-        <div class="relative">
+        <div class="relative blurhash-container" data-blurhash={blurhash}>
+          {blurhash && (
+            <canvas 
+              class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-2xl" 
+              aria-hidden="true"
+            />
+          )}
           <Image
             width={1200}
             height={630}
             src={image}
             alt={title}
-            class="object-cover w-full aspect-video rounded-2xl"
+            class="blurhash-img object-cover w-full aspect-video rounded-2xl"
           />
         </div>
       </a>
@@ -46,11 +52,11 @@ const isIcmal = categories?.includes('icmal') || false;
           )}
         </div>
         
-        <h3 class="text-2xl sm:text-3xl font-bold mb-2 leading-tight">
-          <a href={url} class="group-hover:underline decoration-wavy">{title}</a>
+        <h3 class="text-2xl sm:text-2xl font-bold mb-2 leading-tight text-pretty">
+          <a href={url} class="group-hover:underline decoration-wavy line-clamp-2">{title}</a>
         </h3>
         
-        <p class="text-white/80 line-clamp-3 text-base sm:text-md mb-5">{description}</p>
+        <p class="text-white/80 line-clamp-3 text-base sm:text-md my-5">{description}</p>
         
         {categories && categories.length > 0 && (
           <div class="flex flex-wrap gap-2 mb-5">
@@ -74,13 +80,19 @@ const isIcmal = categories?.includes('icmal') || false;
 ) : (
   <article class="flex flex-col flex-1 h-full group">
     <a href={url} title={title} class="block">
-      <div class="block w-full lg:col-span-2">
+      <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden" data-blurhash={blurhash}>
+        {blurhash && (
+          <canvas 
+            class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl" 
+            aria-hidden="true"
+          />
+        )}
         <Image
           width={1200}
           height={630}
           src={image}
           alt={title}
-          class="object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
+          class="blurhash-img object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
         />
       </div>
     </a>
@@ -155,6 +167,7 @@ const isIcmal = categories?.includes('icmal') || false;
 
 <script>
    import { navigate } from "astro:transitions/client";
+   import { decode } from "blurhash";
    
     function setupUserAvatarClick() {
         const userAvatar = document.querySelector('.user-avatar');
@@ -168,9 +181,59 @@ const isIcmal = categories?.includes('icmal') || false;
         }
     }
     
+    function initBlurhash() {
+      const containers = document.querySelectorAll('.blurhash-container[data-blurhash]');
+      
+      containers.forEach((container) => {
+        const blurhash = container.getAttribute('data-blurhash');
+        const canvas = container.querySelector('.blurhash-canvas') as HTMLCanvasElement;
+        const img = container.querySelector('.blurhash-img') as HTMLImageElement;
+        
+        if (!blurhash || !canvas) return;
+        
+        try {
+          const width = 32;
+          const height = 32;
+          const pixels = decode(blurhash, width, height);
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            const imageData = ctx.createImageData(width, height);
+            imageData.data.set(pixels);
+            ctx.putImageData(imageData, 0, 0);
+          }
+          
+          if (img) {
+            if (img.complete) {
+              canvas.style.opacity = '0';
+            } else {
+              img.addEventListener('load', () => {
+                canvas.style.opacity = '0';
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Blurhash decode xətası:', error);
+        }
+      });
+    }
+    
     // İlk yükləmə üçün
     setupUserAvatarClick();
+    initBlurhash();
     
     // Transitions sonrası yenidən quraşdır
-    document.addEventListener('astro:after-swap', setupUserAvatarClick);
+    document.addEventListener('astro:after-swap', () => {
+      setupUserAvatarClick();
+      initBlurhash();
+    });
 </script>
+
+<style>
+  .blurhash-canvas {
+    transition: opacity 0.3s ease-out;
+  }
+</style>

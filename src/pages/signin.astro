@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // import SigninView from "@/components/auth/signinView";
-import SignInView from "@/components/auth/SignIngView.svelte";
+import SignInView from "@/components/auth/SignInView.svelte";
 
 export const prerender = false
 
@@ -14,7 +14,7 @@ if (accessToken && refreshToken) {
   return redirect("/");
 }
 ---  
-
+ 
 <BaseLayout>
   <SignInView client:load />
 </BaseLayout>
