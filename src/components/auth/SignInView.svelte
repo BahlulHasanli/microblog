@@ -77,7 +77,7 @@ import { Toaster, toast } from 'svelte-sonner'
           type="email"
           id="email"
           name="email"
-          placeholder="email@example.com"
+          placeholder="email@the99.az"
           required
           bind:value={formState.email}
           class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -102,17 +102,7 @@ import { Toaster, toast } from 'svelte-sonner'
         />
       </div>
 
-      <div class="flex items-center justify-between">
-        <label for="remember" class="flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            id="remember"
-            name="remember"
-            bind:checked={formState.remember}
-            class="w-4 h-4 text-rose-500 bg-white border-base-300 rounded focus:ring-1 focus:ring-rose-500"
-          />
-          <span class="ml-2 text-xs text-base-600">Məni xatırla</span>
-        </label> 
+      <div class="flex items-center justify-end">
         <a
           href="/forgot-password"
           class="text-xs text-rose-500 hover:text-rose-600 transition-colors"
