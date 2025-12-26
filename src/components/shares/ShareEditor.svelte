@@ -1,10 +1,12 @@
 <script lang="ts">
   import { shareStore } from "@/stores/shareStore";
   import { Image, X, Play } from "lucide-svelte";
+  import { generateBlurhashFromFile } from "@/utils/blurhash";
 
   interface ImagePreview {
     file: File;
     preview: string;
+    blurhash: string | null;
   }
 
   interface Props {
@@ -79,12 +81,16 @@
         }
 
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
+          // Blurhash generasiya et
+          const blurhash = await generateBlurhashFromFile(file);
+          
           images = [
             ...images,
             {
               file,
               preview: reader.result as string,
+              blurhash,
             },
           ];
         };
@@ -157,6 +163,7 @@
       }
 
       const imageUrls: string[] = [];
+      const imageBlurhashes: (string | null)[] = [];
 
       // Şəkillər varsa BunnyCDN-ə yüklə (post ID-si ilə)
       if (images.length > 0) {
@@ -164,6 +171,9 @@
           const formData = new FormData();
           formData.append("file", image.file);
           formData.append("shareId", shareId);
+          if (image.blurhash) {
+            formData.append("blurhash", image.blurhash);
+          }
 
           const uploadResponse = await fetch("/api/upload/share-image", {
             method: "POST",
@@ -179,6 +189,7 @@
           }
 
           imageUrls.push(uploadData.imageUrl);
+          imageBlurhashes.push(uploadData.blurhash || image.blurhash);
         }
 
         // Şəkilləri Supabase-ə yenilə
@@ -190,6 +201,7 @@
           body: JSON.stringify({
             shareId,
             imageUrls,
+            imageBlurhashes,
           }),
         });
 

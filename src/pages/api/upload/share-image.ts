@@ -1,6 +1,5 @@
 import type { APIRoute } from "astro";
 import { getUserFromCookies } from "@/utils/auth";
-import { generateBlurhash } from "@/utils/blurhash";
 
 const BUNNY_API_KEY = import.meta.env.BUNNY_API_KEY;
 const BUNNY_STORAGE_ZONE = import.meta.env.BUNNY_STORAGE_ZONE;
@@ -28,6 +27,7 @@ export const POST: APIRoute = async (context) => {
     const formData = await context.request.formData();
     const file = formData.get("file") as File;
     const shareId = formData.get("shareId") as string;
+    const blurhash = formData.get("blurhash") as string | null;
 
     if (!file) {
       return new Response(
@@ -91,9 +91,6 @@ export const POST: APIRoute = async (context) => {
 
     // BunnyCDN-ə yüklə
     const arrayBuffer = await file.arrayBuffer();
-
-    // Blurhash generasiya et
-    const blurhash = await generateBlurhash(arrayBuffer);
 
     const uploadResponse = await fetch(
       `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${fileName}`,

@@ -1,72 +1,108 @@
 import { encode } from "blurhash";
 
 /**
- * Şəkil üçün blurhash generasiya edir
- * @param imageBuffer - Şəkil buffer-i (ArrayBuffer)
- * @param width - Şəkil eni
- * @param height - Şəkil hündürlüyü
+ * Browser-da şəkil faylından blurhash generasiya edir (client-side)
+ * Bu funksiya yalnız browser-da işləyir
+ * @param file - Şəkil faylı
  * @returns Blurhash string
  */
-export async function generateBlurhash(
-  imageBuffer: ArrayBuffer
+export async function generateBlurhashFromFile(
+  file: File
 ): Promise<string | null> {
-  try {
-    // Sharp istifadə edərək şəkili kiçik ölçüyə gətiririk (performans üçün)
-    const sharp = (await import("sharp")).default;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-    const image = sharp(Buffer.from(imageBuffer));
-    const metadata = await image.metadata();
+    img.onload = () => {
+      // Kiçik ölçüyə resize et (performans üçün)
+      const width = 32;
+      const height = Math.round((img.height / img.width) * 32);
 
-    if (!metadata.width || !metadata.height) {
-      console.error("Şəkil metadata-sı alınmadı");
-      return null;
-    }
+      canvas.width = width;
+      canvas.height = height;
 
-    // Kiçik ölçüyə resize et (blurhash üçün böyük şəkil lazım deyil)
-    const resizedWidth = 32;
-    const resizedHeight = Math.round((metadata.height / metadata.width) * 32);
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
 
-    const { data, info } = await image
-      .resize(resizedWidth, resizedHeight, { fit: "inside" })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
+        try {
+          const blurhash = encode(
+            imageData.data,
+            imageData.width,
+            imageData.height,
+            4,
+            3
+          );
+          resolve(blurhash);
+        } catch (error) {
+          console.error("Blurhash encode xətası:", error);
+          resolve(null);
+        }
+      } else {
+        resolve(null);
+      }
 
-    // Blurhash encode et
-    const blurhash = encode(
-      new Uint8ClampedArray(data),
-      info.width,
-      info.height,
-      4, // componentX
-      3 // componentY
-    );
+      URL.revokeObjectURL(img.src);
+    };
 
-    return blurhash;
-  } catch (error) {
-    console.error("Blurhash generasiya xətası:", error);
-    return null;
-  }
+    img.onerror = () => {
+      console.error("Şəkil yüklənmədi");
+      resolve(null);
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
 }
 
 /**
- * URL-dən şəkil yükləyib blurhash generasiya edir
+ * Browser-da URL-dən blurhash generasiya edir (client-side)
  * @param imageUrl - Şəkil URL-i
  * @returns Blurhash string
  */
 export async function generateBlurhashFromUrl(
   imageUrl: string
 ): Promise<string | null> {
-  try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) {
-      console.error("Şəkil yüklənmədi:", response.status);
-      return null;
-    }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
 
-    const arrayBuffer = await response.arrayBuffer();
-    return generateBlurhash(arrayBuffer);
-  } catch (error) {
-    console.error("URL-dən blurhash generasiya xətası:", error);
-    return null;
-  }
+    img.onload = () => {
+      const width = 32;
+      const height = Math.round((img.height / img.width) * 32);
+
+      canvas.width = width;
+      canvas.height = height;
+
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+
+        try {
+          const blurhash = encode(
+            imageData.data,
+            imageData.width,
+            imageData.height,
+            4,
+            3
+          );
+          resolve(blurhash);
+        } catch (error) {
+          console.error("Blurhash encode xətası:", error);
+          resolve(null);
+        }
+      } else {
+        resolve(null);
+      }
+    };
+
+    img.onerror = () => {
+      console.error("Şəkil yüklənmədi:", imageUrl);
+      resolve(null);
+    };
+
+    img.src = imageUrl;
+  });
 }

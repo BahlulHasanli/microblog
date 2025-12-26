@@ -3,6 +3,7 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { slugify } from "../utils/slugify";
+import { generateBlurhashFromFile } from "@/utils/blurhash";
 
 export default function Editor({ author }: any) {
   const [editorContent, setEditorContent] = useState(null);
@@ -15,6 +16,9 @@ export default function Editor({ author }: any) {
   const [description, setDescription] = useState("");
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>("");
+  const [coverImageBlurhash, setCoverImageBlurhash] = useState<string | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
@@ -23,10 +27,16 @@ export default function Editor({ author }: any) {
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const handleCoverImageChange = (file: File | null) => {
+  const handleCoverImageChange = async (file: File | null) => {
     setCoverImage(file);
     if (!file) {
       setCoverImagePreview("");
+      setCoverImageBlurhash(null);
+    } else {
+      // Blurhash generasiya et (client-side)
+      const blurhash = await generateBlurhashFromFile(file);
+      setCoverImageBlurhash(blurhash);
+      console.log("Blurhash generasiya edildi:", blurhash);
     }
   };
 
@@ -139,6 +149,13 @@ export default function Editor({ author }: any) {
           formData.append("uploadedImage", newFile);
           formData.append("image", `posts/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
+
+          // Blurhash varsa əlavə et
+          if (coverImageBlurhash) {
+            formData.append("imageBlurhash", coverImageBlurhash);
+            console.log("Blurhash FormData'ya eklendi:", coverImageBlurhash);
+          }
+
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
         } catch (error) {
           console.error("FormData'ya resim ekleme hatası:", error);

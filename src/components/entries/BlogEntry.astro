@@ -223,11 +223,16 @@ const isIcmal = categories?.includes('icmal') || false;
           }
           
           if (img) {
-            if (img.complete) {
-              canvas.style.opacity = '0';
+            // Şəkil artıq yüklənibsə, bir az gözlə sonra gizlət (effekti görmək üçün)
+            if (img.complete && img.naturalWidth > 0) {
+              setTimeout(() => {
+                canvas.style.opacity = '0';
+              }, 500);
             } else {
               img.addEventListener('load', () => {
-                canvas.style.opacity = '0';
+                setTimeout(() => {
+                  canvas.style.opacity = '0';
+                }, 300);
               });
             }
           }

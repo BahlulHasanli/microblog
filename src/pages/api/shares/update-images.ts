@@ -21,7 +21,8 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Form verilerini al
-    const { shareId, imageUrls } = await context.request.json();
+    const { shareId, imageUrls, imageBlurhashes } =
+      await context.request.json();
 
     if (!shareId) {
       return new Response(
@@ -37,11 +38,20 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Supabase-də şəkilləri yenilə
+    const updateData: {
+      image_urls: string[];
+      image_blurhashes?: (string | null)[];
+    } = {
+      image_urls: imageUrls,
+    };
+
+    if (imageBlurhashes && Array.isArray(imageBlurhashes)) {
+      updateData.image_blurhashes = imageBlurhashes;
+    }
+
     const { data, error } = await supabaseAdmin
       .from("shares")
-      .update({
-        image_urls: imageUrls,
-      })
+      .update(updateData)
       .eq("id", shareId)
       .select();
 

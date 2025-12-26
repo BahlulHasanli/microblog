@@ -23,11 +23,22 @@ if (isLoggedIn) {
 const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
   .from('posts')
-  .select('id')
+  .select('id, image_blurhash')
   .eq('slug', postSlug)
   .single();
 
 const postId = postData?.id;
+const imageBlurhash = postData?.image_blurhash || null;
+
+// Baxış sayını al
+let viewCount = 0;
+if (postId) {
+  const { count } = await supabase
+    .from("post_views")
+    .select("*", { count: "exact", head: true })
+    .eq("post_id", postId);
+  viewCount = count || 0;
+}
 
 // Check if comments are enabled
 let enableComments = true;
@@ -84,9 +95,26 @@ try {
               height={720}
               src={frontmatter.author?.avatar}
               alt={frontmatter.author?.fullname}
-              class="squircle !w-16 sm:!w-20 md:!w-[85px] !h-16 sm:!h-20 md:!h-[83px] cursor-pointer"
+              class="squircle size-24 object-cover cursor-pointer"
             />
             </button>
+            <div class="absolute -bottom-2 -right-2 bg-white rounded-full px-2 py-1 shadow-md flex items-center gap-1 text-xs text-zinc-600">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 animate-pulse">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <span id="view-count">{viewCount}</span>
+            </div>
+
+            <style>
+              @keyframes eye-blink {
+                0%, 90%, 100% { opacity: 1; }
+                95% { opacity: 0.3; }
+              }
+              .animate-pulse {
+                animation: eye-blink 4s infinite;
+              }
+            </style>
           {/* </div> */}
          </div>
           <div class="mt-3">
@@ -129,13 +157,21 @@ try {
           </div>
 
           {frontmatter.image && frontmatter.image.url && (
-            <Image
-              width={1280}
-              height={720}
-              src={frontmatter.image.url}
-              alt={frontmatter.image.alt || frontmatter.title}
-              class="object-cover object-center aspect-12/7 rounded-xl mt-4"
-            />
+            <div class="relative blurhash-container mt-4" data-blurhash={imageBlurhash}>
+              {imageBlurhash && (
+                <canvas 
+                  class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl z-10" 
+                  aria-hidden="true"
+                />
+              )}
+              <Image
+                width={1280}
+                height={720}
+                src={frontmatter.image.url}
+                alt={frontmatter.image.alt || frontmatter.title}
+                class="blurhash-img object-cover object-center aspect-12/7 rounded-xl w-full"
+              />
+            </div>
           )}
 
         </div>
@@ -198,6 +234,7 @@ try {
 
       <script> 
         import { navigate } from 'astro:transitions/client';
+        import { decode } from 'blurhash';
 
         function setupUserAvatarClick() {
           const userAvatar = document.querySelector('.user-avatar');
@@ -211,11 +248,95 @@ try {
           }
         }
         
+        function initBlurhash() {
+          const containers = document.querySelectorAll('.blurhash-container[data-blurhash]');
+          
+          containers.forEach((container) => {
+            const blurhash = container.getAttribute('data-blurhash');
+            const canvas = container.querySelector('.blurhash-canvas') as HTMLCanvasElement;
+            const img = container.querySelector('.blurhash-img') as HTMLImageElement;
+            
+            if (!blurhash || !canvas) return;
+            
+            try {
+              const width = 32;
+              const height = 32;
+              const pixels = decode(blurhash, width, height);
+              
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              
+              if (ctx) {
+                const imageData = ctx.createImageData(width, height);
+                imageData.data.set(pixels);
+                ctx.putImageData(imageData, 0, 0);
+              }
+              
+              if (img) {
+                if (img.complete && img.naturalWidth > 0) {
+                  setTimeout(() => {
+                    canvas.style.opacity = '0';
+                  }, 500);
+                } else {
+                  img.addEventListener('load', () => {
+                    setTimeout(() => {
+                      canvas.style.opacity = '0';
+                    }, 300);
+                  });
+                }
+              }
+            } catch (error) {
+              console.error('Blurhash decode xətası:', error);
+            }
+          });
+        }
+        
         // İlk yükləmə üçün
         setupUserAvatarClick();
+        initBlurhash();
         
         // Transitions sonrası yenidən quraşdır
-        document.addEventListener('astro:after-swap', setupUserAvatarClick);
+        document.addEventListener('astro:after-swap', () => {
+          setupUserAvatarClick();
+          initBlurhash();
+        });
+      </script>
+      
+      <style>
+        .blurhash-canvas {
+          transition: opacity 0.3s ease-out;
+        }
+      </style>
+
+      <script define:vars={{ postId }}>
+        // Baxış sayını qeyd et
+        async function recordView() {
+          if (!postId) return;
+          
+          try {
+            const response = await fetch('/api/posts/views', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ postId })
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const viewCountEl = document.getElementById('view-count');
+              if (viewCountEl && data.viewCount !== undefined) {
+                viewCountEl.textContent = data.viewCount;
+              }
+            }
+          } catch (error) {
+            console.error('Baxış qeyd edilərkən xəta:', error);
+          }
+        }
+        
+        // Səhifə yükləndikdə baxışı qeyd et
+        recordView();
       </script>
     </div>
   </section>
