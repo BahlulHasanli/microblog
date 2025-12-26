@@ -97,8 +97,8 @@ const handleBackToSignIn = () => {
         </button> 
       </form>
     {:else}
-      <div class="bg-rose-50 border border-rose-200 rounded-lg p-4 mb-6">
-        <p class="text-base-700 text-sm">
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <p class="text-green-700 text-sm">
           Şifirə sıfırlama linki <strong>{formState.email}</strong> email ünvanına göndərildi. Lütfən email-inizi yoxlayın.
         </p>
       </div>
