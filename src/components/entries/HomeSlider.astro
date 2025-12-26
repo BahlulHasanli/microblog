@@ -62,6 +62,12 @@ const backgroundImage = featuredPost?.data.image.url;
   
       <!-- Left Side -->
     <div class="absolute left-0 top-0 w-full sm:w-[855px] h-full z-10">
+        <!-- Mobil üçün blur arxa plan -->
+        <img src={backgroundImage}  
+        alt={featuredPost.data.title}
+        class="sm:hidden absolute inset-0 w-full h-full object-cover blur-2xl opacity-80" 
+        />
+        <!-- Desktop üçün blur arxa plan -->
         <img src={backgroundImage}  
         alt={featuredPost.data.title}
         class="hidden sm:block size-[750px] object-cover blur-3xl -mt-28 object-center" 
