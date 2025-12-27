@@ -5,7 +5,6 @@ import SponsorBanner from "@/components/entries/SponsorBanner.astro";
 import Slider from "@/components/entries/HomeSlider.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
-import { categories as defaultCategories, slugifyCategory } from "@/data/categories";
 import { supabase } from "@/db/supabase";
 import { isAuthenticated } from "@/utils/auth";
 
@@ -17,7 +16,7 @@ const { data: categoriesData, error: categoriesError } = await supabase
   .select("*")
   .order("id", { ascending: true });
 
-const categories = categoriesData || defaultCategories;
+const categories = categoriesData || [];
 
 if (categoriesError) {
   console.warn('Kategoriyalar yüklənərkən xəta:', categoriesError);
@@ -119,7 +118,6 @@ const posts = (postsData || []).map(post => {
                       <div class="sm:col-span-2">
                         <BlogEntries
                           url={"/posts/" + post.slug} 
-                          alt={post.data.title}
                           categories={post.data.categories}
                           title={post.data.title}
                           image={post.data.image.url}
@@ -127,6 +125,7 @@ const posts = (postsData || []).map(post => {
                           pubDate={post.data.pubDate}
                           author={post.data.author}
                           blurhash={post.data.blurhash}
+                          allCategories={categories}
                         />
                       </div>
                     );
@@ -135,7 +134,6 @@ const posts = (postsData || []).map(post => {
                       <div>
                         <BlogEntries
                           url={"/posts/" + post.slug} 
-                          alt={post.data.title}
                           categories={post.data.categories}
                           title={post.data.title}
                           image={post.data.image.url}
@@ -143,6 +141,7 @@ const posts = (postsData || []).map(post => {
                           pubDate={post.data.pubDate}
                           author={post.data.author}
                           blurhash={post.data.blurhash}
+                          allCategories={categories}
                         />
                       </div>
                     );

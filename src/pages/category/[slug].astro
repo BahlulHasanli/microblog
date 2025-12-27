@@ -2,14 +2,19 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
 import { supabase } from "@/db/supabase";
-import { categories } from "@/data/categories";
 import { formatSimpleDate } from "@/utils/date";
 
 export const prerender = false;
 
 const { slug } = Astro.params;
- 
-const category = categories.find(cat => cat.slug === slug);
+
+// Supabase-dən kateqoriyaları al
+const { data: categoriesData } = await supabase
+  .from("categories")
+  .select("slug, name");
+const categories = categoriesData || [];
+
+const category = categories.find((cat: { slug: string; name: string }) => cat.slug === slug);
 
 if (!category) {
   return new Response(null, {
@@ -79,7 +84,6 @@ const sortedPosts = (filteredPosts || []).map(post => ({
           {sortedPosts.map((post) => (
             <BlogEntries
               url={"/posts/" + post.slug}
-              alt={post.data.title}
               categories={post.data.categories}
               title={post.data.title}
               image={post.data.image.url}
@@ -87,6 +91,7 @@ const sortedPosts = (filteredPosts || []).map(post => ({
               pubDate={post.data.pubDate}
               author={post.data.author}
               blurhash={post.data.blurhash}
+              allCategories={categories}
             />
           ))}
         </div>

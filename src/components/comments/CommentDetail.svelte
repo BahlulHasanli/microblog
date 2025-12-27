@@ -3,15 +3,23 @@
   import { formatDate as formatDateUtil } from '@/utils/date';
   import { supabase } from '@/db/supabase';
   import CommentForm from './CommentForm.svelte';
-  import { categories, slugifyCategory } from '@/data/categories';
+  import { slugifyCategory } from '@/utils/slugify-category';
   import { formatSimpleDate } from '@/utils/date';
   import { navigate } from "astro:transitions/client";
 
   let { postSlug, commentId, initialComment, initialReplies, initialUser, backUrl, postTitle, postDescription, postImage, postImageAlt, postCategories } = $props();
   
+  // Kateqoriyaları Supabase-dən çək
+  let categoriesList: { slug: string; name: string }[] = $state([]);
+  
+  onMount(async () => {
+    const { data } = await supabase.from('categories').select('slug, name');
+    if (data) categoriesList = data;
+  });
+
   // Get category name from slug
   function getCategoryName(categorySlug: string): string {
-    const category = categories.find(cat => cat.slug === categorySlug);
+    const category = categoriesList.find(cat => cat.slug === categorySlug);
     return category ? category.name : categorySlug;
   }
 

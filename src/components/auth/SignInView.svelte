@@ -89,7 +89,7 @@ import { Toaster, toast } from 'svelte-sonner'
           for="password"
           class="block text-xs font-medium text-base-700 mb-1"
         >
-          Şifre
+          Şifrə
         </label>
         <input
           type="password"
@@ -115,7 +115,7 @@ import { Toaster, toast } from 'svelte-sonner'
         type="submit"
         disabled={isSubmitting.value}
         class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
-      >
+      > 
         {#if isSubmitting.value}
           Daxil olunur...
         {:else}

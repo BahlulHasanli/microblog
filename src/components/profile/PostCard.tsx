@@ -1,5 +1,4 @@
 import { formatSimpleDate } from "@/utils/date";
-import { categories as CATEGORIES } from "@/data/categories";
 
 interface Post {
   id: string;
@@ -15,9 +14,15 @@ interface Post {
 interface PostCardProps {
   post: Post;
   isOwner?: boolean;
+  allCategories?: { slug: string; name: string }[];
 }
 
-export default function PostCard({ post, isOwner = false }: PostCardProps) {
+export default function PostCard({
+  post,
+  isOwner = false,
+  allCategories = [],
+}: PostCardProps) {
+  const CATEGORIES = allCategories;
   return (
     <article className="flex flex-col h-full group relative bg-white rounded-xl border border-base-100 overflow-hidden">
       {/* Gözləmə rejimi göstəricisi */}

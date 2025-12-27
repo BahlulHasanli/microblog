@@ -4,7 +4,7 @@ import { userAvatar } from "@/store/userStore";
 import { useStore } from "@nanostores/react";
 import { supabase } from "@/db/supabase";
 import { navigate } from "astro:transitions/client";
-import { slugifyCategory } from "@/data/categories";
+import { slugifyCategory } from "@/utils/slugify-category";
 
 interface ProfileDropdownProps {
   userImage: string;

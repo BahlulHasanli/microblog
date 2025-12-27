@@ -1,9 +1,21 @@
 ---
 import { Image } from "astro:assets";
-import { categories as CATEGORIES } from "@/data/categories";
 import { formatSimpleDate } from "@/utils/date";
 
-const { title, url, description, image, categories, author, pubDate, blurhash } = Astro.props;
+interface Props {
+  title: string;
+  url: string;
+  description: string;
+  image: string;
+  categories?: string[];
+  author?: { avatar?: string; fullname?: string; username?: string };
+  pubDate?: Date;
+  blurhash?: string;
+  allCategories?: { slug: string; name: string }[];
+}
+
+const { title, url, description, image, categories, author, pubDate, blurhash, allCategories = [] } = Astro.props;
+const CATEGORIES = allCategories;
 
 const isIcmal = categories?.includes('icmal') || false;
 
@@ -77,7 +89,7 @@ const isIcmal = categories?.includes('icmal') || false;
         {categories && categories.length > 0 && (
           <div class="flex flex-wrap gap-2 mb-5">
             {categories.map((categorySlug) => {
-              const categoryObj = CATEGORIES.find(cat => cat.slug === categorySlug);
+              const categoryObj = CATEGORIES.find((cat: { slug: string; name: string }) => cat.slug === categorySlug);
               return (
                 <a 
                   href={`/category/${categorySlug}`}
@@ -88,7 +100,7 @@ const isIcmal = categories?.includes('icmal') || false;
               );
             })}
           </div>
-        )}
+        )} 
         
       </div>
     </div>
@@ -129,7 +141,7 @@ const isIcmal = categories?.includes('icmal') || false;
           <span aria-hidden="true">&middot;</span>
           <span>
             {categories.map((categorySlug, index) => {
-              const categoryObj = CATEGORIES.find(cat => cat.slug === categorySlug);
+              const categoryObj = CATEGORIES.find((cat: { slug: string; name: string }) => cat.slug === categorySlug);
               return (
                 <a 
                   href={`/category/${categorySlug}`}
@@ -180,7 +192,7 @@ const isIcmal = categories?.includes('icmal') || false;
   </div>
   </article>
 )}
-
+ 
 <script>
    import { navigate } from "astro:transitions/client";
    import { decode } from "blurhash";

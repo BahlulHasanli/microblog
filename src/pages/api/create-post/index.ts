@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
-import { slugifyCategory } from "@/data/categories";
+import { slugifyCategory } from "@/utils/slugify-category";
 
 export const POST: APIRoute = async (context) => {
   try {

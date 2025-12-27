@@ -49,6 +49,22 @@ export default function ProfileTabs({
   const [sharesOffset, setSharesOffset] = useState(0);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastShareRef = useRef<HTMLDivElement | null>(null);
+  const [categories, setCategories] = useState<
+    { slug: string; name: string }[]
+  >([]);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data } = await supabase.from("categories").select("slug, name");
+        if (data) setCategories(data);
+      } catch (error) {
+        console.error("Kateqoriyalar yüklənərkən xəta:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Fetch user shares
   const fetchShares = useCallback(
@@ -320,7 +336,12 @@ export default function ProfileTabs({
             {posts.length > 0 ? (
               <div className="grid grid-cols-1 gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post) => (
-                  <PostCard key={post.id} post={post} isOwner={isOwner} />
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    isOwner={isOwner}
+                    allCategories={categories}
+                  />
                 ))}
               </div>
             ) : isOwner ? (

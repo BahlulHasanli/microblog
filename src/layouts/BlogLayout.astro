@@ -1,7 +1,6 @@
 ---
 import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { categories as CATEGORIES } from "../data/categories";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
 import PostReactions from "@/components/reactions/PostReactions.svelte";
@@ -29,6 +28,12 @@ const { data: postData } = await supabase
 
 const postId = postData?.id;
 const imageBlurhash = postData?.image_blurhash || null;
+
+// Kateqoriyaları Supabase-dən çək
+const { data: categoriesData } = await supabase
+  .from('categories')
+  .select('slug, name');
+const CATEGORIES = categoriesData || [];
 
 // Baxış sayını al
 let viewCount = 0;
@@ -131,8 +136,8 @@ try {
           <div class="flex flex-col justify-between mt-4 md:flex-row">
             <div class="flex gap-3">
               {
-                frontmatter.categories.map((categorySlug: string) => {
-                  const categoryObj = CATEGORIES.find(cat => cat.slug === categorySlug);
+                (frontmatter.categories || []).map((categorySlug: string) => {
+                  const categoryObj = CATEGORIES.find((cat: { slug: string; name: string }) => cat.slug === categorySlug);
                   return (
                     <span class="hover:text-blue-500 text-sm font-medium text-base-600">
                       <a href={`/category/${categorySlug}`}>{categoryObj ? categoryObj.name : categorySlug}</a>
@@ -177,7 +182,7 @@ try {
         </div>
       </div>
 
-      <div class="prose prose-sm max-w-md mt-12 mx-auto">
+      <div class="prose prose-sm max-w-md mt-12 mx-auto" id="post-content">
         <slot />
       </div>
 
@@ -197,6 +202,56 @@ try {
       )}
 
       <script is:inline>
+        // Image zoom funksiyası
+        function initImageZoom() {
+          const postContent = document.getElementById('post-content');
+          if (!postContent) return;
+
+          const images = postContent.querySelectorAll('img');
+          
+          images.forEach(img => {
+            // Zaten zoom qabiliyyəti varsa, yenidən əlavə etmə
+            if (img.style.cursor === 'zoom-in') return;
+            
+            img.style.cursor = 'zoom-in';
+            img.style.transition = 'transform 0.3s ease';
+            
+            img.addEventListener('click', function(e) {
+              e.stopPropagation();
+              
+              // Zaten zoom modunda mı?
+              if (this.dataset.zoomed === 'true') {
+                // Zoom-u bağla
+                this.style.transform = 'scale(1)';
+                this.style.position = 'relative';
+                this.style.zIndex = 'auto';
+                this.dataset.zoomed = 'false';
+                this.style.cursor = 'zoom-in';
+                return;
+              }
+              
+              // Zoom-u aç
+              this.style.transform = 'scale(1.5)';
+              this.style.position = 'relative';
+              this.style.zIndex = '50';
+              this.dataset.zoomed = 'true';
+              this.style.cursor = 'zoom-out';
+            });
+          });
+          
+          // Zoom-u bağlamaq üçün background-a klik
+          document.addEventListener('click', function(e) {
+            const zoomedImg = postContent.querySelector('img[data-zoomed="true"]');
+            if (zoomedImg && !zoomedImg.contains(e.target)) {
+              zoomedImg.style.transform = 'scale(1)';
+              zoomedImg.style.position = 'relative';
+              zoomedImg.style.zIndex = 'auto';
+              zoomedImg.dataset.zoomed = 'false';
+              zoomedImg.style.cursor = 'zoom-in';
+            }
+          });
+        }
+        
         function loadYoutubeVideos() {
           const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
 
@@ -295,11 +350,13 @@ try {
         // İlk yükləmə üçün
         setupUserAvatarClick();
         initBlurhash();
+        initImageZoom();
         
         // Transitions sonrası yenidən quraşdır
         document.addEventListener('astro:after-swap', () => {
           setupUserAvatarClick();
           initBlurhash();
+          initImageZoom();
         });
       </script>
       

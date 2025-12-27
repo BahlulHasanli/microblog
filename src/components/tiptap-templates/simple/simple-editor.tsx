@@ -79,7 +79,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
 
-import { categories as CATEGORIES, getCategories } from "@/data/categories";
+import { supabase } from "@/db/supabase";
 
 const MainToolbarContent = ({
   onHighlighterClick,
@@ -321,21 +321,18 @@ export function SimpleEditor({
   const [categories, setCategories] = React.useState<string[]>(
     selectedCategories || []
   );
-  const [supabaseCategories, setSupabaseCategories] =
-    React.useState<any[]>(CATEGORIES);
+  const [supabaseCategories, setSupabaseCategories] = React.useState<
+    { slug: string; name: string }[]
+  >([]);
 
   // Supabase-dən kategoriyaları çək
   React.useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const cats = await getCategories();
-        setSupabaseCategories(cats);
+        const { data } = await supabase.from("categories").select("slug, name");
+        if (data) setSupabaseCategories(data);
       } catch (error) {
-        console.warn(
-          "Kategoriyalar çəkilərkən xəta, fallback istifadə edilir:",
-          error
-        );
-        setSupabaseCategories(CATEGORIES);
+        console.warn("Kategoriyalar çəkilərkən xəta:", error);
       }
     };
     fetchCategories();
