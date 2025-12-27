@@ -202,56 +202,6 @@ try {
       )}
 
       <script is:inline>
-        // Image zoom funksiyası
-        function initImageZoom() {
-          const postContent = document.getElementById('post-content');
-          if (!postContent) return;
-
-          const images = postContent.querySelectorAll('img');
-          
-          images.forEach(img => {
-            // Zaten zoom qabiliyyəti varsa, yenidən əlavə etmə
-            if (img.style.cursor === 'zoom-in') return;
-            
-            img.style.cursor = 'zoom-in';
-            img.style.transition = 'transform 0.3s ease';
-            
-            img.addEventListener('click', function(e) {
-              e.stopPropagation();
-              
-              // Zaten zoom modunda mı?
-              if (this.dataset.zoomed === 'true') {
-                // Zoom-u bağla
-                this.style.transform = 'scale(1)';
-                this.style.position = 'relative';
-                this.style.zIndex = 'auto';
-                this.dataset.zoomed = 'false';
-                this.style.cursor = 'zoom-in';
-                return;
-              }
-              
-              // Zoom-u aç
-              this.style.transform = 'scale(1.5)';
-              this.style.position = 'relative';
-              this.style.zIndex = '50';
-              this.dataset.zoomed = 'true';
-              this.style.cursor = 'zoom-out';
-            });
-          });
-          
-          // Zoom-u bağlamaq üçün background-a klik
-          document.addEventListener('click', function(e) {
-            const zoomedImg = postContent.querySelector('img[data-zoomed="true"]');
-            if (zoomedImg && !zoomedImg.contains(e.target)) {
-              zoomedImg.style.transform = 'scale(1)';
-              zoomedImg.style.position = 'relative';
-              zoomedImg.style.zIndex = 'auto';
-              zoomedImg.dataset.zoomed = 'false';
-              zoomedImg.style.cursor = 'zoom-in';
-            }
-          });
-        }
-        
         function loadYoutubeVideos() {
           const youtubeContainers = document.querySelectorAll('div[data-youtube-video]');
 
@@ -347,6 +297,51 @@ try {
           });
         }
         
+        function initImageZoom() {
+          const postContent = document.getElementById('post-content');
+          if (!postContent) return;
+
+          const images = postContent.querySelectorAll('img');
+          
+          images.forEach(img => {
+            if ((img as HTMLImageElement).style.cursor === 'zoom-in') return;
+            
+            (img as HTMLImageElement).style.cursor = 'zoom-in';
+            (img as HTMLImageElement).style.transition = 'transform 0.3s ease';
+            
+            img.addEventListener('click', function(e) {
+              e.stopPropagation();
+              
+              const imgEl = this as HTMLImageElement;
+              if (imgEl.dataset.zoomed === 'true') {
+                imgEl.style.transform = 'scale(1)';
+                imgEl.style.position = 'relative';
+                imgEl.style.zIndex = 'auto';
+                imgEl.dataset.zoomed = 'false';
+                imgEl.style.cursor = 'zoom-in';
+                return;
+              }
+              
+              imgEl.style.transform = 'scale(1.5)';
+              imgEl.style.position = 'relative';
+              imgEl.style.zIndex = '50';
+              imgEl.dataset.zoomed = 'true';
+              imgEl.style.cursor = 'zoom-out';
+            });
+          });
+          
+          document.addEventListener('click', function(e) {
+            const zoomedImg = postContent.querySelector('img[data-zoomed="true"]') as HTMLImageElement;
+            if (zoomedImg && !zoomedImg.contains(e.target as Node)) {
+              zoomedImg.style.transform = 'scale(1)';
+              zoomedImg.style.position = 'relative';
+              zoomedImg.style.zIndex = 'auto';
+              zoomedImg.dataset.zoomed = 'false';
+              zoomedImg.style.cursor = 'zoom-in';
+            }
+          });
+        }
+        
         // İlk yükləmə üçün
         setupUserAvatarClick();
         initBlurhash();
@@ -366,7 +361,7 @@ try {
         }
       </style>
 
-      <script define:vars={{ postId }}>
+      <script is:inline>
         // Baxış sayını qeyd et
         async function recordView() {
           if (!postId) return;
