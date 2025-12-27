@@ -2,6 +2,52 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
+import VideoPlayer from "@/components/video/VideoPlayer.svelte";
+
+const videos = [
+  {
+    id: 1,
+    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
+    title: "Video 1",
+    authorName: "Bəhlul Həsənli",
+    authorAvatar: "/squad/bahlulhasanli.png"
+  },
+  {
+    id: 2,
+    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
+    title: "Video 2",
+    authorName: "Elcan Eyvazlı",
+    authorAvatar: "/squad/eljaneyvazli.png"
+  },
+  {
+    id: 3,
+    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
+    title: "Video 3",
+    authorName: "Bəhlul Həsənli",
+    authorAvatar: "/squad/bahlulhasanli.png"
+  },
+  {
+    id: 4,
+    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
+    title: "Video 4",
+    authorName: "Elcan Eyvazlı",
+    authorAvatar: "/squad/eljaneyvazli.png"
+  },
+  {
+    id: 5,
+    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
+    title: "Video 5",
+    authorName: "Bəhlul Həsənli",
+    authorAvatar: "/squad/bahlulhasanli.png"
+  },
+  {
+    id: 6,
+    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
+    title: "Video 6",
+    authorName: "Elcan Eyvazlı",
+    authorAvatar: "/squad/eljaneyvazli.png"
+  },
+];
 ---
 
 <BaseLayout>
@@ -12,16 +58,23 @@ import MainTabs from "@/components/tabs/MainTabs.astro";
       <div class="mb-8 sm:mb-12">
         <MainTabs activeTab="window" />
 
-        <div class="flex flex-col items-center justify-center text-center py-16 sm:py-24">
-          <div class="mb-6 p-4 rounded-2xl bg-slate-50">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-400">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
-            </svg>
-          </div>
-          <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 mb-2">Pəncərələr tezliklə</h3>
-          <p class="text-sm sm:text-sm text-slate-500 max-w-sm">Bu bölmə hazırlanır...</p>
+        <div class="grid grid-cols-3 gap-3 sm:gap-4 mt-8">
+          {videos.map((video) => (
+            <div class="group">
+              <div class="relative bg-black rounded-lg overflow-hidden" style="aspect-ratio: 9/16;">
+                <VideoPlayer 
+                  videoUrl={video.videoUrl}
+                  title={video.title}
+                  authorName={video.authorName}
+                  authorAvatar={video.authorAvatar}
+                  client:load
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
+
