@@ -119,7 +119,7 @@ const readTime = calculateReadTime(frontmatter.content || '');
               class="squircle size-24 object-cover cursor-pointer"
             />
             </button>
-            <div class="absolute -bottom-2 -right-2 bg-white rounded-full px-2 py-1 shadow-md flex items-center gap-1 text-xs text-zinc-600">
+            <div class="absolute -bottom-2 -right-2 bg-white rounded-full px-2 py-1 shadow-md flex items-center gap-1 text-xs text-zinc-600" data-post-id={postId}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 animate-pulse">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.573-3.007-9.963-7.178Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -417,6 +417,10 @@ const readTime = calculateReadTime(frontmatter.content || '');
       <script is:inline>
         // Baxış sayını qeyd et
         async function recordView() {
+          const viewCountEl = document.getElementById('view-count');
+          const container = viewCountEl?.parentElement;
+          const postId = container?.getAttribute('data-post-id');
+          
           if (!postId) return;
           
           try {
@@ -425,12 +429,11 @@ const readTime = calculateReadTime(frontmatter.content || '');
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ postId })
+              body: JSON.stringify({ postId: parseInt(postId) })
             });
             
             if (response.ok) {
               const data = await response.json();
-              const viewCountEl = document.getElementById('view-count');
               if (viewCountEl && data.viewCount !== undefined) {
                 viewCountEl.textContent = data.viewCount;
               }
