@@ -3,8 +3,7 @@ import { supabase } from "@/db/supabase";
 export async function POST({ request }: { request: Request }) {
   try {
     const body = await request.json();
-    const { title, description, image_url, banner_url, is_active, position } =
-      body;
+    const { title, description, image_url, banner_url, is_active } = body;
 
     if (!title || !image_url || !banner_url) {
       return new Response(
@@ -25,7 +24,6 @@ export async function POST({ request }: { request: Request }) {
           image_url,
           banner_url,
           is_active: is_active !== false,
-          position: position || 0,
         },
       ])
       .select();
