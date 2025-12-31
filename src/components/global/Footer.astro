@@ -7,6 +7,14 @@
       <li><a href="/adv" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">REKLAM</a></li>
       <li><a href="/vacancy" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">VAKANSİYA</a></li>
       <li><a href="/squad" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">SQUAD</a></li>
+      <li class="relative">
+        <button 
+        id="random-post-btn"
+        class="text-lg cursor-pointer absolute -top-2 sm:text-xl md:text-3xl hover:text-base-700/80 font-semibold"
+        title="Təsadüfi"
+      >
+        🎲
+      </button></li>
       <!-- <li><a href="/premieres" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">BİR ŞEY VAR?</a></li> -->
     </ul>
 
@@ -19,3 +27,29 @@
     </div>
   </div>
 </footer>
+
+<script>
+  import { navigate } from 'astro:transitions/client';
+
+  function setupRandomButton() {
+    const randomBtn = document.getElementById('random-post-btn');
+    if (!randomBtn) return;
+
+    randomBtn.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/posts/random');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.slug) {
+            navigate(`/posts/${data.slug}`);
+          }
+        }
+      } catch (error) {
+        console.error('Random məqalə yükləməsi xətası:', error);
+      }
+    });
+  }
+
+  setupRandomButton();
+  document.addEventListener('astro:after-swap', setupRandomButton);
+</script>

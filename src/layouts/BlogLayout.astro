@@ -61,12 +61,28 @@ try {
   console.error("Comments setting yüklənərkən xəta:", error);
 }
 
+// Oxuma vaxtını hesabla
+function calculateReadTime(content: string): number {
+  const wordCount = content.trim().split(/\s+/).length;
+  const wordsPerMinute = 200;
+  const readTime = Math.ceil(wordCount / wordsPerMinute);
+  return Math.max(1, readTime);
+}
+
+const readTime = calculateReadTime(frontmatter.content || '');
+
 ---
 <BaseLayout title={frontmatter.title} description={frontmatter.description}>
+  <div class="fixed top-0 left-0 right-0 h-1 bg-linear-to-r from-rose-500 to-pink-500 origin-left z-50" id="progress-bar" style="transform: scaleX(0); transition: transform 0.1s ease-out;"></div>
   <section>
     <div class="py-24">
       <div class="lg:text-center">
         <div class="max-w-xl mx-auto">
+          <div class="flex items-center justify-center gap-2 mb-2">
+            <span class="text-sm font-medium text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-full">
+              {readTime} dəq oxuma vaxtı
+            </span>
+          </div>
           <h1
             class="text-4xl text-balance font-nouvelr-semibold text-base-900"
           >
@@ -226,6 +242,43 @@ try {
             }
           });
         }
+
+        function updateProgressBar() {
+          const progressBar = document.getElementById('progress-bar');
+          if (!progressBar) return;
+
+          const postContent = document.getElementById('post-content');
+          if (!postContent) {
+            progressBar.style.transform = 'scaleX(0)';
+            return;
+          }
+
+          const windowHeight = window.innerHeight;
+          const contentRect = postContent.getBoundingClientRect();
+          const contentTop = contentRect.top;
+          const contentHeight = contentRect.height;
+
+          if (contentTop > windowHeight) {
+            progressBar.style.transform = 'scaleX(0)';
+            return;
+          }
+
+          if (contentTop + contentHeight < 0) {
+            progressBar.style.transform = 'scaleX(1)';
+            return;
+          }
+
+          const scrollProgress = Math.max(0, Math.min(1, (windowHeight - contentTop) / (windowHeight + contentHeight)));
+          progressBar.style.transform = `scaleX(${scrollProgress})`;
+        }
+
+        window.addEventListener('scroll', updateProgressBar);
+        window.addEventListener('resize', updateProgressBar);
+        document.addEventListener('astro:after-swap', () => {
+          updateProgressBar();
+          window.addEventListener('scroll', updateProgressBar);
+          window.addEventListener('resize', updateProgressBar);
+        });
 
         // Sayfa ilk yüklenirken
         document.addEventListener('DOMContentLoaded', loadYoutubeVideos);
