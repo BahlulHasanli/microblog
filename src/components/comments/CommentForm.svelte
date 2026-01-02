@@ -57,12 +57,12 @@
 </script>
 
 <div class="mt-6 mb-8">
-  <h3 class="text-base font-nouvelr-semibold text-base-900 mb-3">
+  <h3 class="text-base font-nouvelr-semibold text-(--text-primary) mb-3">
     {parentId ? 'Cavab ver' : 'Şərh yaz'}
   </h3>
   
   {#if !user}
-    <div class="p-3 mb-4 border border-zinc-100 text-zinc-600 rounded-md">
+    <div class="p-3 mb-4 border border-(--border-color) text-(--text-secondary) rounded-md">
       Şərh yazmaq üçün <a href="/signin" class="font-medium text-blue-500 hover:underline">daxil olun</a>
     </div>
   {/if}
@@ -74,7 +74,7 @@
           bind:this={textareaRef}
           bind:value={content}
           placeholder="Nə düşünürsən?"
-          class="w-full px-3 py-3 border border-zinc-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800"
+          class="w-full px-3 py-3 border border-(--border-color) rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-(--text-primary) bg-(--bg-secondary)"
           rows="3"
           disabled={isSubmitting}
         ></textarea>

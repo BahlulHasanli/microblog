@@ -53,7 +53,7 @@
 </script>
 
 {#if !loading && total > 0}
-  <div class="inline-flex items-center gap-1 text-xs text-zinc-500 font-nouvelr">
+  <div class="inline-flex items-center gap-1 text-xs text-(--text-secondary) font-nouvelr">
     <div class="flex items-center -space-x-1">
       {#each topReactions as [type, count]}
         <img
@@ -64,7 +64,7 @@
         />
       {/each}
     </div>
-    <span class="font-medium text-zinc-600 tabular-nums ml-1 text-sm">
+    <span class="font-medium text-(--text-secondary) tabular-nums ml-1 text-sm">
       {total}
     </span>
   </div>

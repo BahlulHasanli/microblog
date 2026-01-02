@@ -98,13 +98,13 @@
   {:else if error}
     <div class="py-4 text-center text-red-600 font-display">{error}</div>
   {:else if parentComments.length === 0}
-    <div class="py-6 text-center text-zinc-500 font-display">İlk şərh yazan sən ol!</div>
+    <div class="py-6 text-center text-(--text-secondary) font-display">İlk şərh yazan sən ol!</div>
   {:else}
-    <div class="border-t border-zinc-100 pt-2">
+    <div class="border-t border-(--border-color) pt-2">
       {#each parentComments as comment (comment.id)}
         <div class="w-full text-left mt-6">
           <div class="flex items-start gap-3">
-            <div class="flex-shrink-0">
+            <div class="shrink-0">
               {#if comment.user_avatar}
                 <button
                   type="button"
@@ -133,7 +133,7 @@
                     }}
                     class="cursor-pointer hover:text-blue-600 transition-colors text-left"
                   >
-                    <h4 class="font-nouvelr-semibold text-base-800">{comment.user_fullname}</h4>
+                    <h4 class="font-nouvelr-semibold text-(--text-primary)">{comment.user_fullname}</h4>
                   </button>
                   <button
                     type="button"
@@ -141,19 +141,19 @@
                       e.stopPropagation();
                       navigateToProfile(comment.user_name);
                     }}
-                    class="text-xs text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
+                    class="text-xs text-(--text-secondary) font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
                   >
                     @{comment.user_name}
                   </button>
                 </div>
-                <span class="text-xs text-zinc-400 font-nouvelr">{formatSimpleDate(comment.created_at)}</span>
+                <span class="text-xs text-(--text-tertiary) font-nouvelr">{formatSimpleDate(comment.created_at)}</span>
               </div>
               <button
                 type="button"
                 onclick={() => navigateToComment(comment.id)}
                 class="w-full text-left cursor-pointer"
               >
-                <p class="mt-2 text-base-700 font-display text-[14px] line-clamp-3">{comment.content}</p>
+                <p class="mt-2 text-(--text-secondary) font-display text-[14px] line-clamp-3">{comment.content}</p>
               </button>
 
                <div class="flex items-center gap-5">

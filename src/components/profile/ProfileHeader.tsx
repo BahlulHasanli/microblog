@@ -68,7 +68,7 @@ export default function ProfileHeader({
         {/* Avatar */}
         <div className="relative group shrink-0">
           <div
-            className="overflow-hidden size-28! sm:size-36! squircle cursor-pointer ring-4 ring-base-100"
+            className="overflow-hidden size-28! sm:size-36! squircle cursor-pointer ring-4 ring-[var(--border-color)]"
             suppressHydrationWarning
           >
             <img
@@ -112,10 +112,10 @@ export default function ProfileHeader({
         <div className="flex-1 text-center sm:text-left w-full">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div suppressHydrationWarning>
-              <h1 className="text-2xl sm:text-3xl font-display font-bold text-base-900 mb-1">
+              <h1 className="text-2xl sm:text-3xl font-display font-bold text-[var(--text-primary)] mb-1">
                 {currentUser.fullname}
               </h1>
-              <p className="text-base-500 text-sm sm:text-base">
+              <p className="text-[var(--text-secondary)] text-sm sm:text-base">
                 @{currentUser.username}
               </p>
             </div>
@@ -123,8 +123,8 @@ export default function ProfileHeader({
             {isOwner && (
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-base-100 hover:bg-base-200 cursor-pointer text-sm font-medium
-                      transition-all duration-200 text-base-700 hover:text-base-900
+                className="px-4 py-2 rounded-xl bg-[var(--bg-secondary)] hover:bg-[var(--hover-bg)] cursor-pointer text-sm font-medium
+                      transition-all duration-200 text-[var(--text-secondary)] hover:text-[var(--text-primary)]
                       inline-flex items-center justify-center gap-2 self-center sm:self-start"
               >
                 <svg

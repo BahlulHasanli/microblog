@@ -2,6 +2,8 @@
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: Inter, sans-serif;
   --font-display: InterDisplay, monospace;
@@ -56,6 +58,50 @@
   --tt-color-highlight-purple: #e4d4ff;
   --tt-color-highlight-pink: #ffd4f4;
   --tt-color-highlight-gray: #e4e4e4;
+
+  /* Dark mode dəyişənləri */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e5e5e5;
+  --text-primary: #171717;
+  --text-secondary: #525252;
+  --text-tertiary: #737373;
+  --border-color: #e5e5e5;
+  --card-bg: #ffffff;
+  --hover-bg: #f5f5f5;
+}
+
+.dark {
+  --astro-code-color-text: #e5e5e5;
+  --astro-code-background: #1a1a1a;
+  --astro-code-token-constant: #e5e5e580;
+  --astro-code-token-string: #e5e5e550;
+  --astro-code-token-comment: #e5e5e560;
+  --astro-code-token-keyword: #e5e5e5;
+  --astro-code-token-parameter: #171717;
+  --astro-code-token-function: #e5e5e5;
+  --astro-code-token-string-expression: #7dd3fc;
+  --astro-code-token-punctuation: #171717;
+  --astro-code-token-link: #171717;
+
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-tertiary: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #737373;
+  --border-color: #262626;
+  --card-bg: #171717;
+  --hover-bg: #262626;
+
+  --tt-color-highlight-red: #7f1d1d;
+  --tt-color-highlight-orange: #7c2d12;
+  --tt-color-highlight-yellow: #713f12;
+  --tt-color-highlight-green: #14532d;
+  --tt-color-highlight-blue: #1e3a5f;
+  --tt-color-highlight-purple: #3b0764;
+  --tt-color-highlight-pink: #831843;
+  --tt-color-highlight-gray: #374151;
 }
 
 @font-face {

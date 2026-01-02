@@ -187,14 +187,14 @@ export default function ProfileTabs({
   return (
     <div>
       {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-1.5 mb-6 sm:mb-8 inline-flex gap-1">
+      <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] p-1.5 mb-6 sm:mb-8 inline-flex gap-1">
         {/* Dedi Tab */}
         <button
           onClick={() => setActiveTab("shares")}
           className={`cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-all duration-200 ${
             activeTab === "shares"
               ? "bg-rose-500 text-white"
-              : "text-base-500 hover:text-base-700 hover:bg-base-50"
+              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -229,7 +229,7 @@ export default function ProfileTabs({
           className={`cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-all duration-200 ${
             activeTab === "posts"
               ? "bg-rose-500 text-white"
-              : "text-base-500 hover:text-base-700 hover:bg-base-50"
+              : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover-bg)]"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export default function ProfileTabs({
                 <div className="w-8 h-8 border-2 border-base-200 border-t-rose-500 rounded-full animate-spin"></div>
               </div>
             ) : shares.length > 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100">
+              <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] divide-y divide-[var(--border-color)]">
                 {shares.map((share, index) => (
                   <div
                     key={share.id}
@@ -292,22 +292,22 @@ export default function ProfileTabs({
 
                 {/* End of list */}
                 {!hasMoreShares && shares.length > 0 && (
-                  <div className="text-center py-4 text-xs text-base-400">
+                  <div className="text-center py-4 text-xs text-[var(--text-tertiary)]">
                     Daha çox paylaşım yoxdur
                   </div>
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
+              <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-secondary)] mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="size-8 text-slate-400"
+                      className="size-8 text-[var(--text-tertiary)]"
                     >
                       <path
                         strokeLinecap="round"
@@ -316,10 +316,10 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
                     Heç bir paylaşım yoxdur
                   </h3>
-                  <p className="text-base-600">
+                  <p className="text-[var(--text-secondary)]">
                     {isOwner
                       ? "Hələ heç bir paylaşım etməmisiniz"
                       : "Bu istifadəçi hələ heç bir paylaşım etməmişdir"}
@@ -345,16 +345,16 @@ export default function ProfileTabs({
                 ))}
               </div>
             ) : isOwner ? (
-              <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
+              <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-secondary)] mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke-width="1.5"
                       stroke="currentColor"
-                      className="size-8 text-slate-400"
+                      className="size-8 text-[var(--text-tertiary)]"
                     >
                       <path
                         stroke-linecap="round"
@@ -363,10 +363,10 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
                     Hələ heç bir məqalə yazmamısınız
                   </h3>
-                  <p className="text-slate-600 text-[14px] mb-6">
+                  <p className="text-[var(--text-secondary)] text-[14px] mb-6">
                     İlk məqalənizi yazmaq üçün "Yeni məqalə yaz" düyməsinə
                     klikləyin
                   </p>
@@ -393,16 +393,16 @@ export default function ProfileTabs({
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
+              <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--border-color)] p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--bg-secondary)] mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="size-8 text-base-400"
+                      className="size-8 text-[var(--text-tertiary)]"
                     >
                       <path
                         strokeLinecap="round"
@@ -411,10 +411,10 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-base-900 mb-2">
+                  <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
                     Heç bir məqalə yoxdur
                   </h3>
-                  <p className="text-base-600">
+                  <p className="text-[var(--text-secondary)]">
                     Bu istifadəçi hələ heç bir məqalə yazmamışdır
                   </p>
                 </div>

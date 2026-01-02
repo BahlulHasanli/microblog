@@ -119,7 +119,7 @@
           class={`
             group relative inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-full text-xs sm:text-sm
             transition-all duration-200 font-nouvelr select-none overflow-hidden
-            ${isActive ? "bg-rose-50 text-rose-600" : "bg-zinc-50"}
+            ${isActive ? "bg-rose-50 text-rose-600 dark:bg-rose-900/30" : "bg-zinc-50 dark:bg-zinc-800"}
             ${
               loading
                 ? "opacity-40 cursor-not-allowed"
@@ -147,7 +147,7 @@
           {#if count > 0}
             <span
               class={`text-sm sm:text-lg font-semibold tabular-nums ${
-                isActive ? "text-rose-600" : "text-zinc-600"
+                isActive ? "text-rose-600" : "text-(--text-secondary)"
               }`}
             >
               {count}

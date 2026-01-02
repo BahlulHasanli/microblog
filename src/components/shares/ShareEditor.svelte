@@ -233,14 +233,14 @@
   };
 </script>
 
-<div class="w-full border-b border-slate-100 p-3 sm:p-4">
+<div class="w-full border-b border-(--border-color) p-3 sm:p-4">
   <form onsubmit={handleSubmit} class="space-y-3">
     <textarea
       bind:value={content}
       placeholder="Nə düşünürsən?"
       maxlength={500}
       disabled={isLoading}
-      class="w-full p-2 sm:p-3 text-sm border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-50"
+      class="w-full p-2 sm:p-3 text-sm border border-(--border-color) rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-50 bg-(--bg-secondary) text-(--text-primary)"
       rows={2}
     ></textarea>
     {#if images.length > 0}
@@ -250,7 +250,7 @@
             <img
               src={image.preview}
               alt={`Preview ${index + 1}`}
-              class="max-h-32 w-full object-cover rounded-lg border border-slate-200"
+              class="max-h-32 w-full object-cover rounded-lg border border-(--border-color)"
             />
             <button
               type="button"
@@ -287,10 +287,10 @@
     {/if}
 
     {#if showYoutubeInput && !youtubeUrl}
-      <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="bg-(--bg-secondary) rounded-lg p-3 border border-(--border-color)">
         <div class="flex items-center gap-2 mb-2">
           <Play size={14} class="text-red-600" />
-          <span class="text-xs font-medium text-slate-600">
+          <span class="text-xs font-medium text-(--text-secondary)">
             YouTube Video
           </span>
         </div>
@@ -300,7 +300,7 @@
             placeholder="youtu.be/... yaxud youtube.com/watch?v=..."
             bind:value={youtubeUrl}
             onchange={(e) => handleYoutubeUrlChange((e.target as HTMLInputElement).value)}
-            class="flex-1 p-2 text-sm border border-slate-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 placeholder:text-slate-400"
+            class="flex-1 p-2 text-sm border border-(--border-color) rounded bg-(--bg-secondary) text-(--text-primary) focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 placeholder:text-(--text-tertiary)"
             disabled={isLoading}
             autofocus
           />
@@ -319,7 +319,7 @@
               youtubeUrl = "";
             }}
             disabled={isLoading}
-            class="cursor-pointer px-3 py-2 text-xs bg-white text-slate-600 border border-slate-300 rounded font-medium hover:bg-slate-100 disabled:opacity-50 transition-colors"
+            class="cursor-pointer px-3 py-2 text-xs bg-(--bg-secondary) text-(--text-secondary) border border-(--border-color) rounded font-medium hover:bg-(--hover-bg) disabled:opacity-50 transition-colors"
           >
             Ləğv et
           </button>
@@ -329,8 +329,8 @@
 
     <div class="flex items-center justify-between gap-2">
       <div class="flex items-center gap-2">
-        <label class="cursor-pointer p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-          <Image size={16} class="text-slate-600" />
+        <label class="cursor-pointer p-1.5 hover:bg-(--hover-bg) rounded-lg transition-colors">
+          <Image size={16} class="text-(--text-secondary)" />
           <input
             type="file"
             accept="image/*"
@@ -345,7 +345,7 @@
           type="button"
           onclick={() => (showYoutubeInput = !showYoutubeInput)}
           disabled={isLoading || !!youtubeUrl}
-          class="cursor-pointer p-1.5 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="cursor-pointer p-1.5 hover:bg-(--hover-bg) rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="YouTube video əlavə et"
         >
           <Play size={16} class="text-red-600" />
@@ -366,7 +366,7 @@
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
-                class="text-slate-200"
+                class="text-(--text-tertiary)"
               />
               <!-- Progress circle -->
               <circle
@@ -386,7 +386,7 @@
                 }`}
               />
             </svg>
-            <span class="absolute text-xs font-medium text-slate-600"></span>
+            <span class="absolute text-xs font-medium text-(--text-secondary)"></span>
           </div>
         {/if}
         <button

@@ -303,7 +303,7 @@
           </a>
 
           <div class="mt-3 sm:mt-5">
-            <div class="flex items-center gap-1 sm:gap-2 text-xs text-base-500 flex-wrap">
+            <div class="flex items-center gap-1 sm:gap-2 text-xs text-[var(--text-secondary)] flex-wrap">
               <button type="button" class="user-avatar overflow-hidden size-10! sm:size-14! squircle cursor-pointer shrink-0" data-username={post.data.author?.username}>
                 <img src={post.data.author?.avatar}
                     alt={post.data.author?.fullname}
@@ -328,16 +328,16 @@
               {/if}
             </div>
 
-            <h3 class="mt-4 text-base text-base-900 text-balance">
+            <h3 class="mt-4 text-base text-[var(--text-primary)] text-balance">
               <a href={`/posts/${post.slug}`} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">
                 {post.data.title}
               </a>
             </h3>
 
-            <p class="mt-1 text-sm text-base-500 line-clamp-2">{post.data.description}</p>
+            <p class="mt-1 text-sm text-[var(--text-secondary)] line-clamp-2">{post.data.description}</p>
 
             {#if post.data.pubDate}
-              <div class="flex items-center gap-2 mt-3 text-xs text-base-500">
+              <div class="flex items-center gap-2 mt-3 text-xs text-[var(--text-secondary)]">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
                 </svg>
@@ -392,13 +392,13 @@
               <span>Sponsorlu</span>
             </div>
 
-            <h3 class="text-base text-base-900 text-balance">
+            <h3 class="text-base text-[var(--text-primary)] text-balance">
               <a href={banner.banner_url} target="_blank" rel="noopener noreferrer" class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">
                 {banner.title}
               </a>
             </h3>
 
-            <p class="mt-1 text-sm text-base-500 line-clamp-2">{banner.description}</p>
+            <p class="mt-1 text-sm text-[var(--text-secondary)] line-clamp-2">{banner.description}</p>
           </div>
         </article>
       </div>
@@ -409,7 +409,7 @@
 <!-- Loading trigger -->
 <div bind:this={loadMoreTrigger} class="w-full py-8 flex justify-center sm:col-span-2">
   {#if loading}
-    <div class="flex items-center gap-3 text-base-500">
+    <div class="flex items-center gap-3 text-[var(--text-secondary)]">
       <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -417,7 +417,7 @@
       <span class="text-sm">Yüklənir...</span>
     </div>
   {:else if !hasMore}
-    <div class="text-sm text-base-400">
+    <div class="text-sm text-[var(--text-tertiary)]">
       Bütün postlar yükləndi
     </div>
   {/if}

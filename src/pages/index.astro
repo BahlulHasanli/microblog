@@ -94,7 +94,7 @@ const posts = (postsData || []).map(post => {
            {
             categories.map((category) => (
               <a
-                class="hover:text-rose-500 text-xs sm:text-sm font-medium text-base-600"
+                class="hover:text-rose-500 text-xs sm:text-sm font-medium text-[var(--text-secondary)]"
                 href={`/category/${category.slug}`}
               >
                 {category.name}

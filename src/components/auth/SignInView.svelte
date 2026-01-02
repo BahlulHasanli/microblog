@@ -57,19 +57,19 @@ import { Toaster, toast } from 'svelte-sonner'
 
 <Toaster position="top-center"/>
 <section class="max-w-md mx-auto py-8 px-4 sm:px-0">
-  <div class="bg-white rounded-lg p-4">
+  <div class="bg-[var(--card-bg)] rounded-lg p-4">
     <div class="text-center mb-6">
-      <h1 class="text-xl font-big-shoulders font-bold text-base-900 mb-1">
+      <h1 class="text-xl font-big-shoulders font-bold text-[var(--text-primary)] mb-1">
         Daxil Ol
       </h1>
-      <p class="text-base-600 text-sm">Hesabınıza daxil olun</p>
+      <p class="text-[var(--text-secondary)] text-sm">Hesabınıza daxil olun</p>
     </div>
 
     <form id="signinForm" class="space-y-5" onsubmit={handleSubmit}>
       <div> 
         <label  
           for="email"
-          class="block text-xs font-medium text-base-700 mb-1"
+          class="block text-xs font-medium text-[var(--text-secondary)] mb-1"
         >
           Email
         </label>
@@ -80,14 +80,14 @@ import { Toaster, toast } from 'svelte-sonner'
           placeholder="email@the99.az"
           required
           bind:value={formState.email}
-          class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+          class="w-full px-3 py-1.5 border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] bg-[var(--bg-secondary)]"
         />
       </div>
 
       <div> 
         <label
           for="password"
-          class="block text-xs font-medium text-base-700 mb-1"
+          class="block text-xs font-medium text-[var(--text-secondary)] mb-1"
         >
           Şifrə
         </label>
@@ -98,7 +98,7 @@ import { Toaster, toast } from 'svelte-sonner'
           placeholder="Şifrənizi daxil edin"
           required
           bind:value={formState.password}
-          class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+          class="w-full px-3 py-1.5 border border-[var(--border-color)] rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] bg-[var(--bg-secondary)]"
         />
       </div>
 
@@ -124,8 +124,8 @@ import { Toaster, toast } from 'svelte-sonner'
       </button> 
     </form>
 
-    <div class="text-center mt-4 pt-3 border-t border-base-100">
-      <p class="text-base-600 text-xs">
+    <div class="text-center mt-4 pt-3 border-t border-[var(--border-color)]">
+      <p class="text-[var(--text-secondary)] text-xs">
         Hesabınız yoxdur?
         <a
           href="/signup"
