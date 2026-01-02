@@ -17,10 +17,10 @@
   function formatSimpleDate(date: string | Date): string {
     const d = new Date(date);
     const months = [
-      'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'İyun',
-      'İyul', 'Avqust', 'Sentyabr', 'Oktyabr', 'Noyabr', 'Dekabr'
+      'Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn',
+      'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'
     ];
-    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
   }
 
   function getCategoryName(slug: string): string {
@@ -58,6 +58,25 @@
   }
 
   function initBlurhash() {
+    // Blurhash olmayan şəkillər üçün birbaşa göstər
+    const allImages = document.querySelectorAll('.blurhash-img') as NodeListOf<HTMLImageElement>;
+    allImages.forEach((img) => {
+      const container = img.closest('.blurhash-container');
+      const hasBlurhash = container?.getAttribute('data-blurhash');
+      if (!hasBlurhash) {
+        // Blurhash yoxdursa, şəkili birbaşa göstər
+        if (img.complete && img.naturalWidth > 0) {
+          img.classList.remove('opacity-0');
+          img.classList.add('opacity-100');
+        } else {
+          img.addEventListener('load', () => {
+            img.classList.remove('opacity-0');
+            img.classList.add('opacity-100');
+          });
+        }
+      }
+    });
+
     const containers = document.querySelectorAll('.blurhash-container[data-blurhash]');
     
     containers.forEach((container) => {
@@ -86,14 +105,18 @@
         
         if (img) {
           if (img.complete && img.naturalWidth > 0) {
+            img.classList.remove('opacity-0');
+            img.classList.add('opacity-100');
             setTimeout(() => {
               canvas.style.opacity = '0';
-            }, 500);
+            }, 100);
           } else {
             img.addEventListener('load', () => {
+              img.classList.remove('opacity-0');
+              img.classList.add('opacity-100');
               setTimeout(() => {
                 canvas.style.opacity = '0';
-              }, 300);
+              }, 100);
             });
           }
         }
@@ -199,7 +222,8 @@
                   height="630"
                   src={post.data.image.url}
                   alt={post.data.title}
-                  class="blurhash-img object-cover w-full aspect-video rounded-2xl"
+                  loading="lazy"
+                  class="blurhash-img object-cover w-full aspect-video rounded-2xl opacity-0 transition-opacity duration-300"
                 />
               </div>
             </a>
@@ -272,7 +296,8 @@
                 height="630"
                 src={post.data.image.url}
                 alt={post.data.title}
-                class="blurhash-img object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
+                loading="lazy"
+                class="blurhash-img object-cover w-full h-full bg-center aspect-12/8 rounded-xl opacity-0 transition-opacity duration-300"
               />
             </div>
           </a>
