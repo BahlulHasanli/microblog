@@ -1,17 +1,21 @@
 <script lang="ts">
-  export let videoUrl: string;
-  export let title: string = "";
-  export let authorName: string = "";
-  export let authorAvatar: string = "";
+  interface Props {
+    videoUrl: string;
+    title?: string;
+    authorName?: string;
+    authorAvatar?: string;
+  }
+  
+  let { videoUrl, title = "", authorName = "", authorAvatar = "" }: Props = $props();
 
   let videoElement: HTMLVideoElement;
-  let isPlaying = false;
-  let isMuted = true;
-  let currentTime = 0;
-  let duration = 0;
-  let showControls = false;
+  let isPlaying = $state(false);
+  let isMuted = $state(true);
+  let currentTime = $state(0);
+  let duration = $state(0);
+  let showControls = $state(false);
   let controlsTimeout: number;
-  let hasStarted = false;
+  let hasStarted = $state(false);
   let containerElement: HTMLDivElement;
 
   function togglePlay() {
@@ -72,16 +76,16 @@
     }
   }
 
-  $: progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  let progress = $derived(duration > 0 ? (currentTime / duration) * 100 : 0);
 </script>
 
 <div 
   class="video-container"
   bind:this={containerElement}
-  on:mousemove={handleMouseMove}
-  on:mouseleave={handleMouseLeave}
-  on:click={togglePlay}
-  on:keydown={(e) => e.key === 'Enter' || e.key === ' ' ? togglePlay() : null}
+  onmousemove={handleMouseMove}
+  onmouseleave={handleMouseLeave}
+  onclick={togglePlay}
+  onkeydown={(e) => e.key === 'Enter' || e.key === ' ' ? togglePlay() : null}
   role="button"
   tabindex="0"
 >
@@ -89,8 +93,8 @@
     bind:this={videoElement}
     src={videoUrl}
     class="video-element"
-    on:timeupdate={handleTimeUpdate}
-    on:ended={() => isPlaying = false}
+    ontimeupdate={handleTimeUpdate}
+    onended={() => isPlaying = false}
     muted={isMuted}
     loop
     playsinline
@@ -119,7 +123,7 @@
   {#if !isPlaying}
     <button 
       class="play-overlay"
-      on:click|stopPropagation={togglePlay}
+      onclick={(e) => { e.stopPropagation(); togglePlay(); }}
       aria-label="Play"
     >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="play-icon">
@@ -130,9 +134,9 @@
 
   <!-- Controls -->
   {#if hasStarted}
-  <div class="controls {showControls || !isPlaying ? 'visible' : ''}" on:click|stopPropagation>
+  <div class="controls {showControls || !isPlaying ? 'visible' : ''}" onclick={(e) => e.stopPropagation()} role="group">
     <!-- Progress Bar -->
-    <div class="progress-container" on:click|stopPropagation={handleSeek}>
+    <div class="progress-container" onclick={(e) => { e.stopPropagation(); handleSeek(e); }} role="slider" tabindex="0" aria-label="Progress">
       <div class="progress-bar">
         <div class="progress-fill" style="width: {progress}%"></div>
       </div>
@@ -140,7 +144,7 @@
 
     <!-- Bottom Controls -->
     <div class="bottom-controls">
-      <button class="control-btn" on:click|stopPropagation={togglePlay}>
+      <button class="control-btn" onclick={(e) => { e.stopPropagation(); togglePlay(); }}>
         {#if isPlaying}
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
             <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z" clip-rule="evenodd" />
@@ -156,13 +160,13 @@
         {formatTime(currentTime)} / {formatTime(duration)}
       </span>
 
-      <button class="control-btn ml-auto" on:click|stopPropagation={toggleFullscreen} aria-label="Fullscreen">
+      <button class="control-btn ml-auto" onclick={(e) => { e.stopPropagation(); toggleFullscreen(); }} aria-label="Fullscreen">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
         </svg>
       </button>
 
-      <button class="control-btn" on:click|stopPropagation={toggleMute}>
+      <button class="control-btn" onclick={(e) => { e.stopPropagation(); toggleMute(); }}>
         {#if isMuted}
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon">
             <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM17.78 9.22a.75.75 0 10-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 001.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 101.06-1.06L20.56 12l1.72-1.72a.75.75 0 00-1.06-1.06l-1.72 1.72-1.72-1.72z" />

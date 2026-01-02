@@ -118,6 +118,7 @@ const posts = (postsData || []).map(post => {
                     items.push(
                       <div class="sm:col-span-2">
                         <BlogEntries
+                          page="home"
                           url={"/posts/" + post.slug} 
                           categories={post.data.categories}
                           title={post.data.title}
@@ -135,6 +136,7 @@ const posts = (postsData || []).map(post => {
                     items.push(
                       <div>
                         <BlogEntries
+                         page="home"
                           url={"/posts/" + post.slug} 
                           categories={post.data.categories}
                           title={post.data.title}

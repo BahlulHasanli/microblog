@@ -13,16 +13,17 @@ interface Props {
   blurhash?: string;
   allCategories?: { slug: string; name: string }[];
   postId?: string;
+  page?: 'home' | 'category';
 }
 
-const { title, url, description, image, categories, author, pubDate, blurhash, allCategories = [], postId } = Astro.props;
+const { title, url, description, image, categories, author, pubDate, blurhash, allCategories = [], postId, page } = Astro.props;
 const CATEGORIES = allCategories;
 
 const isIcmal = categories?.includes('icmal') || false;
-
+ 
 ---
  
-{isIcmal ? (
+{isIcmal && page === 'home' ? (
   <article class="relative w-full rounded-xl overflow-hidden group">
     <div class="absolute inset-0">
       <img src={image} alt="" class="w-full h-full object-cover scale-110" />

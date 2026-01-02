@@ -57,6 +57,25 @@ const sortedPosts = (filteredPosts || []).map(post => ({
     author: post.users
   }
 }));
+
+console.log('category', category)
+
+const older = [
+  {category: 'oyun', older: "/older/older_game.svg"},
+  {category: 'movie', older: "/older/older_movie.svg"},
+  {category: 'nba', older: "/older/older_nba.svg"},
+  {category: 'art', older: "/older/older_art.svg"},
+  {category: 'animasiya', older: "/older/older_animation.svg"},
+  {category: 'anime-manga', older: "/older/older_anime.svg"},
+  {category: 'comics', older: "/older/older_comics.svg"},
+  {category: 'podcast', older: "/older/older_podcast.svg"},
+  {category: 'qorxu', older: "/older/older_qorxu.svg"},
+  {category: 'ai', older: "/older/older_ai.svg"},
+  {category: 'sosial-media', older: "/older/older_sosial_media.svg"},
+  {category: 'pikseller', older: "/older/older_pikseller.svg"},
+  {category: 'retro', older: "/older/older_retro.svg"},
+  {category: 'icmal', older: "/older/older_icmal.svg"},
+]
 ---
 
 <BaseLayout title={`${category.name} - Mikroblog`}>
@@ -67,22 +86,20 @@ const sortedPosts = (filteredPosts || []).map(post => ({
         <span class="text-base-400">/</span>
         <span class="text-xs sm:text-sm font-medium text-base-900">{category.name}</span>
       </div>
-      
-      <h1 class="text-2xl sm:text-3xl md:text-4xl text-balance font-light font-display text-base-900 mb-4 sm:mb-6">
-        <span class="font-semibold">{category.name}</span> bölməsi
-      </h1>
 
-      {sortedPosts.length === 0 ? (
-        <div class="text-center py-8 sm:py-12">
-          <p class="text-sm sm:text-base text-base-600">Bölmədə heçnə mövcud deyil.</p>
-          <a href="/" class="text-base-900 font-medium underline underline-offset-4 underline-2 decoration-wavy hover:no-underline mt-2 inline-block text-sm sm:text-base">
-            Ana səhifəyə qayıt
-          </a>
-        </div>
-      ) : (
-        <div class="grid grid-cols-1 mt-6 sm:mt-8 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">
+    <div class="flex items-center justify-between px-14">
+        <img src={older.find((cat: { category: string; older: string }) => cat.category === category.slug)?.older || "/older/older_movie.svg"} alt="Old Gamer" class="size-[320px]" />
+
+          <h1 class="text-2xl sm:text-3xl md:text-4xl text-balance font-light font-display text-base-900 mb-4 sm:mb-6">
+            <span class="font-semibold">{category.name}</span> bölməsi
+          </h1>
+    </div>
+
+     {sortedPosts?.length > 0 && (
+       <div class="grid grid-cols-1 mt-6 sm:mt-8 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">
           {sortedPosts.map((post) => (
             <BlogEntries
+              page="category"
               url={"/posts/" + post.slug}
               categories={post.data.categories}
               title={post.data.title}
@@ -95,7 +112,8 @@ const sortedPosts = (filteredPosts || []).map(post => ({
             />
           ))}
         </div>
-      )}
+     )}
+       
     </div>
   </section>
 </BaseLayout>
