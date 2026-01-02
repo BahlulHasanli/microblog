@@ -137,6 +137,7 @@ import { Toaster, toast } from 'svelte-sonner'
     <!-- Google Login Button -->
     <a
       href="/api/auth/google"
+      data-astro-prefetch="false"
       class="flex items-center justify-center gap-2 w-full bg-white border border-base-200 hover:bg-base-50 text-base-700 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-base-300"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
