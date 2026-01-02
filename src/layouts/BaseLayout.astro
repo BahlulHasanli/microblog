@@ -60,13 +60,19 @@ const finalDescription = pageDescription || siteDescription;
   <head>   
     <BaseHead title={finalTitle} description={finalDescription} />
     <script is:inline>
-      // Dark mode-u localStorage-dan oxu
+      // Dark mode və enerji qənaət rejimini localStorage-dan oxu
       (function() {
         const theme = localStorage.getItem('theme');
         if (theme === 'light') {
           document.documentElement.classList.remove('dark');
         } else {
           document.documentElement.classList.add('dark');
+        }
+        
+        // Enerji qənaət rejimi
+        const energySaver = localStorage.getItem('energy-saver');
+        if (energySaver === 'true') {
+          document.documentElement.classList.add('energy-saver');
         }
       })();
     </script>
@@ -101,6 +107,23 @@ const finalDescription = pageDescription || siteDescription;
       
       // Custom event dispatch et
       window.dispatchEvent(new CustomEvent('themechange', { detail: { dark: !isDark } }));
+    };
+
+    // Enerji qənaət rejimi toggle funksiyası
+    window.toggleEnergySaver = function() {
+      const html = document.documentElement;
+      const isEnergySaver = html.classList.contains('energy-saver');
+      
+      if (isEnergySaver) {
+        html.classList.remove('energy-saver');
+        localStorage.setItem('energy-saver', 'false');
+      } else {
+        html.classList.add('energy-saver');
+        localStorage.setItem('energy-saver', 'true');
+      }
+      
+      // Custom event dispatch et
+      window.dispatchEvent(new CustomEvent('energysaverchange', { detail: { enabled: !isEnergySaver } }));
     };
   </script>
   

@@ -369,3 +369,149 @@
     animation: none !important;
   }
 }
+
+/* ========================================
+   ENERJI QƏNAƏT REJİMİ (Kindle Style)
+   ======================================== */
+
+/* Energy saver toggle icon visibility */
+.energy-saver .energy-saver-off {
+  display: none !important;
+}
+
+.energy-saver .energy-saver-on {
+  display: block !important;
+}
+
+/* Ana enerji qənaət stilləri */
+.energy-saver {
+  /* Ağ-qara rənglər */
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #f5f5f5 !important;
+  --bg-tertiary: #e5e5e5 !important;
+  --text-primary: #000000 !important;
+  --text-secondary: #333333 !important;
+  --text-tertiary: #666666 !important;
+  --border-color: #cccccc !important;
+  --card-bg: #ffffff !important;
+  --hover-bg: #eeeeee !important;
+}
+
+.energy-saver.dark {
+  --bg-primary: #000000 !important;
+  --bg-secondary: #111111 !important;
+  --bg-tertiary: #222222 !important;
+  --text-primary: #ffffff !important;
+  --text-secondary: #cccccc !important;
+  --text-tertiary: #999999 !important;
+  --border-color: #333333 !important;
+  --card-bg: #111111 !important;
+  --hover-bg: #222222 !important;
+}
+
+/* Bütün rəngləri ağ-qara et (şəkillərdən başqa) */
+.energy-saver
+  *:not(img):not(video):not(picture):not(canvas):not([class*="post-image"]):not(
+    [class*="cover"]
+  ):not(.avatar):not([class*="avatar"]) {
+  filter: grayscale(100%) !important;
+}
+
+/* Şəkilləri normal saxla - xəbər vizualları */
+.energy-saver img,
+.energy-saver video,
+.energy-saver picture,
+.energy-saver canvas,
+.energy-saver [class*="post-image"],
+.energy-saver [class*="cover"],
+.energy-saver .avatar,
+.energy-saver [class*="avatar"] {
+  filter: none !important;
+}
+
+/* Animasiyaları söndür */
+.energy-saver *,
+.energy-saver *::before,
+.energy-saver *::after {
+  animation: none !important;
+  animation-duration: 0ms !important;
+  animation-delay: 0ms !important;
+  transition: none !important;
+  transition-duration: 0ms !important;
+}
+
+/* Blur effektlərini söndür */
+.energy-saver [class*="blur"],
+.energy-saver [class*="backdrop"],
+.energy-saver [style*="blur"],
+.energy-saver [style*="backdrop"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: grayscale(100%) !important;
+}
+
+/* Kölgələri sadələşdir */
+.energy-saver [class*="shadow"],
+.energy-saver [style*="shadow"] {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Gradient-ləri söndür */
+.energy-saver [class*="gradient"],
+.energy-saver [style*="gradient"] {
+  background-image: none !important;
+  background: var(--bg-secondary) !important;
+}
+
+/* Hover effektlərini sadələşdir */
+.energy-saver *:hover {
+  transform: none !important;
+  scale: none !important;
+}
+
+/* View transitions söndür */
+.energy-saver ::view-transition-group(*),
+.energy-saver ::view-transition-old(*),
+.energy-saver ::view-transition-new(*) {
+  animation: none !important;
+}
+
+/* Squircle animasiyalarını söndür */
+.energy-saver .squircle-border,
+.energy-saver .squircle-wrapper,
+.energy-saver .squircle {
+  animation: none !important;
+  filter: grayscale(100%) !important;
+}
+
+/* Loader animasiyalarını söndür */
+.energy-saver .loader,
+.energy-saver #nav-loader,
+.energy-saver .nav-loader-bar {
+  animation: none !important;
+  display: none !important;
+}
+
+/* Rəngli düymələri ağ-qara et */
+.energy-saver button,
+.energy-saver a,
+.energy-saver [role="button"] {
+  background-image: none !important;
+}
+
+/* Prose içindəki rəngli elementləri ağ-qara et */
+.energy-saver .prose mark {
+  background-color: #e5e5e5 !important;
+}
+
+.energy-saver.dark .prose mark {
+  background-color: #333333 !important;
+}
+
+/* Code blokları */
+.energy-saver pre,
+.energy-saver code {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
