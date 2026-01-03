@@ -62,7 +62,7 @@ console.log('category', category)
 
 const older = [
   {category: 'oyun', older: "https://the99.b-cdn.net/older/older_game.svg"},
-  {category: 'movie', older: "https://the99.b-cdn.net/older/older_movie.svg"},
+  {category: 'film-serial', older: "https://the99.b-cdn.net/older/older_movie.svg"}, 
   {category: 'nba', older: "https://the99.b-cdn.net/older/older_nba.svg"},
   {category: 'art', older: "https://the99.b-cdn.net/older/older_art.svg"},
   {category: 'animasiya', older: "https://the99.b-cdn.net/older/older_animation.svg"},
@@ -88,7 +88,7 @@ const older = [
       </div>
 
     <div class="flex items-center justify-between px-14">
-        <img src={older.find((cat: { category: string; older: string }) => cat.category === category.slug)?.older || "/older/older_movie.svg"} alt="Old Gamer" class="size-[320px]" />
+        <img src={older.find((cat: { category: string; older: string }) => cat.category === category.slug)?.older} alt="Old Gamer" class="size-[320px]" />
 
           <h1 class="text-2xl sm:text-3xl md:text-4xl text-balance font-light font-display text-base-900 mb-4 sm:mb-6">
             <span class="font-semibold">{category.name}</span> bölməsi
