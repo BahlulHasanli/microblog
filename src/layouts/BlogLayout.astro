@@ -4,6 +4,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
 import PostReactions from "@/components/reactions/PostReactions.svelte";
+import MediaPlayer from "@/components/media/MediaPlayer.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
@@ -22,12 +23,17 @@ if (isLoggedIn) {
 const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
   .from('posts')
-  .select('id, image_blurhash')
+  .select('id, image_blurhash, audio_url, audio_title, audio_artist')
   .eq('slug', postSlug)
   .single();
 
 const postId = postData?.id;
 const imageBlurhash = postData?.image_blurhash || null;
+
+// Audio məlumatları Supabase-dən
+const dbAudioUrl = postData?.audio_url || null;
+const dbAudioTitle = postData?.audio_title || null;
+const dbAudioArtist = postData?.audio_artist || null;
 
 // Kateqoriyaları Supabase-dən çək
 const { data: categoriesData } = await supabase
@@ -70,6 +76,17 @@ function calculateReadTime(content: string): number {
 }
 
 const readTime = calculateReadTime(frontmatter.content || '');
+
+// Audio/Musiqi məlumatları - Supabase-dən və ya frontmatter-dən
+const hasAudio = dbAudioUrl || frontmatter.audio?.url;
+const audioData = hasAudio ? {
+  url: dbAudioUrl || frontmatter.audio?.url,
+  title: dbAudioTitle || frontmatter.audio?.title || frontmatter.title,
+  artist: dbAudioArtist || frontmatter.audio?.artist || frontmatter.author?.fullname || '',
+  cover: frontmatter.image?.url || ''
+} : null;
+
+const finalAudioData = audioData;
 
 ---
 <BaseLayout title={frontmatter.title} description={frontmatter.description}>
@@ -215,6 +232,17 @@ const readTime = calculateReadTime(frontmatter.content || '');
           <Comments client:load="svelte" postSlug={postSlug} />
           <CommentButton client:load="svelte" />
         </>
+      )}
+
+      {/* Media Player - yalnız audio varsa göstər */}
+      {finalAudioData && (
+        <MediaPlayer
+          client:load
+          audioUrl={finalAudioData.url}
+          title={finalAudioData.title}
+          artist={finalAudioData.artist}
+          coverImage={finalAudioData.cover}
+        />
       )}
 
       <script is:inline>

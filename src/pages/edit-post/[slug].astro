@@ -44,7 +44,12 @@ const postData = {
   },
   categories: post.categories || [],
   approved: post.approved,
-  featured: post.featured
+  featured: post.featured,
+  audio: {
+    url: post.audio_url || '',
+    title: post.audio_title || '',
+    artist: post.audio_artist || ''
+  }
 };
 ---
 

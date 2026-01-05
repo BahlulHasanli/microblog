@@ -41,6 +41,27 @@ export const POST: APIRoute = async (context) => {
     const imageAlt = (formData.get("imageAlt") as string) || title;
     const uploadedImage = formData.get("uploadedImage") as File;
 
+    // Musiqi məlumatları
+    const audioFileRaw = formData.get("audioFile");
+    const audioFile =
+      audioFileRaw instanceof File && audioFileRaw.size > 0
+        ? audioFileRaw
+        : null;
+    const audioTitle = formData.get("audioTitle")?.toString() || "";
+    const audioArtist = formData.get("audioArtist")?.toString() || "";
+    const existingAudioUrl = formData.get("existingAudioUrl")?.toString() || "";
+    const removeAudio = formData.get("removeAudio") === "true";
+
+    console.log("Audio məlumatları:", {
+      audioFileRaw: audioFileRaw,
+      audioFileType: audioFileRaw ? typeof audioFileRaw : null,
+      audioFileSize: audioFile?.size,
+      audioTitle,
+      audioArtist,
+      existingAudioUrl,
+      removeAudio,
+    });
+
     // Resim ID'lerini al
     let imageIdMap: Record<string, string> = {};
     const imageIdMapJson = formData.get("imageIdMap") as string;
@@ -428,6 +449,81 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
+    // Musiqi faylını BunnyCDN-ə yüklə və ya sil
+    let audioUrl = existingAudioUrl || existingPost.audio_url || "";
+    let audioTitleFinal = audioTitle || existingPost.audio_title || "";
+    let audioArtistFinal = audioArtist || existingPost.audio_artist || "";
+
+    // Audio silmə
+    if (removeAudio && existingPost.audio_url) {
+      console.log("Audio silmə başladı:", existingPost.audio_url);
+      try {
+        // BunnyCDN-dən audio faylını sil
+        const audioUrlPath = existingPost.audio_url.replace(
+          "https://the99.b-cdn.net/",
+          ""
+        );
+        const deleteAudioResponse = await fetch(
+          `https://storage.bunnycdn.com/${storageZoneName}/${audioUrlPath}`,
+          {
+            method: "DELETE",
+            headers: {
+              AccessKey: bunnyApiKey,
+            },
+          }
+        );
+
+        if (deleteAudioResponse.ok) {
+          console.log("Audio BunnyCDN-dən silindi:", audioUrlPath);
+        } else {
+          console.error(
+            "Audio silmə xətası:",
+            await deleteAudioResponse.text()
+          );
+        }
+      } catch (deleteError) {
+        console.error("Audio silmə xətası:", deleteError);
+      }
+
+      // Audio məlumatlarını sıfırla
+      audioUrl = "";
+      audioTitleFinal = "";
+      audioArtistFinal = "";
+    } else if (audioFile && audioFile.size > 0) {
+      try {
+        const audioFileName = `${newSlug}-audio.mp3`;
+        const audioFolder = `posts/${newSlug}/audio`;
+
+        const audioArrayBuffer = await audioFile.arrayBuffer();
+
+        const audioFilePath = `${audioFolder}/${audioFileName}`;
+
+        const audioResponse = await fetch(
+          `https://storage.bunnycdn.com/${storageZoneName}/${audioFilePath}`,
+          {
+            method: "PUT",
+            headers: {
+              AccessKey: bunnyApiKey,
+              "Content-Type": "application/octet-stream",
+            },
+            body: audioArrayBuffer,
+          }
+        );
+
+        if (!audioResponse.ok) {
+          const errorText = await audioResponse.text();
+          console.error(
+            `Bunny CDN audio yükləmə xətası: ${audioResponse.status} ${audioResponse.statusText} - ${errorText}`
+          );
+        } else {
+          audioUrl = `https://the99.b-cdn.net/${audioFolder}/${audioFileName}`;
+          console.log("Musiqi faylı BunnyCDN-ə yükləndi:", audioUrl);
+        }
+      } catch (audioError: any) {
+        console.error("Musiqi yükləmə xətası:", audioError);
+      }
+    }
+
     // Editorda silinən şəkilləri BunnyCDN-dən sil
     const deletedImageUrls: string[] = [];
 
@@ -703,9 +799,8 @@ export const POST: APIRoute = async (context) => {
           );
         } else {
           // Yoksa yeni bir ID oluştur
-          const { getOrCreateImageId } = await import(
-            "../../../utils/image-id-store"
-          );
+          const { getOrCreateImageId } =
+            await import("../../../utils/image-id-store");
           imageFileName = getOrCreateImageId(tempKey, newSlug, fileExtension);
           console.log(
             `API: Yeni resim ID'si oluşturuldu: ${tempKey} -> ${imageFileName}`
@@ -774,6 +869,10 @@ export const POST: APIRoute = async (context) => {
         approved: approvedStatus,
         featured: featuredStatus,
         updated_at: new Date().toISOString(),
+        // Musiqi məlumatları - silindisə null, yoxsa mövcud dəyər
+        audio_url: removeAudio ? null : audioUrl || null,
+        audio_title: removeAudio ? null : audioTitleFinal || null,
+        audio_artist: removeAudio ? null : audioArtistFinal || null,
       })
       .eq("slug", oldSlug)
       .select()

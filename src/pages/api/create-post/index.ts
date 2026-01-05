@@ -38,6 +38,11 @@ export const POST: APIRoute = async (context) => {
     const uploadedImage = formData.get("uploadedImage") as File | null;
     const imageBlurhash = formData.get("imageBlurhash")?.toString() || null;
 
+    // Musiqi məlumatları
+    const audioFile = formData.get("audioFile") as File | null;
+    const audioTitle = formData.get("audioTitle")?.toString() || "";
+    const audioArtist = formData.get("audioArtist")?.toString() || "";
+
     const imageAlt =
       imageAltFromForm && imageAltFromForm.trim() !== ""
         ? imageAltFromForm
@@ -132,6 +137,55 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
+    // Musiqi faylını BunnyCDN-ə yüklə
+    let audioUrl = "";
+    if (audioFile) {
+      try {
+        const audioFileName = `${slug}-audio.mp3`;
+        const audioFolder = `posts/${slug}/audio`;
+
+        const audioArrayBuffer = await audioFile.arrayBuffer();
+
+        const runtime = (context.locals as any).runtime;
+        const bunnyApiKey =
+          runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+        const storageZoneName =
+          runtime?.env?.BUNNY_STORAGE_ZONE ||
+          import.meta.env.BUNNY_STORAGE_ZONE;
+
+        if (!bunnyApiKey) {
+          throw new Error("BUNNY_API_KEY environment variable tapılmadı");
+        }
+
+        const audioFilePath = `${audioFolder}/${audioFileName}`;
+
+        const audioResponse = await fetch(
+          `https://storage.bunnycdn.com/${storageZoneName}/${audioFilePath}`,
+          {
+            method: "PUT",
+            headers: {
+              AccessKey: bunnyApiKey,
+              "Content-Type": "application/octet-stream",
+            },
+            body: audioArrayBuffer,
+          }
+        );
+
+        if (!audioResponse.ok) {
+          const errorText = await audioResponse.text();
+          throw new Error(
+            `Bunny CDN audio yükleme xətası: ${audioResponse.status} ${audioResponse.statusText} - ${errorText}`
+          );
+        }
+
+        audioUrl = `https://the99.b-cdn.net/${audioFolder}/${audioFileName}`;
+        console.log("Musiqi faylı BunnyCDN-ə yükləndi:", audioUrl);
+      } catch (audioError: any) {
+        console.error("Musiqi yükləmə xətası:", audioError);
+        // Musiqi yükləmə xətası post yaratmağı dayandırmasın
+      }
+    }
+
     let processedContent = content;
 
     const blobUrlRegex =
@@ -189,6 +243,10 @@ export const POST: APIRoute = async (context) => {
         categories: categoriesData,
         approved: false,
         featured: false,
+        // Musiqi məlumatları
+        audio_url: audioUrl || null,
+        audio_title: audioTitle || null,
+        audio_artist: audioArtist || null,
       })
       .select()
       .single();

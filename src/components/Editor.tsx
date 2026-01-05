@@ -21,6 +21,11 @@ export default function Editor({ author }: any) {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Musiqi state-ləri
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioTitle, setAudioTitle] = useState("");
+  const [audioArtist, setAudioArtist] = useState("");
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
   >("idle");
@@ -160,6 +165,19 @@ export default function Editor({ author }: any) {
         } catch (error) {
           console.error("FormData'ya resim ekleme hatası:", error);
         }
+      }
+
+      // Musiqi faylı varsa əlavə et
+      if (audioFile) {
+        const slug = slugify(title);
+        const audioFileName = `${slug}-audio.mp3`;
+        const newAudioFile = new File([audioFile], audioFileName, {
+          type: audioFile.type,
+        });
+        formData.append("audioFile", newAudioFile);
+        formData.append("audioTitle", audioTitle || title);
+        formData.append("audioArtist", audioArtist || author.fullname);
+        console.log("Musiqi faylı FormData'ya əlavə edildi:", audioFileName);
       }
 
       // API'ye istek gönder
@@ -538,6 +556,12 @@ export default function Editor({ author }: any) {
         coverImage={coverImage}
         onCoverImageChange={handleCoverImageChange}
         onCategoriesChange={setSelectedCategories}
+        audioFile={audioFile}
+        onAudioFileChange={setAudioFile}
+        audioTitle={audioTitle}
+        onAudioTitleChange={setAudioTitle}
+        audioArtist={audioArtist}
+        onAudioArtistChange={setAudioArtist}
       />
 
       <style>{`

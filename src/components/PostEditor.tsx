@@ -10,6 +10,10 @@ import { useStore } from "@nanostores/react";
 declare global {
   interface Window {
     _currentEditorTitle?: string;
+    _currentAudioFile?: File | null;
+    _currentAudioTitle?: string;
+    _currentAudioArtist?: string;
+    _currentExistingAudioUrl?: string;
   }
 }
 
@@ -33,6 +37,68 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     post.categories || []
   );
+
+  // Musiqi state-ləri
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const audioFileRef = useRef<File | null>(null); // Ref ilə saxla ki, save zamanı ən son dəyəri oxuya bilək
+  const [audioTitle, setAudioTitle] = useState(post.audio?.title || "");
+  const [audioArtist, setAudioArtist] = useState(post.audio?.artist || "");
+  const [existingAudioUrl, setExistingAudioUrl] = useState(
+    post.audio?.url || ""
+  );
+  const existingAudioUrlRef = useRef(post.audio?.url || "");
+  const [audioRemoved, setAudioRemoved] = useState(false); // Audio silindi flag-i
+  const audioRemovedRef = useRef(false);
+
+  // Audio fayl dəyişikliyi handler
+  const handleAudioFileChange = (file: File | null) => {
+    console.log(
+      "PostEditor: handleAudioFileChange çağırıldı:",
+      file?.name,
+      file?.size
+    );
+    setAudioFile(file);
+    audioFileRef.current = file; // Ref-i də yenilə
+    window._currentAudioFile = file; // Window-a da yaz
+    if (file) {
+      // Yeni fayl seçildikdə mövcud URL-i sıfırla
+      setExistingAudioUrl("");
+      existingAudioUrlRef.current = "";
+      window._currentExistingAudioUrl = "";
+      // Yeni fayl seçildikdə silindi flag-ini sıfırla
+      setAudioRemoved(false);
+      audioRemovedRef.current = false;
+      (window as any)._audioRemoved = false;
+    }
+  };
+
+  // Audio silmə handler
+  const handleAudioRemove = () => {
+    console.log("PostEditor: handleAudioRemove çağırıldı");
+    setAudioFile(null);
+    audioFileRef.current = null;
+    window._currentAudioFile = null;
+    setExistingAudioUrl("");
+    existingAudioUrlRef.current = "";
+    window._currentExistingAudioUrl = "";
+    // Silindi flag-ini qur
+    setAudioRemoved(true);
+    audioRemovedRef.current = true;
+    (window as any)._audioRemoved = true;
+  };
+
+  // Audio title/artist dəyişikliyi
+  useEffect(() => {
+    window._currentAudioTitle = audioTitle;
+  }, [audioTitle]);
+
+  useEffect(() => {
+    window._currentAudioArtist = audioArtist;
+  }, [audioArtist]);
+
+  useEffect(() => {
+    window._currentExistingAudioUrl = existingAudioUrl;
+  }, [existingAudioUrl]);
 
   // Markdown içeriğini JSON'a dönüştür
   const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
@@ -230,6 +296,49 @@ export default function PostEditor({ post, content, slug, author }: any) {
         } catch (error) {
           console.error("FormData'ya resim ekleme hatası:", error);
         }
+      }
+
+      // Musiqi faylı varsa əlavə et - window və ref-dən oxu
+      const currentAudioFile = window._currentAudioFile || audioFileRef.current;
+      const currentExistingAudioUrl =
+        window._currentExistingAudioUrl || existingAudioUrlRef.current;
+      const currentAudioTitle = window._currentAudioTitle || audioTitle;
+      const currentAudioArtist = window._currentAudioArtist || audioArtist;
+      const isAudioRemoved =
+        (window as any)._audioRemoved || audioRemovedRef.current;
+
+      console.log("Audio state yoxlanılır (window + ref):", {
+        currentAudioFile: currentAudioFile?.name,
+        currentAudioFileSize: currentAudioFile?.size,
+        currentAudioTitle,
+        currentAudioArtist,
+        currentExistingAudioUrl,
+        isAudioRemoved,
+      });
+
+      // Audio silindi flag-i
+      if (isAudioRemoved) {
+        formData.append("removeAudio", "true");
+        console.log("Audio silmə flag-i əlavə edildi");
+      } else if (currentAudioFile && currentAudioFile.size > 0) {
+        const audioFileName = `${slug}-audio.mp3`;
+        const newAudioFile = new File([currentAudioFile], audioFileName, {
+          type: currentAudioFile.type,
+        });
+        formData.append("audioFile", newAudioFile);
+        formData.append("audioTitle", currentAudioTitle || title);
+        formData.append("audioArtist", currentAudioArtist || "");
+        console.log(
+          "Musiqi faylı FormData'ya əlavə edildi:",
+          audioFileName,
+          "Size:",
+          currentAudioFile.size
+        );
+      } else if (currentExistingAudioUrl) {
+        // Mövcud audio URL-i saxla
+        formData.append("existingAudioUrl", currentExistingAudioUrl);
+        formData.append("audioTitle", currentAudioTitle);
+        formData.append("audioArtist", currentAudioArtist);
       }
 
       // API'ye istek gönder
@@ -588,6 +697,14 @@ export default function PostEditor({ post, content, slug, author }: any) {
         selectedCategories={selectedCategories}
         initialContent={initialEditorContent}
         initialCoverImageUrl={existingImageUrl}
+        audioFile={audioFile}
+        onAudioFileChange={handleAudioFileChange}
+        audioTitle={audioTitle}
+        onAudioTitleChange={setAudioTitle}
+        audioArtist={audioArtist}
+        onAudioArtistChange={setAudioArtist}
+        initialAudioUrl={existingAudioUrl}
+        onAudioRemove={handleAudioRemove}
       />
 
       <style>{`

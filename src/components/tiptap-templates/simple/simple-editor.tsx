@@ -293,6 +293,15 @@ interface SimpleEditorProps {
   initialContent?: string;
   initialCoverImageUrl?: string;
   selectedCategories?: string[];
+  // Musiqi props
+  audioFile?: File | null;
+  onAudioFileChange?: (file: File | null) => void;
+  audioTitle?: string;
+  onAudioTitleChange?: (title: string) => void;
+  audioArtist?: string;
+  onAudioArtistChange?: (artist: string) => void;
+  initialAudioUrl?: string;
+  onAudioRemove?: () => void;
 }
 
 export function SimpleEditor({
@@ -307,6 +316,15 @@ export function SimpleEditor({
   initialContent,
   initialCoverImageUrl,
   selectedCategories = [],
+  // Musiqi props
+  audioFile = null,
+  onAudioFileChange,
+  audioTitle = "",
+  onAudioTitleChange,
+  audioArtist = "",
+  onAudioArtistChange,
+  initialAudioUrl = "",
+  onAudioRemove,
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const { height } = useWindowSize();
@@ -315,6 +333,7 @@ export function SimpleEditor({
   >("main");
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const [coverImagePreview, setCoverImagePreview] = React.useState<string>(
     initialCoverImageUrl || ""
   );
@@ -324,6 +343,13 @@ export function SimpleEditor({
   const [supabaseCategories, setSupabaseCategories] = React.useState<
     { slug: string; name: string }[]
   >([]);
+  const [localAudioFile, setLocalAudioFile] = React.useState<File | null>(
+    audioFile
+  );
+  const [localAudioTitle, setLocalAudioTitle] = React.useState(audioTitle);
+  const [localAudioArtist, setLocalAudioArtist] = React.useState(audioArtist);
+  const [existingAudioUrl, setExistingAudioUrl] =
+    React.useState(initialAudioUrl);
 
   // Supabase-dən kategoriyaları çək
   React.useEffect(() => {
@@ -603,6 +629,73 @@ export function SimpleEditor({
     });
   };
 
+  // Musiqi faylı seçmə
+  const handleAudioFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    console.log(
+      "SimpleEditor: Audio fayl seçildi:",
+      file?.name,
+      file?.type,
+      file?.size
+    );
+    console.log(
+      "SimpleEditor: onAudioFileChange mövcuddur:",
+      !!onAudioFileChange
+    );
+    if (file) {
+      // MP3 faylları üçün tip yoxlaması (audio/mpeg, audio/mp3)
+      const isAudio =
+        file.type.startsWith("audio/") || file.name.endsWith(".mp3");
+      console.log("SimpleEditor: isAudio:", isAudio);
+      if (isAudio) {
+        setLocalAudioFile(file);
+        // Birbaşa window-a yaz
+        (window as any)._currentAudioFile = file;
+        console.log(
+          "SimpleEditor: window._currentAudioFile yazıldı:",
+          file.name
+        );
+        // Callback-i də çağır
+        if (onAudioFileChange) {
+          onAudioFileChange(file);
+        }
+      } else {
+        console.warn("SimpleEditor: Seçilən fayl audio deyil:", file.type);
+      }
+    }
+  };
+
+  // Musiqi faylını silmə
+  const handleRemoveAudio = () => {
+    console.log("SimpleEditor: handleRemoveAudio çağırıldı");
+    setLocalAudioFile(null);
+    setLocalAudioTitle("");
+    setLocalAudioArtist("");
+    setExistingAudioUrl(""); // Mövcud URL-i də sıfırla
+    // Window-a da yaz
+    (window as any)._currentAudioFile = null;
+    (window as any)._audioRemoved = true;
+    if (onAudioFileChange) onAudioFileChange(null);
+    if (onAudioTitleChange) onAudioTitleChange("");
+    if (onAudioArtistChange) onAudioArtistChange("");
+    if (onAudioRemove) onAudioRemove(); // Silmə callback-ini çağır
+    if (audioInputRef.current) {
+      audioInputRef.current.value = "";
+    }
+  };
+
+  // Musiqi başlığı dəyişikliyi
+  const handleAudioTitleChange = (value: string) => {
+    setLocalAudioTitle(value);
+    if (onAudioTitleChange) onAudioTitleChange(value);
+  };
+
+  // Musiqi artist dəyişikliyi
+  const handleAudioArtistChange = (value: string) => {
+    setLocalAudioArtist(value);
+    if (onAudioArtistChange) onAudioArtistChange(value);
+  };
+
   return (
     <>
       <div className="simple-editor-wrapper mt-8">
@@ -702,6 +795,190 @@ export function SimpleEditor({
                 </div>
               )}
             </div>
+
+            {/* Musiqi yükləmə sahəsi */}
+            <div className="audio-upload-container mt-4 mb-4">
+              <input
+                type="file"
+                ref={audioInputRef}
+                onChange={handleAudioFileChange}
+                accept=".mp3,audio/*"
+                style={{ display: "none" }}
+              />
+
+              {!localAudioFile && !existingAudioUrl ? (
+                <button
+                  type="button"
+                  onClick={() => audioInputRef.current?.click()}
+                  className="audio-upload-button font-medium font-display flex items-center gap-2 px-4 py-3 border-2 border-dashed border-zinc-300 rounded-xl hover:border-rose-400 hover:bg-rose-50 transition-all w-full justify-center text-zinc-500 hover:text-rose-500"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="size-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
+                    />
+                  </svg>
+                  Musiqi əlavə et (MP3)
+                </button>
+              ) : existingAudioUrl && !localAudioFile ? (
+                <div className="audio-preview-container p-4 bg-zinc-50 rounded-xl border border-zinc-200">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center shrink-0">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="size-6 text-rose-500"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-zinc-700 truncate mb-2">
+                        Mövcud musiqi
+                      </p>
+                      <p className="text-xs text-zinc-400 mb-3 truncate">
+                        {existingAudioUrl.split("/").pop()}
+                      </p>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Mahnı adı"
+                          value={localAudioTitle}
+                          onChange={(e) =>
+                            handleAudioTitleChange(e.target.value)
+                          }
+                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        />
+                        <input
+                          type="text"
+                          placeholder="İfaçı adı"
+                          value={localAudioArtist}
+                          onChange={(e) =>
+                            handleAudioArtistChange(e.target.value)
+                          }
+                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => audioInputRef.current?.click()}
+                        className="mt-3 text-xs text-rose-500 hover:text-rose-600 font-medium"
+                      >
+                        Yeni musiqi seç
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExistingAudioUrl("");
+                        handleRemoveAudio();
+                      }}
+                      className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="audio-preview-container p-4 bg-zinc-50 rounded-xl border border-zinc-200">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center shrink-0">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="size-6 text-rose-500"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-zinc-700 truncate mb-2">
+                        {localAudioFile.name}
+                      </p>
+                      <p className="text-xs text-zinc-400 mb-3">
+                        {(localAudioFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          placeholder="Mahnı adı"
+                          value={localAudioTitle}
+                          onChange={(e) =>
+                            handleAudioTitleChange(e.target.value)
+                          }
+                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        />
+                        <input
+                          type="text"
+                          placeholder="İfaçı adı"
+                          value={localAudioArtist}
+                          onChange={(e) =>
+                            handleAudioArtistChange(e.target.value)
+                          }
+                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveAudio}
+                      className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <EditorContent
               editor={editor}
               role="presentation"
