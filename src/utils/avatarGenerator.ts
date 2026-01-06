@@ -5,7 +5,7 @@ class AvatarManager {
 
   constructor() {
     this.baseUrl = "https://the99.b-cdn.net/avatar/noavatar/";
-    this.avatarCount = 6; // 1-6 arası avatar var
+    this.avatarCount = 9; // 1-6 arası avatar var
     this.selectedAvatar = null;
   }
 
@@ -16,7 +16,7 @@ class AvatarManager {
 
   // Avatar URL-ni yarat
   getAvatarUrl(avatarId: number) {
-    return `${this.baseUrl}avatar_${avatarId}.jpg`;
+    return `${this.baseUrl}avatar_${avatarId}.png`;
   }
 
   // Random avatar seç

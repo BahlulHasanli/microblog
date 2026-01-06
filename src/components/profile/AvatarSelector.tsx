@@ -44,7 +44,7 @@ export default function AvatarSelector({
             <img
               src={avatar.url}
               alt={`Avatar ${avatar.id}`}
-              className="!w-[110px] !h-[110px] squircle aspect-square object-cover"
+              className="w-[110px]! h-[110px]! squircle aspect-square object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = "none";
               }}
