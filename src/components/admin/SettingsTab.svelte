@@ -375,7 +375,7 @@
               {/if}
             </div>
             <p class="text-xs text-base-500 mt-1.5">
-              Facebook, Twitter və s. paylaşımlarda göstəriləcək
+              Facebook, X və s. paylaşımlarda göstəriləcək
             </p>
           </div>
         </div>

@@ -89,7 +89,11 @@ const audioData = hasAudio ? {
 const finalAudioData = audioData;
 
 ---
-<BaseLayout title={frontmatter.title} description={frontmatter.description}>
+<BaseLayout 
+  title={frontmatter.title} 
+  description={frontmatter.description}
+  image={frontmatter.image?.url}
+>
   <div class="fixed top-0 left-0 right-0 h-1 bg-linear-to-r from-rose-500 to-pink-500 origin-left z-50" id="progress-bar" style="transform: scaleX(0); transition: transform 0.1s ease-out;"></div>
   <section>
     <div class="py-24">

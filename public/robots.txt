@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /studio
+Disallow: /api
+Disallow: /private
+Disallow: /*.json$
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+
+Crawl-delay: 1
+Request-rate: 30/1m
+
+Sitemap: https://the99.az/sitemap-index.xml
+Sitemap: https://the99.az/sitemap-0.xml

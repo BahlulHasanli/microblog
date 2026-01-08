@@ -9,9 +9,10 @@ interface Props {
   title?: string;
   description?: string;
   hideFooter?: boolean;
+  image?: string;
 }
 
-const { title: pageTitle, description: pageDescription, hideFooter = false } = Astro.props;
+const { title: pageTitle, description: pageDescription, hideFooter = false, image } = Astro.props;
 const isLoggedIn = isAuthenticated(Astro.cookies);
 let user = null;
 
@@ -56,9 +57,9 @@ const finalTitle = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
 const finalDescription = pageDescription || siteDescription;
 ---
 
-<html lang="en">  
+<html lang="az">  
   <head>   
-    <BaseHead title={finalTitle} description={finalDescription} />
+    <BaseHead title={finalTitle} description={finalDescription} image={image} />
   </head>
   <body class=`flex flex-col min-h-screen px-4 sm:px-6 md:px-8 mx-auto bg-white`>
     <Navigation isLoggedIn={isLoggedIn} user={user} /> 

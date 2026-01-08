@@ -9,6 +9,30 @@ import { isAuthenticated } from "@/utils/auth";
 
 const currentPath = Astro.url.pathname;
 
+// Get site settings for structured data
+let siteTitle = "THE DOXSANDOQQUZ";
+let siteDescription = "Azərbaycan dilində pop-kultura, əyləncə və müasir mədəniyyət haqqında etibarlı məlumat mənbəyi.";
+
+try {
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("key, value")
+    .in("key", ["site_title", "site_description"]);
+
+  if (settings) {
+    for (const setting of settings) {
+      if (setting.key === "site_title" && setting.value) {
+        siteTitle = setting.value;
+      }
+      if (setting.key === "site_description" && setting.value) {
+        siteDescription = setting.value;
+      }
+    }
+  }
+} catch (error) {
+  console.error("Settings yüklənərkən xəta:", error);
+}
+
 // Supabase-dən kategoriyaları al
 const { data: categoriesData, error: categoriesError } = await supabase
   .from("categories")

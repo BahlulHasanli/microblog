@@ -8,6 +8,7 @@ import cloudflare from "@astrojs/cloudflare";
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://the99.az",
   output: "server",
   vite: {
     plugins: [tailwindcss()],
@@ -23,6 +24,21 @@ export default defineConfig({
     skipInline: false,
     drafts: true,
   },
-  integrations: [sitemap(), react(), svelte()],
+  integrations: [
+    sitemap({
+      changefreq: "weekly",
+      priority: 0.7,
+      lastmod: new Date(),
+      i18n: {
+        defaultLocale: "az",
+        locales: {
+          az: "az-AZ",
+          en: "en-US",
+        },
+      },
+    }),
+    react(),
+    svelte(),
+  ],
   adapter: cloudflare(),
 });

@@ -63,8 +63,8 @@ const {
   }}
   twitter={{
     card: "summary_large_image",
-    site: xHandle,
-    creator: xHandle,
+    site: `@${xHandle}`,
+    creator: `@${xHandle}`,
   }}
 />
 
@@ -80,6 +80,39 @@ const {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="keywords" content={keywords} />
 <meta name="author" content={siteName} />
+
+<!-- Structured Data (JSON-LD) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": siteName,
+  "description": description,
+  "url": canonical,
+  "image": image,
+  "inLanguage": "az-AZ",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": `${canonical}/search?q={search_term_string}`
+    },
+    "query-input": "required name=search_term_string"
+  }
+})} />
+
+<!-- Organization Schema -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": siteName,
+  "description": description,
+  "url": canonical,
+  "image": image,
+  "sameAs": [
+    xHandle ? `https://x.com/${xHandle}` : null,
+    facebookHandle ? `https://facebook.com/${facebookHandle}` : null,
+  ].filter(Boolean)
+})} />
 
 <!-- Favicons -->
 <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -97,6 +130,30 @@ const {
 
 <!-- For IE -->
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+<!-- Additional SEO Meta Tags -->
+<meta name="language" content="Azerbaijani" />
+<meta name="revisit-after" content="7 days" />
+<meta name="distribution" content="global" />
+<meta name="rating" content="general" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content={siteName} />
+
+<!-- Open Graph Additional Tags -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:locale" content="az_AZ" />
+
+<!-- X (Twitter) Card Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image} />
+
+<!-- Mobile Optimization -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="format-detection" content="telephone=no" />
 <!-- HTML in your document's head -->
 <link rel="preconnect" href="https://rsms.me/" />
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
