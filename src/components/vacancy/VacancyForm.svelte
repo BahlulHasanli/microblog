@@ -8,7 +8,7 @@ interface Props {
 
 let { isLoggedIn = false, userFullName = "" }: Props = $props();
 
-const formState = $state.raw({
+let formState = $state({
   name: userFullName,
   email: "",
   message: ""
@@ -63,9 +63,12 @@ const handleSubmit = async (e: Event) => {
 
     if (response.ok) {
       toast.success(result.message || "Müraciətiniz uğurla göndərildi!");
-      formState.name = userFullName;
-      formState.email = "";
-      formState.message = "";
+      // Toast görünəndən sonra formu sıfırla
+      setTimeout(() => {
+        formState.name = userFullName;
+        formState.email = "";
+        formState.message = "";
+      }, 100);
     } else {
       toast.error(result.message || "Bir xəta baş verdi");
     }

@@ -51,7 +51,7 @@ export default function ProfileDropdown({
         const result = await response.json();
 
         if (result.authenticated && result.user) {
-          console.log("User data from API:", result.user);
+          // console.log("User data from API:", result.user);
           setUserData({
             avatar: result.user.avatar || userImage,
             fullname: result.user.name || userName,

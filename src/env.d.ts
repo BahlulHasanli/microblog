@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly BUNNY_STORAGE_ZONE: string;
   readonly BUNNY_STORAGE_KEY: string;
   readonly BUNNY_PULL_ZONE: string;
+  readonly RESEND_API_KEY: string;
 }
 
 interface ImportMeta {
