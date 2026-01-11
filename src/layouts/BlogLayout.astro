@@ -234,7 +234,7 @@ const finalAudioData = audioData;
       {enableComments && (
         <>
           <Comments client:load="svelte" postSlug={postSlug} />
-          <CommentButton client:load="svelte" />
+          <CommentButton client:load="svelte" hasMediaPlayer={!!finalAudioData} />
         </>
       )}
 

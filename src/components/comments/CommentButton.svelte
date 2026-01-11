@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  let { hasMediaPlayer = false } = $props<{ hasMediaPlayer?: boolean }>();
+  
   let isVisible = $state(true)
 
   function scrollToComments() {
@@ -41,7 +43,9 @@
 {#if isVisible} 
   <button
     onclick={scrollToComments}
-    class="fixed cursor-pointer bottom-6 right-6 w-12 h-12 bg-base-800 text-white rounded-full flex items-center justify-center hover:bg-base-900 focus:outline-none z-50"
+    class="fixed cursor-pointer right-6 w-12 h-12 bg-base-800 text-white rounded-full flex items-center justify-center hover:bg-base-900 focus:outline-none z-50 transition-all duration-300"
+    class:bottom-6={!hasMediaPlayer}
+    class:bottom-20={hasMediaPlayer}
     aria-label="Yorumlara git"
   >
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
