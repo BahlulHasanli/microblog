@@ -14,11 +14,14 @@
   let isMinimized = true;
   let isLoaded = true;
   let waveformContainer: HTMLElement;
+  let isMobile = false;
 
   onMount(() => {
     if (audio) {
       audio.load();
     }
+    // Mobil cihaz yoxlaması
+    isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   });
 
   async function togglePlay() {
@@ -40,12 +43,25 @@
   function handleLoadedMetadata() { duration = audio.duration; isLoaded = true; }
   function handleCanPlay() { isLoaded = true; }
   function handleEnded() { isPlaying = false; currentTime = 0; }
+  function handleVolumeUpdate() { volume = audio.volume; }
 
   function handleWaveformClick(e: MouseEvent) {
     if (!waveformContainer || !duration) return;
     const rect = waveformContainer.getBoundingClientRect();
     const percent = (e.clientX - rect.left) / rect.width;
     audio.currentTime = percent * duration;
+  }
+
+  function handleWaveformTouch(e: TouchEvent) {
+    if (!waveformContainer || !duration) return;
+    const rect = waveformContainer.getBoundingClientRect();
+    const touch = e.touches[0] || e.changedTouches[0];
+    const percent = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+    audio.currentTime = percent * duration;
+  }
+
+  function toggleExpand() {
+    isMinimized = !isMinimized;
   }
 
   function handleVolumeChange(e: Event) {
@@ -66,8 +82,8 @@
 
 <div 
   class="fixed bottom-0 left-0 right-0 z-100"
-  on:mouseenter={() => isMinimized = false}
-  on:mouseleave={() => isMinimized = true}
+  on:mouseenter={() => { if (!isMobile) isMinimized = false; }}
+  on:mouseleave={() => { if (!isMobile) isMinimized = true; }}
   role="region"
   aria-label="Media Player"
 >
@@ -80,6 +96,7 @@
     on:loadedmetadata={handleLoadedMetadata}
     on:canplay={handleCanPlay}
     on:ended={handleEnded}
+    on:volumechange={handleVolumeUpdate}
     preload="auto"
   ></audio>
 
@@ -96,14 +113,25 @@
     <div class="absolute inset-0 bg-black/60 backdrop-blur-2xl"></div>
   </div>
 
-  <div class="relative z-10 mx-auto max-w-4xl px-6 py-2.5">
+  <div class="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 py-2.5">
     <!-- Expanded View -->
     <div 
       class="grid transition-[grid-template-rows] duration-500 ease-out"
       style="grid-template-rows: {isMinimized ? '0fr' : '1fr'};"
     >
       <div class="overflow-hidden">
-        <div class="flex items-center gap-5 pb-2">
+        <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-5 pb-2">
+          <!-- Close button (mobile only) -->
+          <button
+            class="sm:hidden w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 active:scale-95 transition-transform cursor-pointer"
+            on:click={toggleExpand}
+            aria-label="Bağla"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-white/60">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          
           <!-- Album Cover + Vinyl Disk -->
           <div class="relative h-14 shrink-0" style="width: {isPlaying ? '88px' : '56px'}; transition: width 0.5s ease-out;">
             <!-- Vinyl Disk -->
@@ -142,7 +170,7 @@
           </div>
 
           <!-- Track Info -->
-          <div class="flex flex-col gap-0.5 min-w-0 max-w-[140px]">
+          <div class="flex flex-col gap-0.5 min-w-0 max-w-[140px] sm:max-w-[140px] text-center sm:text-left">
             <span class="text-white font-semibold text-sm truncate">{title || 'Naməlum'}</span>
             <span class="text-white/40 text-xs truncate">{artist || 'Naməlum artist'}</span>
           </div>
@@ -166,12 +194,14 @@
           </button>
 
           <!-- Progress Bar -->
-          <div class="flex-1 flex items-center gap-3">
+          <div class="w-full sm:flex-1 flex items-center gap-2 sm:gap-3">
             <span class="text-white/40 text-[11px] font-medium tabular-nums min-w-[32px]">{formatTime(currentTime)}</span>
             <div 
               class="flex-1 h-2 relative cursor-pointer group"
               bind:this={waveformContainer}
               on:click={handleWaveformClick}
+              on:touchstart|preventDefault={handleWaveformTouch}
+              on:touchmove|preventDefault={handleWaveformTouch}
               on:keydown={(e) => {
                 if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 5);
                 if (e.key === 'ArrowRight') audio.currentTime = Math.min(duration, audio.currentTime + 5);
@@ -191,7 +221,7 @@
           </div>
 
           <!-- Volume Control -->
-          <div class="flex items-center gap-2">
+          <div class="hidden sm:flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-white/40">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
             </svg>
@@ -216,7 +246,18 @@
       style="grid-template-rows: {isMinimized ? '1fr' : '0fr'};"
     >
       <div class="overflow-hidden">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
+          <!-- Expand button (mobile only) -->
+          <button
+            class="sm:hidden w-8 h-8 rounded-full bg-white/10 flex items-center justify-center shrink-0 active:scale-95 transition-transform cursor-pointer"
+            on:click={toggleExpand}
+            aria-label="Genişlət"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 text-white/60">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+            </svg>
+          </button>
+          
           <!-- Mini vinyl -->
           <div class="relative w-9 h-9 rounded-full bg-linear-to-br from-zinc-900 to-zinc-800 overflow-hidden shrink-0 shadow-lg" class:animate-[spin_3s_linear_infinite]={isPlaying}>
             {#if coverImage}
@@ -243,7 +284,7 @@
             {/if}
           </button>
           
-          <span class="text-white text-sm font-medium truncate max-w-[140px]">{title || 'Musiqi'}</span>
+          <span class="text-white text-sm font-medium truncate max-w-[100px] sm:max-w-[140px]">{title || 'Musiqi'}</span>
           
           <!-- Mini progress bar -->
           <div class="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
