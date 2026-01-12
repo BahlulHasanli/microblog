@@ -47,6 +47,11 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 
     async function handleCallback() {
       try {
+        // Debug: URL-i konsola yaz
+        console.log('Callback URL:', window.location.href);
+        console.log('Hash:', window.location.hash);
+        console.log('Search:', window.location.search);
+
         // Supabase avtomatik olaraq URL-dəki hash/query parametrlərini oxuyur
         const { data, error } = await supabase.auth.getSession();
         
