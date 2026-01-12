@@ -75,6 +75,38 @@ const finalDescription = pageDescription || siteDescription;
         "https://www.unpkg.com/css-houdini-squircle/squircle.min.js"
       );
     }
+
+    // Google OAuth hash fragment callback handler
+    (async function() {
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          try {
+            const response = await fetch('/api/auth/set-session', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                access_token: accessToken,
+                refresh_token: refreshToken,
+              }),
+            });
+
+            if (response.ok) {
+              // Hash-i təmizlə və səhifəni yenilə
+              window.history.replaceState(null, '', window.location.pathname);
+              window.location.reload();
+            }
+          } catch (error) {
+            console.error('OAuth callback error:', error);
+          }
+        }
+      }
+    })();
   </script>
   
   {isLoggedIn && (

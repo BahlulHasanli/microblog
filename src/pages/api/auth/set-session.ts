@@ -2,27 +2,16 @@ export const prerender = false;
 import type { APIRoute } from "astro";
 import { supabase } from "@db/supabase";
 
-export const GET: APIRoute = async ({ url, cookies, redirect }) => {
-  const authCode = url.searchParams.get("code");
-
-  console.log("Callback received, code:", authCode ? "exists" : "missing");
-
-  if (!authCode) {
-    return redirect("/signin?error=no_code");
-  }
-
+export const POST: APIRoute = async ({ request, cookies, url }) => {
   try {
-    const { data, error } =
-      await supabase.auth.exchangeCodeForSession(authCode);
+    const { access_token, refresh_token } = await request.json();
 
-    if (error) {
-      console.error("OAuth callback error:", error.message);
-      return redirect("/signin?error=auth_failed");
+    if (!access_token || !refresh_token) {
+      return new Response(JSON.stringify({ error: "Token-lər tələb olunur" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-
-    console.log("Session exchanged successfully, user:", data.user?.email);
-
-    const { access_token, refresh_token } = data.session;
 
     // Cookie-ləri qur - production-da secure: true, development-də false
     const isProduction =
@@ -43,10 +32,13 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
       maxAge: 60 * 60 * 24 * 30, // 30 gün
     });
 
-    console.log("Cookies set, isProduction:", isProduction);
-
     // İstifadəçini verilənlər bazasında yoxla/yarat
-    const user = data.user;
+    const { data: sessionData } = await supabase.auth.setSession({
+      access_token,
+      refresh_token,
+    });
+
+    const user = sessionData?.user;
     if (user?.email) {
       const { data: existingUser } = await supabase
         .from("users")
@@ -76,9 +68,15 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
       }
     }
 
-    return redirect("/");
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("Callback error:", error);
-    return redirect("/signin?error=callback_failed");
+    console.error("Set session error:", error);
+    return new Response(JSON.stringify({ error: "Session qurma xətası" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };

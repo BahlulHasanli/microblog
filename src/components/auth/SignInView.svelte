@@ -1,6 +1,12 @@
 <script lang="ts">
 import { navigate } from "astro:transitions/client";
 import { Toaster, toast } from 'svelte-sonner'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseClient = createClient(
+  import.meta.env.PUBLIC_SUPABASE_URL, 
+  import.meta.env.PUBLIC_SUPABASE_KEY
+);
 
  const formState = $state.raw({
     email: "",
@@ -20,19 +26,15 @@ import { Toaster, toast } from 'svelte-sonner'
     isGoogleLoading.value = true;
     
     try {
-      const response = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
-      const result = await response.json();
-
-      if (response.ok && result.url) {
-        window.location.href = result.url;
-      } else {
-        toast.error(result.error || "Google ilə giriş xətası");
+      if (error) {
+        toast.error(error.message || "Google ilə giriş xətası");
         isGoogleLoading.value = false;
       }
     } catch (error) {
