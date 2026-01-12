@@ -117,7 +117,7 @@ const supabaseClient = createClient(
 <section class="max-w-md mx-auto py-8 px-4 sm:px-0">
   <div class="bg-white rounded-lg p-4">
     <div class="text-center mb-6">
-      <h1 class="text-xl font-big-shoulders font-bold text-base-900 mb-1">
+      <h1 class="text-xl md:text-3xl font-big-shoulders font-bold text-base-900 mb-1">
         Daxil Ol
       </h1>
       <p class="text-base-600 text-sm">Hesabınıza daxil olun</p>
@@ -213,17 +213,13 @@ const supabaseClient = createClient(
     <button
       type="button"
       onclick={handleAppleSignIn}
-      disabled={isAppleLoading.value}
-      class="cursor-pointer w-full flex items-center justify-center gap-2 bg-base-900 hover:bg-base-800 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-base-700 disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+      disabled={true}
+      class="w-full flex items-center justify-center gap-2 bg-base-300 text-base-500 font-medium py-1.5 px-4 rounded-lg text-sm opacity-50 cursor-not-allowed mt-2"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
       </svg>
-      {#if isAppleLoading.value}
-        Yüklənir...
-      {:else}
-        Apple ilə daxil ol
-      {/if}
+      Apple ilə daxil ol (Tezliklə)
     </button>
 
     <div class="text-center mt-4 pt-3 border-t border-base-100">
