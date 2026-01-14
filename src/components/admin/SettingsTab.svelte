@@ -94,6 +94,35 @@
     };
   }
 
+  async function saveOgImageToDatabase(imageUrl: string) {
+    try {
+      const response = await fetch("/api/admin/settings/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ og_image: imageUrl }),
+      });
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "OG image saxlanılarkən xəta");
+      }
+    } catch (error) {
+      console.error("OG image saxlama xətası:", error);
+      throw error;
+    }
+  }
+
+  async function handleSelectOgImage(imageUrl: string) {
+    try {
+      settings.og_image = imageUrl;
+      await saveOgImageToDatabase(imageUrl);
+      showAlert('OG şəkli seçildi və saxlanıldı', 'success', 'Uğurlu');
+    } catch (error) {
+      console.error('OG şəkli seçmə xətası:', error);
+      showAlert(error instanceof Error ? error.message : 'Şəkil seçmə xətası', 'error', 'Xəta');
+    }
+  }
+
   async function handleOgImageUpload(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -113,7 +142,11 @@
       });
 
       settings.og_image = imageUrl;
-      showAlert('OG şəkli uğurla yükləndi', 'success', 'Uğurlu');
+      
+      // OG image-i avtomatik Supabase-ə saxla
+      await saveOgImageToDatabase(imageUrl);
+      
+      showAlert('OG şəkli uğurla yükləndi və saxlanıldı', 'success', 'Uğurlu');
       await loadOgMediaFiles();
     } catch (error) {
       console.error('OG şəkli yükləmə xətası:', error);
@@ -326,6 +359,7 @@
                       <div class="relative group">
                         <button
                           type="button"
+                          onclick={() => handleSelectOgImage(imageUrl)}
                           class="w-full h-24 p-0 border-0 rounded-lg overflow-hidden cursor-pointer hover:border-slate-900 transition-all"
                           class:ring-2={settings.og_image === imageUrl}
                           class:ring-blue-500={settings.og_image === imageUrl}
