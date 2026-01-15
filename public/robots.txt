@@ -9,7 +9,28 @@ Disallow: /*?*sort=
 Disallow: /*?*filter=
 
 Crawl-delay: 1
-Request-rate: 30/1m
+
+# AI Bots
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
 
 Sitemap: https://the99.az/sitemap-index.xml
 Sitemap: https://the99.az/sitemap-0.xml
