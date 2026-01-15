@@ -56,6 +56,8 @@ try {
   </a>
     <button
       @click="open = !open"
+      aria-label="Menyu"
+      :aria-expanded="open"
       class="inline-flex items-center justify-center p-2 text-base-900 hover:text-blue-500 focus:outline-none focus:text-base-900 md:hidden"
     >
       <svg
