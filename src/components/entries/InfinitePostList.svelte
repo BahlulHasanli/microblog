@@ -6,6 +6,7 @@
   export let categories: any[] = [];
   export let sponsorBanners: any[] = [];
   export let initialPage: number = 1;
+  export let postsPerPage: number = 10;
 
   let posts = [...initialPosts];
   let page = initialPage;
@@ -33,7 +34,7 @@
     
     loading = true;
     try {
-      const response = await fetch(`/api/posts/list?page=${page + 1}&limit=10`);
+      const response = await fetch(`/api/posts/list?page=${page + 1}&limit=${postsPerPage}`);
       const data = await response.json();
       
       if (data.posts && data.posts.length > 0) {
@@ -230,9 +231,9 @@
             
             <div class="flex-1 text-white flex flex-col justify-center">
               <div class="flex items-center gap-2 text-sm text-white/80 mb-4">
-                <button type="button" class="user-avatar overflow-hidden size-8 squircle cursor-pointer shrink-0" data-username={post.data.author?.username}>
+                <button type="button" class="user-avatar overflow-hidden size-8 squircle cursor-pointer shrink-0" data-username={post.data.author?.username} aria-label="{post.data.author?.fullname} profilinə keç">
                   <img src={post.data.author?.avatar}
-                      alt={post.data.author?.fullname}
+                      alt=""
                       class="w-full h-full object-cover"
                   />
                 </button>
@@ -304,9 +305,9 @@
 
           <div class="mt-3 sm:mt-5">
             <div class="flex items-center gap-1 sm:gap-2 text-xs text-base-500 flex-wrap">
-              <button type="button" class="user-avatar overflow-hidden size-10! sm:size-14! squircle cursor-pointer shrink-0" data-username={post.data.author?.username}>
+              <button type="button" class="user-avatar overflow-hidden size-10! sm:size-14! squircle cursor-pointer shrink-0" data-username={post.data.author?.username} aria-label="{post.data.author?.fullname} profilinə keç">
                 <img src={post.data.author?.avatar}
-                    alt={post.data.author?.fullname}
+                    alt=""
                     class="w-full h-full object-cover"
                 />
               </button>
