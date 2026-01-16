@@ -10,6 +10,7 @@
 
 <button type="button"
     onclick={goToPost}
+    aria-label="Məqaləni oxu"
     class="bg-white/70 backdrop-blur-xl hover:bg-white/50 transition-all cursor-pointer flex items-center gap-2 px-5 py-2 rounded-full">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
         class="size-5">
