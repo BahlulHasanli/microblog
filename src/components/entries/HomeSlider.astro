@@ -2,6 +2,7 @@
 import { supabase } from "@/db/supabase";
 import SliderReadMoreBtn from "@/components/ui/SliderReadMoreBtn.svelte";
 import { formatShortDate, formatSimpleDate } from "@/utils/date";
+import { generateResponsiveImages, getAvatarSizes, getHeroImageSizes } from "@/utils/image-optimizer";
 
 // Supabase-dən featured postları al
 const { data: featuredPostsData, error } = await supabase
@@ -39,14 +40,34 @@ const featuredPost = featuredPostData ? {
 
 const backgroundImage = featuredPost?.data.image.url;
 
+// Responsive images
+const heroImageData = backgroundImage ? generateResponsiveImages({
+  src: backgroundImage,
+  width: 1920,
+  quality: 85,
+  sizes: getHeroImageSizes()
+}) : null;
+
+const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveImages({
+  src: featuredPost.data.author.avatar,
+  width: 200,
+  quality: 85,
+  sizes: getAvatarSizes()
+}) : null;
+
 ---
 
 {featuredPost && (
   <>
     <div class="absolute inset-0 h-[300px] sm:h-[500px] md:h-[700px] overflow-hidden -z-10">
-      <img src={backgroundImage}
-      alt={featuredPost.data.title} 
-      class="w-full h-full object-cover opacity-40" 
+      <img
+        src={heroImageData?.src || backgroundImage}
+        srcset={heroImageData?.srcset}
+        sizes={heroImageData?.sizes}
+        alt={featuredPost.data.title}
+        loading="eager"
+        decoding="async"
+        class="w-full h-full object-cover opacity-40"
       />
       <div class="absolute inset-0 bg-linear-to-t from-white to-transparent backdrop-blur-xs"></div>
     </div>
@@ -54,23 +75,38 @@ const backgroundImage = featuredPost?.data.image.url;
     <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl">
     <!-- Right Side - Hidden on mobile -->
     <div class="hidden sm:block absolute right-0 top-0 w-1/2 h-full">
-        <img src={backgroundImage}
-        alt={featuredPost.data.title}
-        class="w-full h-full object-cover object-center" 
+        <img
+          src={heroImageData?.src || backgroundImage}
+          srcset={heroImageData?.srcset}
+          sizes={heroImageData?.sizes}
+          alt={featuredPost.data.title}
+          loading="eager"
+          decoding="async"
+          class="w-full h-full object-cover object-center"
         />
     </div> 
   
       <!-- Left Side -->
     <div class="absolute left-0 top-0 w-full sm:w-[855px] h-full z-10">
         <!-- Mobil üçün blur arxa plan -->
-        <img src={backgroundImage}  
-        alt={featuredPost.data.title}
-        class="sm:hidden absolute inset-0 w-full h-full object-cover blur-2xl opacity-80" 
+        <img
+          src={heroImageData?.src || backgroundImage}
+          srcset={heroImageData?.srcset}
+          sizes={heroImageData?.sizes}
+          alt={featuredPost.data.title}
+          loading="eager"
+          decoding="async"
+          class="sm:hidden absolute inset-0 w-full h-full object-cover blur-2xl opacity-80"
         />
         <!-- Desktop üçün blur arxa plan -->
-        <img src={backgroundImage}  
-        alt={featuredPost.data.title}
-        class="hidden sm:block size-[750px] object-cover blur-3xl -mt-28 object-center" 
+        <img
+          src={heroImageData?.src || backgroundImage}
+          srcset={heroImageData?.srcset}
+          sizes={heroImageData?.sizes}
+          alt={featuredPost.data.title}
+          loading="eager"
+          decoding="async"
+          class="hidden sm:block size-[750px] object-cover blur-3xl -mt-28 object-center"
         />
         <div class="absolute inset-0 px-4 sm:ml-15 flex flex-col justify-between pt-4 sm:pt-24 pb-4 sm:mb-10">
             <div class="text-white flex flex-col gap-1 w-full sm:w-[470px]">
@@ -85,8 +121,15 @@ const backgroundImage = featuredPost?.data.image.url;
             <div class="flex w-full sm:w-[320px] flex-row items-center justify-between mt-3 sm:mt-10 gap-2">
                <button type="button" id="user-profile" class="cursor-pointer flex flex-row gap-1 sm:gap-2 items-center hover:opacity-90 transition-opacity min-w-0">
                     <div class="w-10! sm:w-[80px]! h-10! sm:h-[78px]!">
-                      <img src={featuredPost.data.author?.avatar}  alt={featuredPost.data.author?.fullname} 
-                    class="squircle w-full h-full object-cover" />
+                      <img
+                        src={avatarImageData?.src || featuredPost.data.author?.avatar}
+                        srcset={avatarImageData?.srcset}
+                        sizes={avatarImageData?.sizes}
+                        alt={featuredPost.data.author?.fullname}
+                        loading="lazy"
+                        decoding="async"
+                        class="squircle w-full h-full object-cover"
+                      />
                     </div>
                    <div class="flex flex-col ml-1 sm:ml-4 min-w-0">
                     <span data-username={featuredPost.data.author?.username} class="text-white/80 font-medium text-[11px] sm:text-[15px] truncate">

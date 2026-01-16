@@ -1,4 +1,6 @@
 ---
+import { generateResponsiveImages, getBlogEntrySizes } from "@/utils/image-optimizer";
+
 interface Props {
   title: string;
   description: string;
@@ -8,6 +10,13 @@ interface Props {
 }
 
 const { title, description, image, url, id } = Astro.props;
+
+const responsiveImageData = generateResponsiveImages({
+  src: image,
+  width: 1200,
+  quality: 85,
+  sizes: getBlogEntrySizes()
+});
 ---
 
 <article class="flex flex-col flex-1 h-full group">
@@ -21,8 +30,14 @@ const { title, description, image, url, id } = Astro.props;
   >
     <div class="block w-full">
       <img
-        src={image}
+        width={1200}
+        height={630}
+        src={responsiveImageData.src}
+        srcset={responsiveImageData.srcset}
+        sizes={responsiveImageData.sizes}
         alt={title}
+        loading="lazy"
+        decoding="async"
         class="object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
       />
     </div>

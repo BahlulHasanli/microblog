@@ -1,5 +1,5 @@
 ---
-import { Image } from "astro:assets";
+import { generateResponsiveImages } from "@/utils/image-optimizer";
 
 interface Props {
   src: string;
@@ -8,25 +8,37 @@ interface Props {
   width: number;
   height: number;
   class?: string;
+  sizes?: string;
+  quality?: number;
 }
 
-const { src, alt, blurhash, width, height, class: className = "" } = Astro.props;
+const { src, alt, blurhash, width, height, class: className = "", sizes, quality = 85 } = Astro.props;
+
+const responsiveImageData = generateResponsiveImages({
+  src,
+  width,
+  quality,
+  sizes: sizes || '100vw'
+});
 ---
 
 <div class={`blurhash-container relative overflow-hidden ${className}`} data-blurhash={blurhash}>
   {blurhash && (
-    <canvas 
-      class="blurhash-canvas absolute inset-0 w-full h-full object-cover" 
+    <canvas
+      class="blurhash-canvas absolute inset-0 w-full h-full object-cover"
       aria-hidden="true"
     />
   )}
-  <Image
-    src={src}
+  <img
+    src={responsiveImageData.src}
+    srcset={responsiveImageData.srcset}
+    sizes={responsiveImageData.sizes}
     alt={alt}
     width={width}
     height={height}
-    class="blurhash-img w-full h-full object-cover"
     loading="lazy"
+    decoding="async"
+    class="blurhash-img w-full h-full object-cover"
   />
 </div>
 

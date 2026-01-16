@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import { formatSimpleDate } from "@/utils/date";
+import { generateResponsiveImages, getBlogEntrySizes, getHeroImageSizes } from "@/utils/image-optimizer";
 
 interface Props {
   title: string;
@@ -20,6 +21,14 @@ const { title, url, description, image, categories, author, pubDate, blurhash, a
 const CATEGORIES = allCategories;
 
 const isIcmal = categories?.includes('icmal') || false;
+
+// Responsive images üçün
+const responsiveImageData = generateResponsiveImages({
+  src: image,
+  width: 1200,
+  quality: 85,
+  sizes: isIcmal ? getHeroImageSizes() : getBlogEntrySizes()
+});
  
 ---
  
@@ -35,16 +44,20 @@ const isIcmal = categories?.includes('icmal') || false;
       <a href={url} title={title} class="block w-full sm:w-1/2 shrink-0">
         <div class="relative blurhash-container" data-blurhash={blurhash}>
           {blurhash && (
-            <canvas 
-              class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-2xl" 
+            <canvas
+              class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-2xl"
               aria-hidden="true"
             />
           )}
-          <Image
+          <img
             width={1200}
             height={630}
-            src={image}
+            src={responsiveImageData.src}
+            srcset={responsiveImageData.srcset}
+            sizes={responsiveImageData.sizes}
             alt={title}
+            loading="lazy"
+            decoding="async"
             class="blurhash-img object-cover w-full aspect-video rounded-2xl"
           />
         </div>
@@ -137,16 +150,20 @@ const isIcmal = categories?.includes('icmal') || false;
     <a href={url} title={title} class="block">
       <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden" data-blurhash={blurhash}>
         {blurhash && (
-          <canvas 
-            class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl" 
+          <canvas
+            class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl"
             aria-hidden="true"
           />
         )}
-        <Image
+        <img
           width={1200}
           height={630}
-          src={image}
+          src={responsiveImageData.src}
+          srcset={responsiveImageData.srcset}
+          sizes={responsiveImageData.sizes}
           alt={title}
+          loading="lazy"
+          decoding="async"
           class="blurhash-img object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
         />
       </div>
