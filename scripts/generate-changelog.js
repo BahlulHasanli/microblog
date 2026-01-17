@@ -97,14 +97,6 @@ commits.forEach((commit) => {
   changes.push({ type, text });
 });
 
-// Əgər commit yoxdursa, placeholder əlavə et
-if (changes.length === 0) {
-  changes.push({
-    type: "improvement",
-    text: "Performans və stabillik təkmilləşdirmələri",
-  });
-}
-
 // Yeni changelog entry
 const newEntry = {
   version: currentVersion,
