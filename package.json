@@ -1,15 +1,16 @@
 {
   "name": "@lexington/microblog",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/generate-changelog.js && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "d": "NODE_TLS_REJECT_UNAUTHORIZED=0 bun dev"
+    "d": "NODE_TLS_REJECT_UNAUTHORIZED=0 bun dev",
+    "changelog": "node scripts/generate-changelog.js"
   },
   "dependencies": {
     "@astrojs/cloudflare": "12.6.12",

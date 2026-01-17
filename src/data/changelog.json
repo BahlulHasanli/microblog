@@ -1,0 +1,17 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-01-17",
+    "title": "Wind",
+    "changes": [
+      {
+        "type": "feature",
+        "text": "Dedi-qodu səhifəsini artıq hər kəs görə biləcək"
+      },
+      {
+        "type": "improve",
+        "text": "Performans təkminləşdirildi. Səhifələr artıq daha sürətli yüklənir."
+      }
+    ]
+  }
+]

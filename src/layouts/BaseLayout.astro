@@ -2,6 +2,7 @@
 import BaseHead from "@/components/BaseHead.astro";
 import Navigation from "@/components/global/Navigation.astro";
 import Footer from "@/components/global/Footer.astro";
+import ChangelogModal from "@/components/changelog/ChangelogModal.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { supabase } from "@/db/supabase";
 
@@ -68,6 +69,9 @@ const finalDescription = pageDescription || siteDescription;
       <slot />
     </main>
     {!hideFooter && <Footer />}
+    
+    <!-- Changelog Modal -->
+    <ChangelogModal client:load />
   </body>
 
   <script is:inline>
