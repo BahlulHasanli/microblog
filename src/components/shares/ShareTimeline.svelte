@@ -23,9 +23,10 @@
 
   interface Props {
     refreshTrigger?: number;
+    isAuthenticated?: boolean;
   }
 
-  let { refreshTrigger = 0 }: Props = $props();
+  let { refreshTrigger = 0, isAuthenticated = false }: Props = $props();
   let storeRefreshTrigger = $state(0);
 
   // Store-u subscribe et
@@ -262,7 +263,7 @@
 {:else}
   <div class="w-full">
     {#each shares as share, index (share.id)}
-      <ShareCard {share} isLast={index === shares.length - 1} />
+      <ShareCard {share} isLast={index === shares.length - 1} {isAuthenticated} />
     {/each}
 
     <!-- Loading more indicator -->

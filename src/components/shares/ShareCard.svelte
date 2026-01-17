@@ -29,9 +29,10 @@
     share: Share;
     onLikeChange?: (shareId: string, isLiked: boolean) => void;
     isLast?: boolean;
+    isAuthenticated?: boolean;
   }
 
-  let { share, onLikeChange, isLast = false }: Props = $props();
+  let { share, onLikeChange, isLast = false, isAuthenticated = false }: Props = $props();
 
   const user = share.user;
   let isLiked = $state(false);
@@ -209,16 +210,23 @@
           <MessageCircle size={16} />
           <span>{share.comments_count || 0}</span>
         </a>
-        <button
-          onclick={handleLike}
-          disabled={isLoading}
-          class={`cursor-pointer flex items-center gap-2 transition-colors ${
-            isLiked ? "text-red-500" : "hover:text-red-500"
-          } disabled:opacity-50`}
-        >
-          <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
-          <span>{likesCount}</span>
-        </button>
+        {#if isAuthenticated}
+          <button
+            onclick={handleLike}
+            disabled={isLoading}
+            class={`cursor-pointer flex items-center gap-2 transition-colors ${
+              isLiked ? "text-red-500" : "hover:text-red-500"
+            } disabled:opacity-50`}
+          >
+            <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+            <span>{likesCount}</span>
+          </button>
+        {:else}
+          <div class="flex items-center gap-2 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+            <Heart size={16} />
+            <span>{likesCount}</span>
+          </div>
+        {/if}
       </div>
     </div>
   </div>

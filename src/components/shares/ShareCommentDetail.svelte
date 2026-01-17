@@ -357,18 +357,25 @@
             <MessageCircle size={16} />
             <span>{comment.reply_count || 0}</span>
           </button>
-          <button
-            onclick={handleParentCommentLike}
-            class={`transition-colors inline-flex items-center gap-1 ${
-              isParentCommentLiked ? "text-red-500" : "hover:text-red-500"
-            }`}
-          >
-            <Heart
-              size={16}
-              fill={isParentCommentLiked ? "currentColor" : "none"}
-            />
-            <span>{parentCommentLikesCount}</span>
-          </button>
+          {#if isAuthenticated}
+            <button
+              onclick={handleParentCommentLike}
+              class={`transition-colors inline-flex items-center gap-1 ${
+                isParentCommentLiked ? "text-red-500" : "hover:text-red-500"
+              }`}
+            >
+              <Heart
+                size={16}
+                fill={isParentCommentLiked ? "currentColor" : "none"}
+              />
+              <span>{parentCommentLikesCount}</span>
+            </button>
+          {:else}
+            <div class="inline-flex items-center gap-1 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+              <Heart size={16} />
+              <span>{parentCommentLikesCount}</span>
+            </div>
+          {/if}
         </div>
       </div>
     </div>
@@ -458,22 +465,29 @@
                   <MessageCircle size={16} />
                   <span>{reply.nested_replies_count || 0}</span>
                 </a>
-                <button
-                  onclick={() => handleReplyLike(reply.id)}
-                  class={`transition-colors inline-flex items-center gap-1 ${
-                    likedReplies.has(reply.id)
-                      ? "text-red-500"
-                      : "hover:text-red-500"
-                  }`}
-                >
-                  <Heart
-                    size={16}
-                    fill={
-                      likedReplies.has(reply.id) ? "currentColor" : "none"
-                    }
-                  />
-                  <span>{replyLikesCounts.get(reply.id) || 0}</span>
-                </button>
+                {#if isAuthenticated}
+                  <button
+                    onclick={() => handleReplyLike(reply.id)}
+                    class={`transition-colors inline-flex items-center gap-1 ${
+                      likedReplies.has(reply.id)
+                        ? "text-red-500"
+                        : "hover:text-red-500"
+                    }`}
+                  >
+                    <Heart
+                      size={16}
+                      fill={
+                        likedReplies.has(reply.id) ? "currentColor" : "none"
+                      }
+                    />
+                    <span>{replyLikesCounts.get(reply.id) || 0}</span>
+                  </button>
+                {:else}
+                  <div class="inline-flex items-center gap-1 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+                    <Heart size={16} />
+                    <span>{replyLikesCounts.get(reply.id) || 0}</span>
+                  </div>
+                {/if}
               </div>
             </div>
           </div>

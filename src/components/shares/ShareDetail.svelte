@@ -425,16 +425,23 @@
               <MessageCircle size={16} />
               <span>{allComments.length}</span>
             </button>
-            <button
-              onclick={handleLike}
-              disabled={isLoading}
-              class={`cursor-pointer flex items-center gap-2 transition-colors ${
-                isLiked ? "text-red-500" : "hover:text-red-500"
-              } disabled:opacity-50`}
-            >
-              <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
-              <span>{likesCount}</span>
-            </button>
+            {#if isAuthenticated}
+              <button
+                onclick={handleLike}
+                disabled={isLoading}
+                class={`cursor-pointer flex items-center gap-2 transition-colors ${
+                  isLiked ? "text-red-500" : "hover:text-red-500"
+                } disabled:opacity-50`}
+              >
+                <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+                <span>{likesCount}</span>
+              </button>
+            {:else}
+              <div class="flex items-center gap-2 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+                <Heart size={16} />
+                <span>{likesCount}</span>
+              </div>
+            {/if}
           </div>
         </div>
       </div>
@@ -530,20 +537,27 @@
                     <MessageCircle size={16} />
                     <span>{replies.length || 0}</span>
                   </a>
-                  <button
-                    onclick={() => handleCommentLike(comment.id)}
-                    class={`transition-colors inline-flex items-center gap-1 ${
-                      likedComments.has(comment.id)
-                        ? "text-red-500"
-                        : "hover:text-red-500"
-                    }`}
-                  >
-                    <Heart
-                      size={16}
-                      fill={likedComments.has(comment.id) ? "currentColor" : "none"}
-                    />
-                    <span>{commentLikesCounts.get(comment.id) || 0}</span>
-                  </button>
+                  {#if isAuthenticated}
+                    <button
+                      onclick={() => handleCommentLike(comment.id)}
+                      class={`transition-colors inline-flex items-center gap-1 ${
+                        likedComments.has(comment.id)
+                          ? "text-red-500"
+                          : "hover:text-red-500"
+                      }`}
+                    >
+                      <Heart
+                        size={16}
+                        fill={likedComments.has(comment.id) ? "currentColor" : "none"}
+                      />
+                      <span>{commentLikesCounts.get(comment.id) || 0}</span>
+                    </button>
+                  {:else}
+                    <div class="inline-flex items-center gap-1 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+                      <Heart size={16} />
+                      <span>{commentLikesCounts.get(comment.id) || 0}</span>
+                    </div>
+                  {/if}
                 </div>
               </div>
             </div>
