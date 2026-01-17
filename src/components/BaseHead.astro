@@ -123,24 +123,34 @@ const {
 <!-- Mobile Optimization -->
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="format-detection" content="telephone=no" />
-<!-- DNS Prefetch for faster lookups -->
-<link rel="dns-prefetch" href="https://rsms.me/" />
-<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-<link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-<link rel="dns-prefetch" href="https://api.fontshare.com" />
 <!-- Preconnect for critical font origins -->
-<link rel="preconnect" href="https://rsms.me/" crossorigin />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="preconnect" href="https://api.fontshare.com" crossorigin />
-<!-- Font stylesheets with display=swap for better performance -->
-<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,100..900&family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
-<link href="https://api.fontshare.com/v2/css?f[]=panchang@200,300,400,500,600,700&f[]=bebas-neue@400&display=swap&f[]=jet-brains-mono@1,2&display=swap" rel="stylesheet" />
+<link rel="preconnect" href="https://api.fontshare.com" />
 
-<script is:inline type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-<script is:inline nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-<script is:inline src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- Critical fonts preload -->
+<link rel="preload" href="https://api.fontshare.com/v2/css?f[]=panchang@400,500,600&display=swap" as="style" />
+
+<!-- Font stylesheets with display=swap and media=print trick -->
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=panchang@200,300,400,500,600,700&f[]=bebas-neue@400&f[]=jet-brains-mono@1,2&display=swap" media="print" onload="this.media='all'" />
+<noscript>
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=panchang@200,300,400,500,600,700&f[]=bebas-neue@400&f[]=jet-brains-mono@1,2&display=swap" />
+</noscript>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,100..900&family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap" media="print" onload="this.media='all'" />
+<noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,100..900&family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap" />
+</noscript>
+
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css" media="print" onload="this.media='all'" />
+<noscript>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+</noscript>
+
+<!-- Defer non-critical scripts -->
+<script is:inline type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js" defer></script>
+<script is:inline nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js" defer></script>
+<script is:inline src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 <ClientRouter fallback="none" />
 
