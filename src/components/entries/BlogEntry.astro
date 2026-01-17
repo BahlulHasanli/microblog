@@ -1,7 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import { formatSimpleDate } from "@/utils/date";
-import { generateResponsiveImages, getBlogEntrySizes, getHeroImageSizes } from "@/utils/image-optimizer";
+import { generateResponsiveImages, generateBunnyCDNUrl, getBlogEntrySizes, getHeroImageSizes } from "@/utils/image-optimizer";
 
 interface Props {
   title: string;
@@ -25,17 +25,20 @@ const isIcmal = categories?.includes('icmal') || false;
 // Responsive images üçün
 const responsiveImageData = generateResponsiveImages({
   src: image,
-  width: 1200,
-  quality: 85,
+  width: 800,
+  quality: 80,
   sizes: isIcmal ? getHeroImageSizes() : getBlogEntrySizes()
 });
+
+// Background blur üçün kiçik ölçülü şəkil
+const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp');
  
 ---
  
 {isIcmal && page === 'home' ? (
   <article class="relative w-full rounded-xl overflow-hidden group">
     <div class="absolute inset-0">
-      <img src={image} alt="" class="w-full h-full object-cover scale-110" />
+      <img src={blurBackgroundUrl} alt="" class="w-full h-full object-cover scale-110" />
     </div>
     <div class="absolute inset-0 backdrop-blur-3xl"></div>
     <div class="absolute inset-0 bg-black/10"></div>
@@ -50,8 +53,8 @@ const responsiveImageData = generateResponsiveImages({
             />
           )}
           <img
-            width={1200}
-            height={630}
+            width={800}
+            height={450}
             src={responsiveImageData.src}
             srcset={responsiveImageData.srcset}
             sizes={responsiveImageData.sizes}
@@ -156,8 +159,8 @@ const responsiveImageData = generateResponsiveImages({
           />
         )}
         <img
-          width={1200}
-          height={630}
+          width={800}
+          height={450}
           src={responsiveImageData.src}
           srcset={responsiveImageData.srcset}
           sizes={responsiveImageData.sizes}
