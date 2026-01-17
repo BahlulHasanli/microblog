@@ -275,6 +275,8 @@ const finalAudioData = audioData;
           });
         }
 
+        let progressBarTicking = false;
+
         function updateProgressBar() {
           const progressBar = document.getElementById('progress-bar');
           if (!progressBar) return;
@@ -302,14 +304,23 @@ const finalAudioData = audioData;
 
           const scrollProgress = Math.max(0, Math.min(1, (windowHeight - contentTop) / (windowHeight + contentHeight)));
           progressBar.style.transform = `scaleX(${scrollProgress})`;
+
+          progressBarTicking = false;
         }
 
-        window.addEventListener('scroll', updateProgressBar);
-        window.addEventListener('resize', updateProgressBar);
+        function requestProgressBarUpdate() {
+          if (!progressBarTicking) {
+            window.requestAnimationFrame(updateProgressBar);
+            progressBarTicking = true;
+          }
+        }
+
+        window.addEventListener('scroll', requestProgressBarUpdate, { passive: true });
+        window.addEventListener('resize', requestProgressBarUpdate, { passive: true });
         document.addEventListener('astro:after-swap', () => {
           updateProgressBar();
-          window.addEventListener('scroll', updateProgressBar);
-          window.addEventListener('resize', updateProgressBar);
+          window.addEventListener('scroll', requestProgressBarUpdate, { passive: true });
+          window.addEventListener('resize', requestProgressBarUpdate, { passive: true });
         });
 
         // Sayfa ilk yüklenirken

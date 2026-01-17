@@ -40,10 +40,12 @@ const { activeTab = 'weekly' } = Astro.props;
     }
 
     // Scroll handler - fixed tabs göstər/gizlət
+    let scrollTicking = false;
+
     const handleScroll = () => {
       const mainTabsRect = mainTabs.getBoundingClientRect();
       const shouldShowFixed = mainTabsRect.bottom < 0;
-      
+
       if (shouldShowFixed) {
         fixedTabs.classList.remove('opacity-0', '-translate-y-full', 'pointer-events-none');
         fixedTabs.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
@@ -51,9 +53,18 @@ const { activeTab = 'weekly' } = Astro.props;
         fixedTabs.classList.add('opacity-0', '-translate-y-full', 'pointer-events-none');
         fixedTabs.classList.remove('opacity-100', 'translate-y-0', 'pointer-events-auto');
       }
+
+      scrollTicking = false;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    const requestScrollUpdate = () => {
+      if (!scrollTicking) {
+        window.requestAnimationFrame(handleScroll);
+        scrollTicking = true;
+      }
+    };
+
+    window.addEventListener('scroll', requestScrollUpdate, { passive: true });
 
     // Tab click handler
     const handleTabClick = (tabId: string) => {
