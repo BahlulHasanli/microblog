@@ -101,7 +101,7 @@ commits.forEach((commit) => {
 const newEntry = {
   version: currentVersion,
   date: new Date().toISOString().split("T")[0],
-  title: `Versiya ${currentVersion}`,
+  title: `Wind`,
   changes: changes,
 };
 
