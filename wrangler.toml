@@ -3,3 +3,13 @@ compatibility_date = "2025-09-17"
 
 [assets]
 directory = "./dist"
+
+# Cache rules for static assets
+[[assets.binding]]
+name = "ASSETS"
+
+[assets.browser_cache]
+ttl = 31536000  # 1 year for static assets
+
+[assets.cache_control]
+enabled = true
