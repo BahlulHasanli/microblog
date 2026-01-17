@@ -66,6 +66,7 @@ const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveIm
         sizes={heroImageData?.sizes}
         alt={featuredPost.data.title}
         loading="eager"
+        fetchpriority="high"
         decoding="async"
         class="w-full h-full object-cover opacity-40"
       />
@@ -81,6 +82,7 @@ const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveIm
           sizes={heroImageData?.sizes}
           alt={featuredPost.data.title}
           loading="eager"
+          fetchpriority="high"
           decoding="async"
           class="w-full h-full object-cover object-center"
         />
