@@ -113,6 +113,7 @@
       onkeydown={(e) => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
+      aria-label="Changelog"
       tabindex="-1"
     >
       <!-- Header -->
@@ -127,7 +128,7 @@
           </div>
         </div>
         
-        <p class="text-xs text-slate-400 mt-2">
+        <p class="text-xs text-slate-500 mt-2">
           {format(new Date(latestChangelog.date), "d MMMM yyyy", { locale: az })}
         </p>
       </div>
