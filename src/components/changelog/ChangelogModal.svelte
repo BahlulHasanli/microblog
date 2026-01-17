@@ -77,13 +77,13 @@
   const getChangeColor = (type: string) => {
     switch (type) {
       case "feature":
-        return "text-green-600 bg-green-50";
+        return "text-green-700 bg-green-100";
       case "improvement":
-        return "text-blue-600 bg-blue-50";
+        return "text-blue-700 bg-blue-100";
       case "fix":
-        return "text-orange-600 bg-orange-50";
+        return "text-orange-700 bg-orange-100";
       default:
-        return "text-slate-600 bg-slate-50";
+        return "text-slate-700 bg-slate-100";
     }
   };
 
