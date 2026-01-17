@@ -1,6 +1,6 @@
 export const prerender = false;
 import type { APIRoute } from "astro";
-import { supabase } from "@db/supabase";
+import { supabase, supabaseAdmin } from "@db/supabase";
 
 export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const authCode = url.searchParams.get("code");
@@ -48,11 +48,15 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
     // İstifadəçini verilənlər bazasında yoxla/yarat
     const user = data.user;
     if (user?.email) {
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: selectError } = await supabaseAdmin
         .from("users")
         .select("id")
         .eq("email", user.email)
         .single();
+
+      if (selectError && selectError.code !== "PGRST116") {
+        console.error("Error checking user:", selectError);
+      }
 
       if (!existingUser) {
         // Yeni istifadəçi yarat
@@ -61,18 +65,28 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
           "_" +
           Math.random().toString(36).substring(2, 6);
 
-        await supabase.from("users").insert({
-          email: user.email,
-          username: username,
-          full_name:
-            user.user_metadata?.full_name || user.user_metadata?.name || "",
-          avatar_url:
-            user.user_metadata?.avatar_url ||
-            user.user_metadata?.picture ||
-            null,
-          role_id: 4, // Default user role
-          is_active: true,
-        });
+        const { error: insertError } = await supabaseAdmin
+          .from("users")
+          .insert({
+            id: user.id,
+            email: user.email,
+            username: username,
+            fullname:
+              user.user_metadata?.full_name || user.user_metadata?.name || "",
+            avatar:
+              user.user_metadata?.avatar_url ||
+              user.user_metadata?.picture ||
+              null,
+            role_id: 4,
+          });
+
+        if (insertError) {
+          console.error("Error creating user:", insertError);
+        } else {
+          console.log("User created successfully:", username);
+        }
+      } else {
+        console.log("User already exists:", user.email);
       }
     }
 

@@ -1,7 +1,7 @@
 import { jwtVerify, errors } from "jose";
 import type { APIContext } from "astro";
 import type { AstroCookies } from "astro";
-import { supabase } from "@/db/supabase";
+import { supabase, supabaseAdmin } from "@/db/supabase";
 
 // JWT secrets
 const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key-change-this";
@@ -38,12 +38,22 @@ export async function getUserFromCookies(
     const accessToken = cookies.get("sb-access-token");
     const refreshToken = cookies.get("sb-refresh-token");
 
+    console.log(
+      "getUserFromCookies - accessToken exists:",
+      !!accessToken?.value
+    );
+    console.log(
+      "getUserFromCookies - refreshToken exists:",
+      !!refreshToken?.value
+    );
+
     if (
       !accessToken ||
       !accessToken.value ||
       !refreshToken ||
       !refreshToken.value
     ) {
+      console.log("getUserFromCookies - tokens missing");
       return null;
     }
 
@@ -57,6 +67,15 @@ export async function getUserFromCookies(
         access_token: accessToken.value,
       });
 
+    console.log(
+      "getUserFromCookies - setSession error:",
+      sessionError?.message
+    );
+    console.log(
+      "getUserFromCookies - sessionData.user:",
+      sessionData?.user?.email
+    );
+
     if (sessionError || !sessionData?.user) {
       console.log("Session error:", sessionError?.message);
       // Cookie-ləri sil
@@ -67,11 +86,14 @@ export async function getUserFromCookies(
 
     // İstifadəçini verilənlər bazasından al
     const userEmail = sessionData.user.email;
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await supabaseAdmin
       .from("users")
       .select("*")
       .eq("email", userEmail)
       .single();
+
+    console.log("getUserFromCookies - userError:", userError?.message);
+    console.log("getUserFromCookies - userData found:", !!userData);
 
     if (userError) {
       console.log("User not found in database:", userError);
