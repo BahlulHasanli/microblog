@@ -60,6 +60,7 @@ const finalDescription = pageDescription || siteDescription;
 <html lang="az">  
   <head>   
     <BaseHead title={finalTitle} description={finalDescription} image={image} />
+    <slot name="head" />
   </head>
   <body class=`flex flex-col min-h-screen px-4 sm:px-6 md:px-8 mx-auto bg-white`>
     <Navigation isLoggedIn={isLoggedIn} user={user} /> 
