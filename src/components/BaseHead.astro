@@ -82,7 +82,7 @@ const {
 <meta name="author" content={siteName} />
 
 <!-- Structured Data (JSON-LD) -->
-<script type="application/ld+json" set:html={JSON.stringify({
+<script is:inline type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": siteName,
@@ -101,7 +101,7 @@ const {
 })} />
 
 <!-- Organization Schema -->
-<script type="application/ld+json" set:html={JSON.stringify({
+<script is:inline type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": siteName,

@@ -95,7 +95,7 @@ const finalAudioData = audioData;
   image={frontmatter.image?.url}
 >
   <Fragment slot="head">
-    <script type="application/ld+json" set:html={JSON.stringify({
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "NewsArticle",
       "mainEntityOfPage": {
