@@ -81,38 +81,6 @@ const {
 <meta name="keywords" content={keywords} />
 <meta name="author" content={siteName} />
 
-<!-- Structured Data (JSON-LD) -->
-<script is:inline type="application/ld+json" set:html={JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": siteName,
-  "description": description,
-  "url": canonical,
-  "image": image,
-  "inLanguage": "az-AZ",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": {
-      "@type": "EntryPoint",
-      "urlTemplate": `${canonical}/search?q={search_term_string}`
-    },
-    "query-input": "required name=search_term_string"
-  }
-})} />
-
-<!-- Organization Schema -->
-<script is:inline type="application/ld+json" set:html={JSON.stringify({
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": siteName,
-  "description": description,
-  "url": canonical,
-  "image": image,
-  "sameAs": [
-    xHandle ? `https://x.com/${xHandle}` : null,
-    facebookHandle ? `https://facebook.com/${facebookHandle}` : null,
-  ].filter(Boolean)
-})} />
 
 <!-- Favicons -->
 <link rel="icon" href="/favicon.ico" sizes="any" />

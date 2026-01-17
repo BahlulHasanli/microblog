@@ -98,22 +98,21 @@ const finalAudioData = audioData;
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "NewsArticle",
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": `https://the99.az/notes/${postSlug}`
-      },
       "headline": frontmatter.title,
-      "image": frontmatter.image?.url ? [frontmatter.image.url] : [],
+      "description": frontmatter.description,
+      "image": [frontmatter.image?.url || "https://the99.az/og-image.jpg"],
       "datePublished": new Date(frontmatter.pubDate).toISOString(),
       "dateModified": frontmatter.modifiedDate 
         ? new Date(frontmatter.modifiedDate).toISOString() 
         : new Date(frontmatter.pubDate).toISOString(),
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `https://the99.az/notes/${postSlug}`
+      },
       "author": {
         "@type": "Person",
-        "name": frontmatter.author?.fullname || frontmatter.author?.name,
-        "url": frontmatter.author?.username 
-          ? `https://the99.az/user/@${frontmatter.author.username}` 
-          : undefined
+        "name": frontmatter.author?.fullname || frontmatter.author?.name || "The99 Redaksiyası",
+        "url": "https://the99.az"
       },
       "publisher": {
         "@type": "Organization",
@@ -122,8 +121,7 @@ const finalAudioData = audioData;
           "@type": "ImageObject",
           "url": "https://the99.az/logo.png"
         }
-      },
-      "description": frontmatter.description
+      }
     })} />
   </Fragment>
   <div class="fixed top-0 left-0 right-0 h-1 bg-linear-to-r from-rose-500 to-pink-500 origin-left z-50" id="progress-bar" style="transform: scaleX(0); transition: transform 0.1s ease-out;"></div>
