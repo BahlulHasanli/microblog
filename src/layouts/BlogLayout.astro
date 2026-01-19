@@ -19,7 +19,7 @@ if (isLoggedIn) {
   currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
 }
 
-// Get post ID from slug
+// Get post ID from slugs
 const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
   .from('posts')
