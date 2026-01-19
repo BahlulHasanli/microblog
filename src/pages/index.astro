@@ -13,11 +13,13 @@ const currentPath = Astro.url.pathname;
 let siteTitle = "THE DOXSANDOQQUZ";
 let siteDescription = "Azərbaycan dilində pop-kultura, əyləncə və müasir mədəniyyət haqqında etibarlı məlumat mənbəyi.";
 
+let postsPerPage = 10;
+
 try {
   const { data: settings } = await supabase
     .from("settings")
     .select("key, value")
-    .in("key", ["site_title", "site_description"]);
+    .in("key", ["site_title", "site_description", "posts_per_page"]);
 
   if (settings) {
     for (const setting of settings) {
@@ -26,6 +28,9 @@ try {
       }
       if (setting.key === "site_description" && setting.value) {
         siteDescription = setting.value;
+      }
+      if (setting.key === "posts_per_page" && setting.value) {
+        postsPerPage = parseInt(setting.value) || 10;
       }
     }
   }
@@ -66,7 +71,7 @@ if (bannersData && Array.isArray(bannersData)) {
 }
 
 
-// Supabase-dən ilk səhifə postlarını al (10 ədəd)
+// Supabase-dən ilk səhifə postlarını al
 const { data: postsData, error: postsError } = await supabase
   .from("posts")
   .select(`
@@ -75,7 +80,7 @@ const { data: postsData, error: postsError } = await supabase
   `)
   .eq("approved", true)
   .order("pub_date", { ascending: false })
-  .range(0, 9);
+  .range(0, postsPerPage - 1);
 
 if (postsError) {
   console.error('Postlar yüklənərkən xəta:', postsError);
@@ -135,6 +140,7 @@ const posts = (postsData || []).map(post => {
                 categories={categories}
                 sponsorBanners={sponsorBanners}
                 initialPage={1}
+                postsPerPage={postsPerPage}
               />
             ) : (
               <div class="grid grid-cols-1 sm:grid-cols-2">
