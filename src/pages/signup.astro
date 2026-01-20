@@ -168,12 +168,10 @@ if (!enableRegistration) {
 
         document.getElementById('googleSignupBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('googleSignupBtn') as HTMLButtonElement;
-            const btnText = document.getElementById('googleBtnText');
             
-            if (!btn || !btnText) return;
+            if (!btn) return;
             
             btn.disabled = true;
-            btnText.textContent = 'Yüklənir...';
             
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -186,24 +184,20 @@ if (!enableRegistration) {
                 if (error) {
                     alert(error.message || 'Google ilə qeydiyyat xətası');
                     btn.disabled = false;
-                    btnText.textContent = 'Google ilə qeydiyyat';
                 }
             } catch (error) {
                 console.error('Google signup error:', error);
                 alert('Şəbəkə xətası baş verdi');
                 btn.disabled = false;
-                btnText.textContent = 'Google ilə qeydiyyat';
             }
         });
 
         document.getElementById('appleSignupBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('appleSignupBtn') as HTMLButtonElement;
-            const btnText = document.getElementById('appleBtnText');
             
-            if (!btn || !btnText) return;
+            if (!btn) return;
             
             btn.disabled = true;
-            btnText.textContent = 'Yüklənir...';
             
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -216,13 +210,11 @@ if (!enableRegistration) {
                 if (error) {
                     alert(error.message || 'Apple ilə qeydiyyat xətası');
                     btn.disabled = false;
-                    btnText.textContent = 'Apple ilə qeydiyyat';
                 }
             } catch (error) {
                 console.error('Apple signup error:', error);
                 alert('Şəbəkə xətası baş verdi');
                 btn.disabled = false;
-                btnText.textContent = 'Apple ilə qeydiyyat';
             }
         });
 
