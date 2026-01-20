@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
           viewCount: count || 0,
           isNewView: false,
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
+        { status: 200, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -65,14 +65,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
             viewCount: count || 0,
             isNewView: false,
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } }
+          { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
 
       console.error("Baxış əlavə edilərkən xəta:", insertError);
       return new Response(
         JSON.stringify({ error: "Baxış əlavə edilə bilmədi" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
         viewCount: count || 0,
         isNewView: true,
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (error) {
     console.error("Baxış API xətası:", error);
@@ -100,10 +100,63 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 };
 
 // Baxış sayını almaq üçün GET endpoint
+// Tək post: ?postId=123
+// Batch: ?postIds=123,456,789
 export const GET: APIRoute = async ({ url }) => {
   try {
     const postId = url.searchParams.get("postId");
+    const postIds = url.searchParams.get("postIds");
 
+    // Batch sorğu - birdəfəyə çox post üçün
+    if (postIds) {
+      const ids = postIds
+        .split(",")
+        .map((id) => parseInt(id.trim()))
+        .filter((id) => !isNaN(id));
+
+      if (ids.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "Düzgün post ID-ləri tələb olunur" }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      // Bütün post-lar üçün view count-ları bir sorğu ilə al
+      const { data, error } = await supabase
+        .from("post_views")
+        .select("post_id")
+        .in("post_id", ids);
+
+      if (error) {
+        console.error("Batch baxış sayı alınarkən xəta:", error);
+        return new Response(
+          JSON.stringify({ error: "Baxış sayları alına bilmədi" }),
+          { status: 500, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      // Post ID-lərə görə qruplaşdır
+      const viewCounts: Record<number, number> = {};
+      ids.forEach((id) => {
+        viewCounts[id] = 0;
+      });
+
+      if (data) {
+        data.forEach((row) => {
+          viewCounts[row.post_id] = (viewCounts[row.post_id] || 0) + 1;
+        });
+      }
+
+      return new Response(JSON.stringify({ viewCounts }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Tək post sorğusu
     if (!postId) {
       return new Response(JSON.stringify({ error: "Post ID tələb olunur" }), {
         status: 400,
@@ -120,7 +173,7 @@ export const GET: APIRoute = async ({ url }) => {
       console.error("Baxış sayı alınarkən xəta:", error);
       return new Response(
         JSON.stringify({ error: "Baxış sayı alına bilmədi" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
 

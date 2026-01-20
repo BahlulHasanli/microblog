@@ -283,22 +283,33 @@ const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp')
 
     async function loadViewCounts() {
         const viewCountElements = document.querySelectorAll('.view-count[data-post-id]');
+        if (viewCountElements.length === 0) return;
         
-        for (const element of viewCountElements) {
+        // Bütün post ID-lərini topla
+        const postIds: string[] = [];
+        viewCountElements.forEach(element => {
             const postId = element.getAttribute('data-post-id');
-            if (!postId) continue;
-            
-            try {
-                const response = await fetch(`/api/posts/views?postId=${postId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.viewCount !== undefined) {
-                        element.textContent = data.viewCount;
-                    }
+            if (postId) postIds.push(postId);
+        });
+        
+        if (postIds.length === 0) return;
+        
+        try {
+            // Batch sorğu - birdəfəyə bütün view count-ları al
+            const response = await fetch(`/api/posts/views?postIds=${postIds.join(',')}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.viewCounts) {
+                    viewCountElements.forEach(element => {
+                        const postId = element.getAttribute('data-post-id');
+                        if (postId && data.viewCounts[postId] !== undefined) {
+                            element.textContent = data.viewCounts[postId];
+                        }
+                    });
                 }
-            } catch (error) {
-                console.error('Oxunma sayı yüklənərkən xəta:', error);
             }
+        } catch (error) {
+            console.error('Oxunma sayları yüklənərkən xəta:', error);
         }
     }
     
