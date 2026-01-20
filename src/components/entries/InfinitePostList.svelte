@@ -224,7 +224,7 @@
                   src={post.data.image.url}
                   alt={post.data.title}
                   loading="lazy"
-                  class="blurhash-img object-cover w-full aspect-video rounded-2xl opacity-0 transition-opacity duration-300"
+                  class="blurhash-img shadow-xl object-cover w-full aspect-video rounded-2xl opacity-0 transition-opacity duration-300"
                 />
               </div>
             </a>

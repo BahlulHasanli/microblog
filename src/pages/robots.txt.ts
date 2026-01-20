@@ -43,7 +43,7 @@ Sitemap: https://the99.az/sitemap.xml
   return new Response(robotsTxt, {
     headers: {
       "Content-Type": "text/plain",
-      "Cache-Control": "public, max-age=86400",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
     },
   });
 };
