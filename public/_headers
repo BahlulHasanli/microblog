@@ -31,3 +31,8 @@
 # API routes - no cache
 /api/*
   Cache-Control: no-cache, no-store, must-revalidate
+
+# robots.txt - no cache, no Content-Signal
+/robots.txt
+  Cache-Control: no-cache, no-store, must-revalidate
+  ! Content-Signal
