@@ -81,9 +81,9 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
           });
 
         if (insertError) {
-          console.error("Error creating user:", insertError);
+          console.error("Error creating user in callback:", insertError);
         } else {
-          console.log("User created successfully:", username);
+          console.log("User created successfully via callback:", username);
         }
       } else {
         console.log("User already exists:", user.email);
