@@ -8,7 +8,6 @@ if (isAuthenticated(Astro.cookies)) {
   return Astro.redirect('/');
 }
 
-// Check if registration is enabled
 let enableRegistration = true;
 try {
   const { data: registrationSetting } = await supabase
