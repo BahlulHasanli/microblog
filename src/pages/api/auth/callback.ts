@@ -1,6 +1,7 @@
 export const prerender = false;
 import type { APIRoute } from "astro";
 import { supabase, supabaseAdmin } from "@db/supabase";
+import AvatarManager from "@/utils/avatarGenerator";
 
 export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const authCode = url.searchParams.get("code");
@@ -65,6 +66,10 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
           "_" +
           Math.random().toString(36).substring(2, 6);
 
+        // Random avatar seç
+        const avatarManager = new AvatarManager();
+        const userAvatar = avatarManager.selectRandomAvatar();
+
         const { error: insertError } = await supabaseAdmin
           .from("users")
           .insert({
@@ -73,10 +78,7 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
             username: username,
             fullname:
               user.user_metadata?.full_name || user.user_metadata?.name || "",
-            avatar:
-              user.user_metadata?.avatar_url ||
-              user.user_metadata?.picture ||
-              null,
+            avatar: userAvatar?.url || null,
             role_id: 4,
           });
 

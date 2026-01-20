@@ -175,7 +175,7 @@ const supabaseClient = createClient(
         class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
       > 
         {#if isSubmitting.value}
-          Daxil olunur...
+          Giriş edilir...
         {:else}
           Daxil Ol
         {/if}
@@ -191,7 +191,8 @@ const supabaseClient = createClient(
       </div>
     </div>
 
-    <button
+   <div class="grid grid-cols-2 items-center justify-between gap-2">
+     <button
       type="button"
       onclick={handleGoogleSignIn}
       disabled={isGoogleLoading.value}
@@ -204,23 +205,24 @@ const supabaseClient = createClient(
         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
       {#if isGoogleLoading.value}
-        Yüklənir...
-      {:else}
-        Google ilə daxil ol
-      {/if}
+        Giriş edilir...
+      {/if} 
     </button>
 
     <button
       type="button"
       onclick={handleAppleSignIn}
-      disabled={true}
-      class="w-full flex items-center justify-center gap-2 bg-base-300 text-base-500 font-medium py-1.5 px-4 rounded-lg text-sm opacity-50 cursor-not-allowed mt-2"
+      disabled={isAppleLoading.value}
+      class="cursor-pointer w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-gray-500 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
       </svg>
-      Apple ilə daxil ol (Tezliklə)
+      {#if isAppleLoading.value}
+        Giriş edilir...
+      {/if}
     </button>
+   </div>
 
     <div class="text-center mt-4 pt-3 border-t border-base-100">
       <p class="text-base-600 text-xs">
