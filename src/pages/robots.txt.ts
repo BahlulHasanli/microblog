@@ -44,6 +44,8 @@ Sitemap: https://the99.az/sitemap.xml
     headers: {
       "Content-Type": "text/plain",
       "Cache-Control": "no-cache, no-store, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Cloudflare-CDN-Cache-Control": "no-store",
     },
   });
 };
