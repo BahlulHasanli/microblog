@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import Comments from "@/components/comments/Comments.svelte";
 import CommentButton from "@/components/comments/CommentButton.svelte";
@@ -8,6 +7,7 @@ import MediaPlayer from "@/components/media/MediaPlayer.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
+import { generateBunnyCDNUrl, generateResponsiveImages, getHeroImageSizes, getAvatarSizes } from "@/utils/image-optimizer";
  
 const { frontmatter } = Astro.props;
 
@@ -88,6 +88,18 @@ const audioData = hasAudio ? {
 
 const finalAudioData = audioData;
 
+// Hero şəkil optimizasiyası
+const heroImageData = frontmatter.image?.url ? generateResponsiveImages({
+  src: frontmatter.image.url,
+  width: 1280,
+  quality: 85,
+  sizes: getHeroImageSizes()
+}) : null;
+
+// Avatar optimizasiyası
+const avatarUrl = frontmatter.author?.avatar ? generateBunnyCDNUrl(frontmatter.author.avatar, 96, undefined, 80) : null;
+const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontmatter.author.avatar, 48)} 48w, ${generateBunnyCDNUrl(frontmatter.author.avatar, 96)} 96w, ${generateBunnyCDNUrl(frontmatter.author.avatar, 192)} 192w` : '';
+
 ---
 <BaseLayout 
   title={frontmatter.title} 
@@ -162,13 +174,15 @@ const finalAudioData = audioData;
           {/* <div class="squircle-border -left-[3px] -top-[3.5px]"></div> */}
           {/* <div class="squircle-wrapper"> */}
             <button type="button" class="user-avatar" data-username={frontmatter.author?.username}>
-              <Image
-              width={1280}
-              height={720}
-              src={frontmatter.author?.avatar}
-              alt={frontmatter.author?.fullname}
-              class="squircle size-24 object-cover cursor-pointer"
-            />
+              <img
+                width={96}
+                height={96}
+                src={avatarUrl}
+                srcset={avatarSrcset}
+                sizes="96px"
+                alt={frontmatter.author?.fullname}
+                class="squircle size-24 object-cover cursor-pointer"
+              />
             </button>
             <div class="absolute -bottom-2 -right-2 bg-white rounded-full px-2 py-1 shadow-md flex items-center gap-1 text-xs text-zinc-600" data-post-id={postId}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 animate-pulse">
@@ -228,7 +242,7 @@ const finalAudioData = audioData;
             )}
           </div>
 
-          {frontmatter.image && frontmatter.image.url && (
+          {frontmatter.image && frontmatter.image.url && heroImageData && (
             <div class="relative blurhash-container mt-4" data-blurhash={imageBlurhash}>
               {imageBlurhash && (
                 <canvas 
@@ -236,11 +250,16 @@ const finalAudioData = audioData;
                   aria-hidden="true"
                 />
               )}
-              <Image
+              <img
                 width={1280}
                 height={720}
-                src={frontmatter.image.url}
+                src={heroImageData.src}
+                srcset={heroImageData.srcset}
+                sizes={heroImageData.sizes}
                 alt={frontmatter.image.alt || frontmatter.title}
+                loading="eager"
+                fetchpriority="high"
+                decoding="async"
                 class="blurhash-img object-cover object-center aspect-12/7 rounded-xl w-full"
               />
             </div>

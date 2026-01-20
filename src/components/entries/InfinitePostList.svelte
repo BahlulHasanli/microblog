@@ -15,6 +15,32 @@
   let observer: IntersectionObserver;
   let loadMoreTrigger: HTMLElement;
 
+  // Şəkil optimizasiyası funksiyaları
+  function generateBunnyCDNUrl(src: string, width?: number, quality: number = 80, format: string = 'webp'): string {
+    if (!src || !src.includes('b-cdn.net')) return src;
+    try {
+      const url = new URL(src);
+      const params = new URLSearchParams(url.search);
+      if (width) params.set('width', width.toString());
+      params.set('quality', quality.toString());
+      params.set('format', format);
+      return `${url.origin}${url.pathname}?${params.toString()}`;
+    } catch {
+      return src;
+    }
+  }
+
+  function generateSrcset(src: string, maxWidth: number = 800, quality: number = 80): string {
+    if (!src || !src.includes('b-cdn.net')) return src;
+    const widths = [320, 480, 640, 800].filter(w => w <= maxWidth);
+    if (widths[widths.length - 1] < maxWidth) widths.push(maxWidth);
+    return widths.map(w => `${generateBunnyCDNUrl(src, w, quality)} ${w}w`).join(', ');
+  }
+
+  const cardSizes = '(max-width: 640px) calc(100vw - 32px), (max-width: 768px) calc(50vw - 24px), 400px';
+  const heroSizes = '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px';
+  const avatarSizes = '(max-width: 640px) 40px, 56px';
+
   function formatSimpleDate(date: string | Date): string {
     const d = new Date(date);
     const months = [
@@ -204,7 +230,7 @@
       <div class="sm:col-span-2">
         <article class="relative w-full rounded-xl overflow-hidden group">
           <div class="absolute inset-0">
-            <img src={post.data.image.url} alt="" class="w-full h-full object-cover scale-110" />
+            <img src={generateBunnyCDNUrl(post.data.image.url, 200, 60)} alt="" class="w-full h-full object-cover scale-110" />
           </div>
           <div class="absolute inset-0 backdrop-blur-3xl"></div>
           <div class="absolute inset-0 bg-black/10"></div>
@@ -219,9 +245,11 @@
                   ></canvas>
                 {/if}
                 <img
-                  width="1200"
-                  height="630"
-                  src={post.data.image.url}
+                  width="800"
+                  height="450"
+                  src={generateBunnyCDNUrl(post.data.image.url, 800)}
+                  srcset={generateSrcset(post.data.image.url, 800)}
+                  sizes={heroSizes}
                   alt={post.data.title}
                   loading="lazy"
                   class="blurhash-img shadow-xl object-cover w-full aspect-video rounded-2xl opacity-0 transition-opacity duration-300"
@@ -293,9 +321,11 @@
                 ></canvas>
               {/if}
               <img
-                width="1200"
-                height="630"
-                src={post.data.image.url}
+                width="400"
+                height="267"
+                src={generateBunnyCDNUrl(post.data.image.url, 400)}
+                srcset={generateSrcset(post.data.image.url, 640)}
+                sizes={cardSizes}
                 alt={post.data.title}
                 loading="lazy"
                 class="blurhash-img object-cover w-full h-full bg-center aspect-12/8 rounded-xl opacity-0 transition-opacity duration-300"
@@ -306,7 +336,10 @@
           <div class="mt-3 sm:mt-5">
             <div class="flex items-center gap-1 sm:gap-2 text-xs text-base-600 flex-wrap">
               <button type="button" class="user-avatar overflow-hidden size-10! sm:size-14! squircle cursor-pointer shrink-0" data-username={post.data.author?.username} aria-label="{post.data.author?.fullname} profilinə keç">
-                <img src={post.data.author?.avatar}
+                <img 
+                    src={generateBunnyCDNUrl(post.data.author?.avatar, 56)}
+                    srcset={`${generateBunnyCDNUrl(post.data.author?.avatar, 40)} 40w, ${generateBunnyCDNUrl(post.data.author?.avatar, 56)} 56w, ${generateBunnyCDNUrl(post.data.author?.avatar, 112)} 112w`}
+                    sizes={avatarSizes}
                     alt=""
                     class="w-full h-full object-cover"
                 />
@@ -378,7 +411,9 @@
           >
             <div class="block w-full">
               <img
-                src={banner.image_url}
+                src={generateBunnyCDNUrl(banner.image_url, 400)}
+                srcset={generateSrcset(banner.image_url, 640)}
+                sizes={cardSizes}
                 alt={banner.title}
                 class="object-cover w-full h-full bg-center aspect-12/8 rounded-xl"
               />

@@ -21,7 +21,7 @@
 
 @theme {
   --font-sans: Inter, sans-serif;
-  --font-display: InterDisplay, monospace;
+  --font-display: InterVariable, Inter, sans-serif;
   --font-mono: JetBrains Mono, monospace;
   --font-big-shoulders: Big Shoulders, sans-serif;
   --font-panchang: Panchang, sans-serif;
