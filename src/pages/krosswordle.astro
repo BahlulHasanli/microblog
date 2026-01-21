@@ -1,0 +1,13 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import KrossWordle from "@/components/KrossWordle";
+
+const title = "KrossWordle - Günlük Krossvord Oyunu";
+const description = "Hər gün yeni Azərbaycan dilində krossvord tapmacanı həll edin və reytinqdə ən yaxşı olun!";
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="max-w-7xl mx-auto">
+    <KrossWordle client:only="react" />
+  </div>
+</BaseLayout> 

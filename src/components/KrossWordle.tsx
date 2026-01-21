@@ -1,0 +1,923 @@
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
+import {
+  Trophy,
+  RotateCcw,
+  Timer,
+  ChevronRight,
+  Lightbulb,
+  Delete,
+  Medal,
+  Clock,
+} from "lucide-react";
+import {
+  GRID_SIZE,
+  INITIAL_POWERS,
+  LEVELS,
+  ALPHABET,
+  getDailyLevelIndex,
+  getTodayDateKey,
+} from "../utils/constants";
+import { Grid, PowerType, PowerState, Direction } from "../models/types";
+
+interface LeaderboardEntry {
+  user_id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  completion_time: number;
+  rank: number;
+}
+
+interface UserScore {
+  completionTime: number;
+  levelId: number;
+  playDate: string;
+}
+
+// localStorage-dən şansları yüklə
+const loadPowersFromStorage = (): PowerState[] => {
+  if (typeof window === "undefined") return INITIAL_POWERS;
+
+  const todayKey = getTodayDateKey();
+  const storedDate = localStorage.getItem("krosswordle_powers_date");
+
+  if (storedDate === todayKey) {
+    const storedPowers = localStorage.getItem("krosswordle_powers");
+    if (storedPowers) {
+      try {
+        return JSON.parse(storedPowers);
+      } catch {
+        return INITIAL_POWERS;
+      }
+    }
+  }
+
+  // Yeni gün - şansları sıfırla
+  localStorage.setItem("krosswordle_powers_date", todayKey);
+  localStorage.setItem("krosswordle_powers", JSON.stringify(INITIAL_POWERS));
+  return INITIAL_POWERS;
+};
+
+// Şansları localStorage-ə saxla
+const savePowersToStorage = (powers: PowerState[]) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("krosswordle_powers", JSON.stringify(powers));
+};
+
+// localStorage-dən oynanmış statusu yüklə
+const loadPlayedStatusFromStorage = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  const todayKey = getTodayDateKey();
+  const storedDate = localStorage.getItem("krosswordle_played_date");
+
+  if (storedDate === todayKey) {
+    const played = localStorage.getItem("krosswordle_played");
+    return played === "true";
+  }
+
+  return false;
+};
+
+// Oynanmış statusu localStorage-ə saxla
+const savePlayedStatusToStorage = (played: boolean) => {
+  if (typeof window === "undefined") return;
+  const todayKey = getTodayDateKey();
+  localStorage.setItem("krosswordle_played_date", todayKey);
+  localStorage.setItem("krosswordle_played", played ? "true" : "false");
+};
+
+export default function KrossWordle() {
+  const [levelIdx, setLevelIdx] = useState(getDailyLevelIndex());
+  const currentLevel = LEVELS[levelIdx];
+
+  const [grid, setGrid] = useState<Grid>(() => generateEmptyGrid(levelIdx));
+  const [powers, setPowers] = useState<PowerState[]>(() =>
+    loadPowersFromStorage(),
+  );
+  const [selectedCell, setSelectedCell] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [activeDirection, setActiveDirection] = useState<Direction>("H");
+  const [activeWordId, setActiveWordId] = useState<string | null>(null);
+  const [alreadyPlayed, setAlreadyPlayed] = useState(() =>
+    loadPlayedStatusFromStorage(),
+  );
+  const [gameOver, setGameOver] = useState(() => loadPlayedStatusFromStorage());
+  const [isLoading, setIsLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [userScore, setUserScore] = useState<UserScore | null>(null);
+
+  const [startTime] = useState(Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<number | null>(null);
+  const hasSubmittedScore = useRef(false);
+
+  function generateEmptyGrid(idx: number) {
+    const level = LEVELS[idx];
+    const emptyGrid: Grid = Array.from({ length: GRID_SIZE }, () =>
+      Array.from({ length: GRID_SIZE }, () => null),
+    );
+    level.words.forEach((wp) => {
+      for (let i = 0; i < wp.word.length; i++) {
+        const nx = wp.direction === "H" ? wp.x + i : wp.x;
+        const ny = wp.direction === "V" ? wp.y + i : wp.y;
+        if (nx < GRID_SIZE && ny < GRID_SIZE && !emptyGrid[ny][nx]) {
+          emptyGrid[ny][nx] = {
+            letter: "",
+            isRevealed: false,
+            isBombEffect: false,
+          };
+        }
+      }
+    });
+    return emptyGrid;
+  }
+
+  useEffect(() => {
+    if (!gameOver) {
+      timerRef.current = window.setInterval(() => {
+        setElapsed(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [gameOver, startTime]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const validatedWords = useMemo(() => {
+    return currentLevel.words.map((wp) => {
+      let correct = true;
+      let full = true;
+      for (let i = 0; i < wp.word.length; i++) {
+        const nx = wp.direction === "H" ? wp.x + i : wp.x;
+        const ny = wp.direction === "V" ? wp.y + i : wp.y;
+        const cell = grid[ny]?.[nx];
+        if (!cell || cell.letter === "") full = false;
+        if (
+          !cell ||
+          (cell.letter.toUpperCase() !== wp.word[i].toUpperCase() &&
+            !cell.isRevealed)
+        ) {
+          correct = false;
+        }
+      }
+      return { id: wp.id, isCorrect: correct && full };
+    });
+  }, [grid, currentLevel]);
+
+  useEffect(() => {
+    const allWordsCorrect = validatedWords.every((v) => v.isCorrect);
+    if (allWordsCorrect && !gameOver && !alreadyPlayed) {
+      setGameOver(true);
+      saveScore();
+    }
+  }, [validatedWords, gameOver, alreadyPlayed]);
+
+  useEffect(() => {
+    checkIfPlayedToday();
+    loadLeaderboard();
+  }, []);
+
+  const checkIfPlayedToday = async () => {
+    // API-dən yoxla (əgər istifadəçi giriş edibsə)
+    try {
+      const response = await fetch(
+        `/api/krosswordle/check-played?date=${getTodayDateKey()}`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.played && data.score) {
+          setAlreadyPlayed(true);
+          savePlayedStatusToStorage(true);
+          setGameOver(true);
+          setUserScore(data.score);
+          setShowLeaderboard(true);
+        }
+      }
+    } catch (error) {
+      console.error("Yoxlama xətası:", error);
+    }
+
+    // localStorage-dən yoxla (API uğursuz olsa və ya istifadəçi giriş etməyibsə)
+    const localPlayed = loadPlayedStatusFromStorage();
+    if (localPlayed && !userScore) {
+      setAlreadyPlayed(true);
+      setGameOver(true);
+    }
+
+    setIsLoading(false);
+    loadLeaderboard();
+  };
+
+  const saveScore = async () => {
+    if (hasSubmittedScore.current || alreadyPlayed) return;
+    hasSubmittedScore.current = true;
+
+    // Əvvəlcə localStorage-ə saxla - API uğursuz olsa belə oyun bitmiş sayılsın
+    setAlreadyPlayed(true);
+    savePlayedStatusToStorage(true);
+
+    // userScore state-ini yenilə
+    setUserScore({
+      completionTime: elapsed,
+      levelId: currentLevel.id,
+      playDate: getTodayDateKey(),
+    });
+
+    try {
+      const response = await fetch("/api/krosswordle/save-score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          levelId: currentLevel.id,
+          completionTime: elapsed,
+          playDate: getTodayDateKey(),
+        }),
+      });
+
+      if (response.ok) {
+        loadLeaderboard();
+        setShowLeaderboard(true);
+      } else {
+        console.error("Score saxlanmadı - API xətası:", response.status);
+      }
+    } catch (error) {
+      console.error("Score saxlanarkən xəta:", error);
+    }
+  };
+
+  const loadLeaderboard = async () => {
+    try {
+      const response = await fetch(
+        `/api/krosswordle/leaderboard?type=daily&date=${getTodayDateKey()}`,
+      );
+      const result = await response.json();
+      if (result.data) {
+        setLeaderboard(result.data);
+      }
+    } catch (error) {
+      console.error("Leaderboard yüklənərkən xəta:", error);
+    }
+  };
+
+  const selectCell = useCallback(
+    (x: number, y: number) => {
+      const availableWords = currentLevel.words.filter((wp) => {
+        for (let i = 0; i < wp.word.length; i++) {
+          const nx = wp.direction === "H" ? wp.x + i : wp.x;
+          const ny = wp.direction === "V" ? wp.y + i : wp.y;
+          if (nx === x && ny === y) return true;
+        }
+        return false;
+      });
+
+      if (availableWords.length === 0) return;
+
+      if (selectedCell?.x === x && selectedCell?.y === y) {
+        if (availableWords.length > 1) {
+          const nextWp =
+            availableWords.find((w) => w.id !== activeWordId) ||
+            availableWords[0];
+          setActiveWordId(nextWp.id);
+          setActiveDirection(nextWp.direction);
+        }
+      } else {
+        const preferred =
+          availableWords.find((w) => w.direction === activeDirection) ||
+          availableWords[0];
+        setSelectedCell({ x, y });
+        setActiveWordId(preferred.id);
+        setActiveDirection(preferred.direction);
+      }
+    },
+    [currentLevel.words, selectedCell, activeWordId, activeDirection],
+  );
+
+  const updateCell = useCallback(
+    (x: number, y: number, char: string) => {
+      if (gameOver) return;
+      setGrid((prevGrid) => {
+        const newGrid = prevGrid.map((row) =>
+          row.map((cell) => (cell ? { ...cell } : null)),
+        );
+        const cell = newGrid[y]?.[x];
+
+        if (cell && !cell.isRevealed) {
+          cell.letter = char;
+
+          if (char !== "" && activeWordId) {
+            const wp = currentLevel.words.find((w) => w.id === activeWordId);
+            if (wp) {
+              const currentIdx = wp.direction === "H" ? x - wp.x : y - wp.y;
+              if (currentIdx < wp.word.length - 1) {
+                const nextX =
+                  wp.direction === "H" ? wp.x + currentIdx + 1 : wp.x;
+                const nextY =
+                  wp.direction === "V" ? wp.y + currentIdx + 1 : wp.y;
+                setTimeout(() => setSelectedCell({ x: nextX, y: nextY }), 0);
+              }
+            }
+          }
+        }
+        return newGrid;
+      });
+    },
+    [gameOver, activeWordId, currentLevel.words],
+  );
+
+  const handleBackspace = useCallback(() => {
+    if (!selectedCell || gameOver) return;
+    const { x, y } = selectedCell;
+
+    setGrid((prevGrid) => {
+      const newGrid = prevGrid.map((row) =>
+        row.map((cell) => (cell ? { ...cell } : null)),
+      );
+      const cell = newGrid[y]?.[x];
+
+      if (cell && !cell.isRevealed) {
+        if (cell.letter === "" && activeWordId) {
+          const wp = currentLevel.words.find((w) => w.id === activeWordId);
+          if (wp) {
+            const currentIdx = wp.direction === "H" ? x - wp.x : y - wp.y;
+            if (currentIdx > 0) {
+              const prevX = wp.direction === "H" ? wp.x + currentIdx - 1 : wp.x;
+              const prevY = wp.direction === "V" ? wp.y + currentIdx - 1 : wp.y;
+              setTimeout(() => setSelectedCell({ x: prevX, y: prevY }), 0);
+            }
+          }
+        } else {
+          cell.letter = "";
+        }
+      }
+      return newGrid;
+    });
+  }, [selectedCell, gameOver, activeWordId, currentLevel.words]);
+
+  const usePower = useCallback(
+    (type: PowerType) => {
+      const power = powers.find((p) => p.type === type);
+      if (!power || power.uses <= 0 || gameOver) return;
+
+      setGrid((prevGrid) => {
+        const newGrid = prevGrid.map((row) =>
+          row.map((cell) => (cell ? { ...cell } : null)),
+        );
+        let success = false;
+
+        if (type === PowerType.MiddleLetter && activeWordId) {
+          const wp = currentLevel.words.find((w) => w.id === activeWordId);
+          if (wp) {
+            const midIdx = Math.floor(wp.word.length / 2);
+            const mx = wp.direction === "H" ? wp.x + midIdx : wp.x;
+            const my = wp.direction === "V" ? wp.y + midIdx : wp.y;
+            if (newGrid[my]?.[mx]) {
+              newGrid[my][mx]!.isRevealed = true;
+              newGrid[my][mx]!.letter = wp.word[midIdx];
+              success = true;
+            }
+          }
+        } else if (type === PowerType.Bomb) {
+          const wp =
+            currentLevel.words[
+              Math.floor(Math.random() * currentLevel.words.length)
+            ];
+          const idx = Math.floor(Math.random() * wp.word.length);
+          const bx = wp.direction === "H" ? wp.x + idx : wp.x;
+          const by = wp.direction === "V" ? wp.y + idx : wp.y;
+          if (newGrid[by]?.[bx]) {
+            newGrid[by][bx]!.isRevealed = true;
+            newGrid[by][bx]!.letter = wp.word[idx];
+            newGrid[by][bx]!.isBombEffect = true;
+            success = true;
+            setTimeout(() => {
+              setGrid((prev) =>
+                prev.map((row) =>
+                  row.map((c) => (c ? { ...c, isBombEffect: false } : null)),
+                ),
+              );
+            }, 600);
+          }
+        } else if (type === PowerType.SwapReveal && activeWordId) {
+          const wp = currentLevel.words.find((w) => w.id === activeWordId);
+          if (wp) {
+            const unrevealed: { x: number; y: number; char: string }[] = [];
+            for (let i = 0; i < wp.word.length; i++) {
+              const nx = wp.direction === "H" ? wp.x + i : wp.x;
+              const ny = wp.direction === "V" ? wp.y + i : wp.y;
+              if (newGrid[ny]?.[nx] && !newGrid[ny][nx]!.isRevealed) {
+                unrevealed.push({ x: nx, y: ny, char: wp.word[i] });
+              }
+            }
+            if (unrevealed.length > 0) {
+              const target =
+                unrevealed[Math.floor(Math.random() * unrevealed.length)];
+              newGrid[target.y][target.x]!.letter = target.char;
+              newGrid[target.y][target.x]!.isRevealed = true;
+              success = true;
+            }
+          }
+        }
+
+        if (success) {
+          setPowers((prev) => {
+            const newPowers = prev.map((p) =>
+              p.type === type ? { ...p, uses: p.uses - 1 } : p,
+            );
+            savePowersToStorage(newPowers);
+            return newPowers;
+          });
+        }
+
+        return success ? newGrid : prevGrid;
+      });
+    },
+    [powers, gameOver, activeWordId, currentLevel.words],
+  );
+
+  const isCellInActiveWord = useCallback(
+    (x: number, y: number) => {
+      if (!activeWordId) return false;
+      const wp = currentLevel.words.find((w) => w.id === activeWordId);
+      if (!wp) return false;
+      for (let i = 0; i < wp.word.length; i++) {
+        if (
+          (wp.direction === "H" ? wp.x + i : wp.x) === x &&
+          (wp.direction === "V" ? wp.y + i : wp.y) === y
+        )
+          return true;
+      }
+      return false;
+    },
+    [activeWordId, currentLevel.words],
+  );
+
+  const isCellCorrect = useCallback(
+    (x: number, y: number) => {
+      const wordsWithThisCell = currentLevel.words.filter((wp) => {
+        for (let i = 0; i < wp.word.length; i++) {
+          if (
+            (wp.direction === "H" ? wp.x + i : wp.x) === x &&
+            (wp.direction === "V" ? wp.y + i : wp.y) === y
+          )
+            return true;
+        }
+        return false;
+      });
+      return (
+        wordsWithThisCell.length > 0 &&
+        wordsWithThisCell.every(
+          (wp) => validatedWords.find((v) => v.id === wp.id)?.isCorrect,
+        )
+      );
+    },
+    [currentLevel.words, validatedWords],
+  );
+
+  const getWordStartCell = useCallback(
+    (x: number, y: number) => {
+      return currentLevel.words.find((w) => w.x === x && w.y === y);
+    },
+    [currentLevel.words],
+  );
+
+  const nextLevel = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const resetGame = useCallback(() => {
+    if (alreadyPlayed) return;
+    // Yalnız yazıları sil, şansları saxla (localStorage-dən)
+    setGrid(generateEmptyGrid(levelIdx));
+    setGameOver(false);
+    // Şansları localStorage-dən yüklə (refresh olsa belə eyni qalır)
+    setPowers(loadPowersFromStorage());
+    setSelectedCell(null);
+    setActiveWordId(null);
+    setElapsed(0);
+    hasSubmittedScore.current = false;
+  }, [levelIdx, alreadyPlayed]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (gameOver || !selectedCell) return;
+
+      const key = e.key.toUpperCase();
+      if (ALPHABET.includes(key)) {
+        updateCell(selectedCell.x, selectedCell.y, key);
+      } else if (e.key === "Backspace") {
+        handleBackspace();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [gameOver, selectedCell, updateCell, handleBackspace]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto"></div>
+          <p className="mt-4 text-zinc-600">Yüklənir...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white text-zinc-900 select-none">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-zinc-200">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-nouvelr-semibold text-zinc-900">
+              Kross<span className="text-rose-500">Wordle</span>
+            </h1>
+            <p className="text-xs text-zinc-500 font-medium">
+              Günlük #{currentLevel.id}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowLeaderboard(!showLeaderboard)}
+              className="flex items-center gap-1.5 bg-zinc-100 hover:bg-zinc-200 px-3 py-2 rounded-lg transition-colors"
+            >
+              <Trophy size={16} className="text-rose-500" />
+              <span className="text-sm font-medium">Reytinq</span>
+            </button>
+            <div className="flex items-center gap-1.5 bg-zinc-100 px-3 py-2 rounded-lg">
+              <Timer size={16} className="text-rose-500" />
+              <span className="font-mono text-sm font-semibold">
+                {formatTime(elapsed)}
+              </span>
+            </div>
+            {!alreadyPlayed && (
+              <button
+                onClick={resetGame}
+                className="p-2 bg-zinc-100 hover:bg-zinc-200 rounded-lg transition-colors"
+                aria-label="Yenidən başla"
+              >
+                <RotateCcw size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+        {alreadyPlayed && (
+          <div className="mb-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Trophy className="text-emerald-500" size={24} />
+              <span className="text-emerald-800 font-semibold text-lg">
+                Təbrik edirik!
+              </span>
+            </div>
+            <p className="text-emerald-700 text-sm mb-2">
+              Bu günün tapmacanı artıq həll etmisiniz!
+            </p>
+            {userScore && (
+              <div className="flex items-center justify-center gap-4 mt-3">
+                <div className="bg-white px-4 py-2 rounded-lg border border-emerald-200">
+                  <div className="text-xs text-zinc-500">Vaxt</div>
+                  <div className="font-mono font-bold text-emerald-600">
+                    {formatTime(userScore.completionTime)}
+                  </div>
+                </div>
+                <div className="bg-white px-4 py-2 rounded-lg border border-emerald-200">
+                  <div className="text-xs text-zinc-500">Səviyyə</div>
+                  <div className="font-bold text-emerald-600">
+                    #{userScore.levelId}
+                  </div>
+                </div>
+              </div>
+            )}
+            <p className="text-zinc-500 text-xs mt-3">
+              Sabah yeni tapmaca gələcək!
+            </p>
+          </div>
+        )}
+
+        {showLeaderboard && (
+          <div className="mb-4 bg-white border border-zinc-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-nouvelr-semibold flex items-center gap-2">
+                <Trophy className="text-rose-500" size={18} />
+                Bugünkü Reytinq
+              </h2>
+              <button
+                onClick={() => setShowLeaderboard(false)}
+                className="text-zinc-500 hover:text-zinc-700 text-sm"
+              >
+                Bağla
+              </button>
+            </div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              {leaderboard.length === 0 ? (
+                <p className="text-center text-zinc-500 py-3 text-sm">
+                  Hələ heç kim oynamamışdır
+                </p>
+              ) : (
+                leaderboard.map((entry, idx) => (
+                  <div
+                    key={entry.user_id}
+                    className={`flex items-center gap-2 p-2 rounded-lg ${
+                      idx === 0
+                        ? "bg-yellow-50 border border-yellow-200"
+                        : idx === 1
+                          ? "bg-zinc-100 border border-zinc-200"
+                          : idx === 2
+                            ? "bg-orange-50 border border-orange-200"
+                            : "bg-zinc-50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white font-bold text-xs">
+                      {idx === 0
+                        ? "🥇"
+                        : idx === 1
+                          ? "🥈"
+                          : idx === 2
+                            ? "🥉"
+                            : entry.rank}
+                    </div>
+                    {entry.avatar_url && (
+                      <img
+                        src={entry.avatar_url}
+                        alt={entry.full_name}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs truncate">
+                        {entry.full_name}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-mono">
+                      <Clock size={12} className="text-zinc-400" />
+                      {formatTime(entry.completion_time)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Kompakt layout - Grid, Powers, Keyboard sol tərəfdə, İpuçları sağda */}
+        <div className="flex flex-col lg:flex-row gap-3">
+          {/* Sol tərəf - Grid və Keyboard */}
+          <div className="flex-1 space-y-3">
+            {/* Grid - daha kompakt */}
+            <div className="flex justify-center">
+              <div
+                className="grid gap-1 bg-zinc-50 p-2 sm:p-3 rounded-xl border border-zinc-200"
+                style={{
+                  gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
+                  width: "min(70vw, 280px)",
+                  aspectRatio: "1",
+                }}
+              >
+                {grid.map((row, y) =>
+                  row.map((cell, x) => {
+                    const wordStart = getWordStartCell(x, y);
+                    const isSelected =
+                      selectedCell?.x === x && selectedCell?.y === y;
+                    const isInActive = isCellInActiveWord(x, y);
+                    const isCorrect = cell && isCellCorrect(x, y);
+                    const isBomb = cell?.isBombEffect;
+
+                    return (
+                      <div
+                        key={`${x}-${y}`}
+                        onClick={() => cell && selectCell(x, y)}
+                        className={`
+                          relative flex items-center justify-center rounded
+                          text-sm sm:text-base font-bold uppercase
+                          transition-all duration-150 cursor-pointer
+                          ${!cell ? "bg-zinc-200" : ""}
+                          ${cell && !isInActive && !isSelected && !isCorrect ? "bg-white border border-zinc-300 hover:border-zinc-400" : ""}
+                          ${isInActive && !isSelected && !isCorrect ? "bg-rose-50 border border-rose-200" : ""}
+                          ${isSelected && !isCorrect ? "bg-rose-500 text-white ring-2 ring-rose-300 scale-105 z-10" : ""}
+                          ${isCorrect ? "bg-emerald-500 text-white" : ""}
+                          ${isBomb ? "animate-pulse bg-amber-400 text-zinc-900" : ""}
+                        `}
+                        style={{ aspectRatio: "1" }}
+                      >
+                        {cell?.letter}
+                        {wordStart && (
+                          <span className="absolute top-0 left-0.5 text-[7px] text-zinc-400 font-bold">
+                            {wordStart.id}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }),
+                )}
+              </div>
+            </div>
+
+            {/* Powers - kompakt */}
+            <div className="flex justify-center gap-2">
+              {powers.map((p) => {
+                const disabled =
+                  p.uses <= 0 ||
+                  gameOver ||
+                  (p.type !== PowerType.Bomb && !activeWordId);
+                return (
+                  <button
+                    key={p.type}
+                    disabled={disabled}
+                    onClick={() => usePower(p.type)}
+                    className={`flex flex-col items-center gap-0.5 p-2 rounded-lg transition-all ${
+                      disabled
+                        ? "opacity-30 cursor-not-allowed bg-zinc-100"
+                        : "bg-white border border-zinc-200 hover:border-rose-300 hover:bg-rose-50 active:scale-95"
+                    }`}
+                  >
+                    <span className="text-lg">{p.icon}</span>
+                    <span className="text-[8px] font-semibold text-zinc-600">
+                      {p.label}
+                    </span>
+                    <span className="text-[8px] font-bold text-rose-500">
+                      ×{p.uses}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Keyboard - kompakt */}
+            <div className="bg-zinc-50 rounded-xl p-2 border border-zinc-200">
+              <div className="grid grid-cols-11 gap-1">
+                {ALPHABET.map((char) => (
+                  <button
+                    key={char}
+                    onClick={() =>
+                      selectedCell &&
+                      updateCell(selectedCell.x, selectedCell.y, char)
+                    }
+                    disabled={!selectedCell || gameOver}
+                    className="bg-white border border-zinc-300 hover:bg-rose-500 hover:text-white hover:border-rose-500 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-900 font-semibold py-1.5 sm:py-2 rounded transition-all text-[10px] sm:text-xs"
+                  >
+                    {char}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handleBackspace}
+                disabled={!selectedCell || gameOver}
+                className="w-full mt-1.5 bg-rose-100 hover:bg-rose-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-rose-700 font-semibold py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-sm"
+              >
+                <Delete size={14} />
+                <span>SİL</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Sağ tərəf - Clues - kompakt */}
+          <div className="lg:w-64 xl:w-72">
+            <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-200 lg:sticky lg:top-16">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb size={14} className="text-rose-500" />
+                <span className="text-xs font-semibold text-zinc-700 uppercase tracking-wide">
+                  İpuçları
+                </span>
+              </div>
+              <div className="space-y-1.5 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto">
+                {currentLevel.words.map((wp) => {
+                  const isActive = activeWordId === wp.id;
+                  const isCorrect = validatedWords.find(
+                    (v) => v.id === wp.id,
+                  )?.isCorrect;
+                  return (
+                    <button
+                      key={wp.id}
+                      onClick={() => selectCell(wp.x, wp.y)}
+                      className={`w-full text-left p-2 rounded-lg transition-all ${
+                        isCorrect
+                          ? "bg-emerald-50 border border-emerald-300"
+                          : isActive
+                            ? "bg-rose-50 border border-rose-300"
+                            : "bg-white border border-zinc-200 hover:bg-zinc-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded ${
+                              isCorrect
+                                ? "bg-emerald-500 text-white"
+                                : isActive
+                                  ? "bg-rose-500 text-white"
+                                  : "bg-zinc-200 text-zinc-600"
+                            }`}
+                          >
+                            {wp.id}
+                          </span>
+                          <span
+                            className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                              isActive
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-zinc-100 text-zinc-500"
+                            }`}
+                          >
+                            {wp.direction === "H" ? "→" : "↓"}
+                          </span>
+                        </div>
+                        {isCorrect && (
+                          <Trophy size={12} className="text-emerald-400" />
+                        )}
+                      </div>
+                      <p
+                        className={`text-xs leading-snug ${
+                          isCorrect
+                            ? "text-emerald-700"
+                            : isActive
+                              ? "text-zinc-900"
+                              : "text-zinc-600"
+                        }`}
+                      >
+                        {wp.clue}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Win Modal */}
+      {gameOver && !alreadyPlayed && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div className="bg-white border border-zinc-200 p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl">
+            <div className="w-20 h-20 bg-linear-to-tr from-rose-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Trophy className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-3xl font-nouvelr-semibold text-zinc-900 mb-1">
+              Təbriklər!
+            </h2>
+            <p className="text-rose-600 font-medium mb-6">
+              Tapmaca həll edildi
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200">
+                <p className="text-[10px] font-semibold text-zinc-500 uppercase">
+                  Vaxt
+                </p>
+                <p className="text-xl font-bold text-zinc-900">
+                  {formatTime(elapsed)}
+                </p>
+              </div>
+              <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200">
+                <p className="text-[10px] font-semibold text-zinc-500 uppercase">
+                  Səviyyə
+                </p>
+                <p className="text-xl font-bold text-zinc-900">
+                  #{currentLevel.id}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowLeaderboard(true)}
+              className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 mb-3"
+            >
+              <Trophy size={20} />
+              Reytinqə Bax
+            </button>
+            <p className="text-xs text-zinc-500">Sabah yeni tapmaca gələcək!</p>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="py-6 text-center text-zinc-400 text-xs">
+        <a href="/" className="hover:text-rose-500 transition-colors">
+          The99.az
+        </a>{" "}
+        © 2025
+      </footer>
+    </div>
+  );
+}
