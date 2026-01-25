@@ -1,13 +1,20 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import KrossWordle from "@/components/KrossWordle";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
 const title = "KrossWordle - Günlük Krossvord Oyunu";
 const description = "Hər gün yeni Azərbaycan dilində krossvord tapmacanı həll edin və reytinqdə ən yaxşı olun!";
+
+const isLoggedIn = isAuthenticated(Astro.cookies);
+let user = null;
+if (isLoggedIn) {
+  user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+}
 ---
 
 <BaseLayout title={title} description={description}>
   <div class="max-w-7xl mx-auto">
-    <KrossWordle client:only="react" />
+    <KrossWordle client:only="react" initialUser={user} />
   </div>
 </BaseLayout> 
