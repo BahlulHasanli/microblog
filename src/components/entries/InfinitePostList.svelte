@@ -231,10 +231,49 @@
       }
     };
   });
+  // Postları yenidən sırala: icmal postları boşluq yaratmasın
+  // İcmal postları 2 sütun tutur, ona görə onları cüt pozisiyalarda yerləşdirmək lazımdır
+  $: organizedPosts = (() => {
+    const icmalPosts = posts.filter(p => p.data.categories?.includes('icmal'));
+    const normalPosts = posts.filter(p => !p.data.categories?.includes('icmal'));
+    
+    const result: any[] = [];
+    let normalIndex = 0;
+    let icmalIndex = 0;
+    let gridPosition = 0; // Cari grid pozisiyası (0-based, hər sütun 1)
+    
+    // Postları orijinal sıra ilə gəz
+    for (const post of posts) {
+      const isIcmal = post.data.categories?.includes('icmal');
+      
+      if (isIcmal) {
+        // İcmal postu əlavə etməzdən əvvəl, əgər tək pozisiyadadırsa, normal post əlavə et
+        if (gridPosition % 2 === 1 && normalIndex < normalPosts.length) {
+          // Tək pozisiyada - əvvəlcə normal post əlavə et
+          // Bu artıq result-da olmayan növbəti normal postu tap
+          const remainingNormals = normalPosts.filter(np => !result.includes(np));
+          if (remainingNormals.length > 0) {
+            result.push(remainingNormals[0]);
+            gridPosition += 1;
+          }
+        }
+        result.push(post);
+        gridPosition += 2; // İcmal 2 sütun tutur
+      } else {
+        // Normal post - əgər artıq əlavə edilməyibsə
+        if (!result.includes(post)) {
+          result.push(post);
+          gridPosition += 1;
+        }
+      }
+    }
+    
+    return result;
+  })();
 </script>
 
 <div class="grid grid-cols-1 gap-6 sm:gap-8 gap-y-16 sm:gap-y-16 sm:grid-cols-2">
-  {#each posts as post, index}
+  {#each organizedPosts as post, index}
     {@const isIcmal = post.data.categories?.includes('icmal') || false}
     {@const banner = getSponsorBanner(index)}
     
