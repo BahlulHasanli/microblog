@@ -157,7 +157,7 @@
     const viewCountElements = document.querySelectorAll('.view-count[data-post-id]');
     if (viewCountElements.length === 0) return;
     
-    // Bütün post ID-lərini topla
+    // Bütün post ID-lərini topla.
     const postIds: string[] = [];
     viewCountElements.forEach(element => {
       const postId = element.getAttribute('data-post-id');
