@@ -333,7 +333,7 @@
       <div class="flex-1 min-w-0">
         <div class="flex items-baseline gap-2 flex-wrap">
           <a
-            href={`/user/@${commentUser?.username}`}
+            href={`/@${commentUser?.username}`}
             class="font-semibold text-slate-900 hover:underline text-[14px]"
           >
             {commentUser?.fullname}
@@ -438,7 +438,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline gap-2 flex-wrap">
                 <a
-                  href={`/user/@${replyUser?.username}`}
+                  href={`/@${replyUser?.username}`}
                   class="font-semibold text-slate-900 hover:underline text-[14px]"
                 >
                   {replyUser?.fullname}

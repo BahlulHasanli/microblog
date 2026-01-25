@@ -192,13 +192,21 @@ export function markdownToTiptap(
     }
 
     // Resimler
-    const imageMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
+    // URL ve opsiyonel başlığı ayırmak için regex güncellemesi
+    const imageMatch = line.match(/!\[(.*?)\]\((.*?)(?:\s+"(.*?)")?\)/);
     if (imageMatch) {
       const alt = imageMatch[1];
       const src = imageMatch[2];
+      const title = imageMatch[3] || null;
+      
+      const attrs: any = { src, alt };
+      if (title) {
+        attrs.title = title;
+      }
+
       document.content.push({
         type: "image",
-        attrs: { src, alt },
+        attrs,
       });
       continue;
     }

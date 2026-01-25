@@ -204,7 +204,7 @@ const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontma
           {/* </div> */}
          </div>
           <div class="mt-3">
-            <a href={`/user/@${frontmatter.author?.username}`} class="hover:text-rose-600 transition-colors">
+            <a href={`/@${frontmatter.author?.username}`} class="hover:text-rose-600 transition-colors">
               <span class="text-md font-medium text-base-700">{frontmatter.author?.fullname}</span>
             </a>
             <p class="text-xs text-zinc-400">
@@ -392,7 +392,7 @@ const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontma
             userAvatar.addEventListener('click', () => {
               const username = userAvatar.getAttribute('data-username');
               if (username) {
-                navigate(`/user/@${username}`);
+                navigate(`/@${username}`);
               }
             });
           }
@@ -503,6 +503,15 @@ const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontma
       <style>
         .blurhash-canvas {
           transition: opacity 0.3s ease-out;
+        }
+        
+        /* Blockquote styling overrides */
+        .prose :global(blockquote) {
+          font-style: normal !important;
+        }
+        .prose :global(blockquote p::before),
+        .prose :global(blockquote p::after) {
+          content: none !important;
         }
       </style>
 

@@ -43,7 +43,27 @@ if (!post.approved && !isOwner) {
 // Əvvəlcə escape edilmiş \n simvollarını real yeni sətir simvolları ilə əvəz et
 const cleanContent = post.content.replace(/\\n/g, '\n');
 
+// Custom renderer configuration
+const renderer = new marked.Renderer();
+
+renderer.image = ({ href, title, text }) => {
+  // If title exists, use it as caption
+  const caption = title || text;
+  
+  if (caption) {
+    return `
+      <figure class="my-8 text-center">
+        <img src="${href || ''}" alt="${text || ''}" title="${title || ''}" class="rounded-lg mx-auto max-w-full h-auto" />
+        <figcaption class="mt-2 text-[11px] text-zinc-500 text-center">${caption}</figcaption>
+      </figure>
+    `;
+  }
+  
+  return `<div class="my-8"><img src="${href || ''}" alt="${text || ''}" class="rounded-lg mx-auto max-w-full h-auto" /></div>`;
+};
+
 // Custom renderer for Rating component
+marked.use({ renderer });
 let htmlContent = await marked(cleanContent);
 
 // Replace <Rating score="X" /> tags with rendered component (GameInformer style)

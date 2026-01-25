@@ -77,7 +77,7 @@
   }
 
   function navigateToProfile(username: string) {
-    navigate(`/user/@${username}`);
+    navigate(`/@${username}`);
   }
 
   onMount(() => {

@@ -74,7 +74,7 @@ const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp')
                 class="w-full h-full object-cover"
             />
           </button>
-          <a href={`/user/@${author?.username}`} class="font-medium hover:text-white transition-colors truncate">
+          <a href={`/@${author?.username}`} class="font-medium hover:text-white transition-colors truncate">
             {author?.fullname}
           </a>
           {pubDate && (
@@ -180,7 +180,7 @@ const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp')
             class="w-full h-full object-cover"
         />
       </button>
-      <a href={`/user/@${author?.username}`} class="font-medium hover:text-rose-600 transition-colors truncate">
+      <a href={`/@${author?.username}`} class="font-medium hover:text-rose-600 transition-colors truncate">
         {author?.fullname}
       </a>
       {categories && categories.length > 0 && (
@@ -275,7 +275,7 @@ const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp')
             userAvatar.addEventListener('click', () => {
                 const username = userAvatar.getAttribute('data-username');
                 if (username) {
-                    navigate(`/user/@${username}`);
+                    navigate(`/@${username}`);
                 }
             });
         }

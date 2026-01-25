@@ -1,5 +1,6 @@
 :root {
   --tt-toolbar-height: 2.75rem;
+  --tt-header-height: 3.5rem; /* Header hündürlüyü */
   --tt-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --tt-toolbar-bg-color: var(--white);
   --tt-toolbar-border-color: var(--tt-gray-light-a-100);
@@ -31,9 +32,11 @@
   }
 
   &[data-variant="fixed"] {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 10;
+    left: 0;
+    right: 0;
+    z-index: 50;
     width: 100%;
     min-height: var(--tt-toolbar-height);
     background: var(--tt-toolbar-bg-color);
@@ -50,8 +53,9 @@
     }
 
     @media (max-width: 480px) {
-      position: absolute;
+      position: fixed;
       top: auto;
+      bottom: 0;
       height: calc(var(--tt-toolbar-height) + var(--tt-safe-area-bottom));
       border-top: 1px solid var(--tt-toolbar-border-color);
       border-bottom: none;

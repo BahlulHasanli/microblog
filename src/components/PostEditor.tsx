@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
-import { useStore } from "@nanostores/react";
-// editorStore artıq lazım deyil - şəkillər save zamanı yüklənir
+import EditorActionButtons from "@/components/EditorActionButtons";
 
 // Global tip tanımlaması
 declare global {
@@ -14,6 +13,8 @@ declare global {
     _currentAudioTitle?: string;
     _currentAudioArtist?: string;
     _currentExistingAudioUrl?: string;
+    _imageIdMap?: Map<string, string>;
+    _audioRemoved?: boolean;
   }
 }
 
@@ -28,7 +29,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [existingImageUrl, setExistingImageUrl] = useState<string>(
     post.image?.url || ""
   );
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Preview URL referansı - memory leak önleme üçün
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "success" | "error"
@@ -68,7 +69,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
       // Yeni fayl seçildikdə silindi flag-ini sıfırla
       setAudioRemoved(false);
       audioRemovedRef.current = false;
-      (window as any)._audioRemoved = false;
+      window._audioRemoved = false;
     }
   };
 
@@ -84,7 +85,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
     // Silindi flag-ini qur
     setAudioRemoved(true);
     audioRemovedRef.current = true;
-    (window as any)._audioRemoved = true;
+    window._audioRemoved = true;
   };
 
   // Audio title/artist dəyişikliyi
@@ -103,8 +104,24 @@ export default function PostEditor({ post, content, slug, author }: any) {
   // Markdown içeriğini JSON'a dönüştür
   const [initialEditorContent, setInitialEditorContent] = useState<any>(null);
   const [isContentProcessed, setIsContentProcessed] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Store artıq lazım deyil
+  // Komponent sökülməsində cleanup
+  useEffect(() => {
+    return () => {
+      // Blob URL-ləri azad et
+      if (coverImagePreview && coverImagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(coverImagePreview);
+      }
+      // Window global dəyişənlərini təmizlə
+      delete window._currentEditorTitle;
+      delete window._currentAudioFile;
+      delete window._currentAudioTitle;
+      delete window._currentAudioArtist;
+      delete window._currentExistingAudioUrl;
+      delete window._audioRemoved;
+    };
+  }, []);
 
   useEffect(() => {
     window._currentEditorTitle = title;
@@ -128,52 +145,72 @@ export default function PostEditor({ post, content, slug, author }: any) {
     }
   }, [content, title, description, isContentProcessed]);
 
-  const handleCoverImageChange = (
-    file: File | null,
-    clearExisting?: boolean
-  ) => {
-    setCoverImage(file);
-    if (!file) {
-      if (clearExisting) {
-        // İstifadəçi şəkli sildi - existingImageUrl-i də sıfırla
-        setExistingImageUrl("");
-        setCoverImagePreview("");
+  const handleCoverImageChange = useCallback(
+    (file: File | null, clearExisting?: boolean) => {
+      setCoverImage(file);
+      if (!file) {
+        if (clearExisting) {
+          // İstifadəçi şəkli sildi - existingImageUrl-i də sıfırla
+          setExistingImageUrl("");
+          setCoverImagePreview((prev) => {
+            // Əvvəlki blob URL-i azad et
+            if (prev && prev.startsWith("blob:")) {
+              URL.revokeObjectURL(prev);
+            }
+            return "";
+          });
+        } else {
+          setCoverImagePreview(existingImageUrl);
+        }
       } else {
-        setCoverImagePreview(existingImageUrl);
+        // Yeni şəkil seçildi - köhnə şəkil URL-ini sıfırla
+        setExistingImageUrl("");
+        // Əvvəlki blob URL-i azad et
+        setCoverImagePreview((prev) => {
+          if (prev && prev.startsWith("blob:")) {
+            URL.revokeObjectURL(prev);
+          }
+          return URL.createObjectURL(file);
+        });
       }
-    } else {
-      // Yeni şəkil seçildi - köhnə şəkil URL-ini sıfırla
-      setExistingImageUrl("");
-      // Create a preview URL for the new image
-      const previewUrl = URL.createObjectURL(file);
-      setCoverImagePreview(previewUrl);
-    }
-  };
+    },
+    [existingImageUrl]
+  );
 
-  const handleSave = async () => {
-    if (!title) {
-      console.error("Başlık alanı zorunludur");
+  const handleSave = useCallback(async () => {
+    setErrorMessage(null);
+    
+    if (!title.trim()) {
+      const errMsg = "Başlık alanı zorunludur";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
 
     if (!editorContent) {
-      console.error("İçerik alanı zorunludur");
+      const errMsg = "İçerik alanı zorunludur";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
 
     if (selectedCategories.length === 0) {
-      console.error("Ən azı bir kateqoriya seçilməlidir");
+      const errMsg = "Ən azı bir kateqoriya seçilməlidir";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
 
     if (!coverImage && !existingImageUrl) {
-      console.error("Kapak şəkli zorunludur");
+      const errMsg = "Kapak şəkli zorunludur";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
@@ -304,8 +341,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
         window._currentExistingAudioUrl || existingAudioUrlRef.current;
       const currentAudioTitle = window._currentAudioTitle || audioTitle;
       const currentAudioArtist = window._currentAudioArtist || audioArtist;
-      const isAudioRemoved =
-        (window as any)._audioRemoved || audioRemovedRef.current;
+      const isAudioRemoved = window._audioRemoved || audioRemovedRef.current;
 
       console.log("Audio state yoxlanılır (window + ref):", {
         currentAudioFile: currentAudioFile?.name,
@@ -365,13 +401,26 @@ export default function PostEditor({ post, content, slug, author }: any) {
       // Dərhal redirect et
       window.location.href = `/posts/${finalSlug}`;
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Güncelleme hatası";
       console.error("Güncelleme hatası:", error);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    title,
+    editorContent,
+    selectedCategories,
+    coverImage,
+    existingImageUrl,
+    description,
+    slug,
+    audioTitle,
+    audioArtist,
+    coverImagePreview,
+  ]);
 
   /**
    * Tiptap JSON içeriğini Markdown formatına dönüştürür
@@ -563,18 +612,25 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
     // Eğer src bir URL nesnesi ise, düzgün bir şekilde dönüştür
     try {
-      // URL'yi düzgün bir şekilde işle
+    // URL'yi düzgün bir şekilde işle
       if (src.includes("blob:") || src.includes("#temp-")) {
         console.warn("Geçici resim URL bulundu:", src);
         // Geçici URL'leri işleme - bunlar zaten CDN'e yüklenmiş olmalı
-        // Geçici URL'yi olduğu gibi bırak, uploadTemporaryImages tarafından düzeltilecek
-        // Bu sayede edit-post API'si tarafında da işlenebilir
       }
     } catch (error) {
       console.error("Resim URL işleme hatası:", error);
     }
 
-    return `![${alt}](${src})`;
+    // Markdown syntax'ını pozmamaq üçün alt text-dən mötərizələri təmizlə
+    const cleanAlt = alt.replace(/[\[\]]/g, "");
+    const title = node.attrs?.title || "";
+    
+    if (title) {
+        const cleanTitle = title.replace(/"/g, '\\"');
+        return `![${cleanAlt}](${src} "${cleanTitle}")`;
+    }
+
+    return `![${cleanAlt}](${src})`;
   }
 
   function processYoutubeVideo(node: any): string {
@@ -674,6 +730,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
         (!coverImage && !existingImageUrl),
     });
   }, [
+    handleSave,
     editorContent,
     title,
     isSaving,
@@ -705,6 +762,17 @@ export default function PostEditor({ post, content, slug, author }: any) {
         onAudioArtistChange={setAudioArtist}
         initialAudioUrl={existingAudioUrl}
         onAudioRemove={handleAudioRemove}
+        author={author}
+      />
+
+      <EditorActionButtons 
+        previewData={{
+          title,
+          description,
+          content: editorContent,
+          coverImageUrl: coverImagePreview,
+          categories: selectedCategories,
+        }}
       />
 
       <style>{`

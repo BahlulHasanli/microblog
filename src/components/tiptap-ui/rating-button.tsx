@@ -16,9 +16,8 @@ export function RatingButton({ editor }: RatingButtonProps) {
   };
 
   return (
-    <Button onClick={handleClick} tooltip="Reytinq əlavə et" className="gap-1">
-      <StarIcon className="w-4 h-4" />
-      <span className="hidden sm:inline">Reytinq</span>
+    <Button onClick={handleClick} data-style="ghost" title="Reytinq əlavə et">
+      <StarIcon className="tiptap-button-icon" />
     </Button>
   );
 }

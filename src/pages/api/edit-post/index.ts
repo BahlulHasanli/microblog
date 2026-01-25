@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { requireAuth } from "../../../utils/auth";
-import { slugify } from "../../../utils/slugify";
-import { supabase } from "../../../db/supabase";
+import { requireAuth } from "@/utils/auth";
+import { slugify } from "@/utils/slugify";
+import { supabase } from "@/db/supabase";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -534,8 +534,10 @@ export const POST: APIRoute = async (context) => {
       // Köhnə məzmundakı şəkilləri tap
       const existingImageRegex =
         /!\[.*?\]\((https:\/\/the99\.b-cdn\.net\/posts\/.*?)\)/g;
+
       const existingImages = [];
-      let match;
+
+      let match: any;
 
       while ((match = existingImageRegex.exec(existingContent)) !== null) {
         existingImages.push(match[1]);
@@ -700,7 +702,7 @@ export const POST: APIRoute = async (context) => {
 
     // 3. #temp- ID'lerini bul
     const tempIdRegex = /#temp-[0-9]+-[a-z]+/g;
-    let tempIdMatch;
+    let tempIdMatch: any;
 
     while ((tempIdMatch = tempIdRegex.exec(processedContent)) !== null) {
       const tempId = tempIdMatch[0];
@@ -785,30 +787,23 @@ export const POST: APIRoute = async (context) => {
             fileExtension = extMatch;
           }
         }
-
+ 
         // Resim için benzersiz bir ID oluştur veya var olanı kullan
-        let imageFileName;
+        let imageFileName: any;
 
         // Önce client'dan gönderilen imageIdMap'te bu resim için bir ID var mı kontrol et
         const tempKey = tempImage.src;
+
         if (imageIdMap[tempKey]) {
           // Client'dan gönderilen ID'yi kullan
           imageFileName = imageIdMap[tempKey];
-          console.log(
-            `API: Client'dan gönderilen resim ID'si kullanılıyor: ${tempKey} -> ${imageFileName}`
-          );
         } else {
           // Yoksa yeni bir ID oluştur
           const { getOrCreateImageId } =
             await import("../../../utils/image-id-store");
           imageFileName = getOrCreateImageId(tempKey, newSlug, fileExtension);
-          console.log(
-            `API: Yeni resim ID'si oluşturuldu: ${tempKey} -> ${imageFileName}`
-          );
         }
         const cdnUrl = `https://the99.b-cdn.net/posts/${newSlug}/images/${imageFileName}`;
-
-        console.log(`Geçici resim işleniyor: ${tempImage.src} -> ${cdnUrl}`);
 
         // Markdown formatındaki resimler için
         if (tempImage.fullMatch.startsWith("![")) {
@@ -825,9 +820,6 @@ export const POST: APIRoute = async (context) => {
           );
         }
 
-        console.log(
-          `Geçici resim URL'si değiştirildi: ${tempImage.fullMatch} -> ${cdnUrl}`
-        );
       } catch (error) {
         console.error(`Resim URL'si düzeltilmedi: ${tempImage.src}`, error);
       }

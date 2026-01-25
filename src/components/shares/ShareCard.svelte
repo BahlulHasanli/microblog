@@ -164,7 +164,7 @@
       <!-- Header -->
       <div class="flex items-baseline gap-2 flex-wrap">
         <a
-          href={`/user/@${user?.username}`}
+          href={`/@${user?.username}`}
           class="font-semibold text-slate-900 hover:underline text-[14px]"
         >
           {user?.fullname}

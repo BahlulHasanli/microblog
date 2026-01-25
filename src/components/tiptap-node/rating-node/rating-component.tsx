@@ -58,12 +58,12 @@ export default function RatingComponent({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center py-12 px-8 relative">
+          <div className="flex flex-col items-center py-6 px-4 relative">
             {/* Top line */}
-            <div className="w-full max-w-2xl h-px bg-gray-300 mb-8"></div>
+            <div className="w-full max-w-sm h-px bg-gray-300 mb-4"></div>
 
             {/* Score */}
-            <div className="text-9xl font-bold leading-none text-black mb-2">
+            <div className="text-5xl font-bold leading-none text-black mb-1">
               {node.attrs.score.toFixed(2)}
             </div>
 
@@ -74,13 +74,13 @@ export default function RatingComponent({
                 e.preventDefault();
                 setIsEditing(true);
               }}
-              className="text-sm text-blue-600 no-underline italic mt-2 hover:text-blue-900 hover:underline transition-colors"
+              className="text-xs text-blue-600 no-underline mt-1 hover:text-blue-900 hover:underline transition-colors"
             >
-              Reytinq sistemini dəyişdir
+              Reytinqi dəyişdir
             </a>
 
             {/* Bottom line */}
-            <div className="w-full max-w-2xl h-px bg-gray-300 mt-8"></div>
+            <div className="w-full max-w-sm h-px bg-gray-300 mt-4"></div>
           </div>
         )}
       </div>
