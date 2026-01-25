@@ -217,8 +217,8 @@ export default function ProfileDropdown({
                 e.stopPropagation();
                 console.log("Profile button clicked, userData:", userData);
                 if (userData.username) {
-                  console.log("Navigating to:", `/user/@${userData.username}`);
-                  navigate(`/user/@${userData.username}`);
+                  console.log("Navigating to:", `/@${userData.username}`);
+                  navigate(`/@${userData.username}`);
                 } else {
                   console.log(
                     "Username is empty, userUsername prop:",

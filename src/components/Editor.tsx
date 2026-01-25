@@ -1,13 +1,22 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages } from "@/lib/tiptap-utils";
 import { slugify } from "../utils/slugify";
 import { generateBlurhashFromFile } from "@/utils/blurhash";
+import EditorActionButtons from "@/components/EditorActionButtons";
+
+// Global tip tanımlaması
+declare global {
+  interface Window {
+    _currentEditorTitle?: string;
+  }
+}
 
 export default function Editor({ author }: any) {
   const [editorContent, setEditorContent] = useState(null);
   const [title, setTitle] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     window._currentEditorTitle = title;
@@ -19,7 +28,6 @@ export default function Editor({ author }: any) {
   const [coverImageBlurhash, setCoverImageBlurhash] = useState<string | null>(
     null
   );
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Musiqi state-ləri
@@ -32,10 +40,27 @@ export default function Editor({ author }: any) {
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const handleCoverImageChange = async (file: File | null) => {
+  // Komponent sökülməsində cleanup
+  useEffect(() => {
+    return () => {
+      // Blob URL-ləri azad et
+      if (coverImagePreview && coverImagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(coverImagePreview);
+      }
+      // Window global dəyişənlərini təmizlə
+      delete window._currentEditorTitle;
+    };
+  }, []);
+
+  const handleCoverImageChange = useCallback(async (file: File | null) => {
     setCoverImage(file);
     if (!file) {
-      setCoverImagePreview("");
+      setCoverImagePreview((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return "";
+      });
       setCoverImageBlurhash(null);
     } else {
       // Blurhash generasiya et (client-side)
@@ -43,32 +68,42 @@ export default function Editor({ author }: any) {
       setCoverImageBlurhash(blurhash);
       console.log("Blurhash generasiya edildi:", blurhash);
     }
-  };
+  }, []);
 
-  const handleSave = async () => {
-    if (!title) {
-      console.error("Başlık alanı zorunludur");
+  const handleSave = useCallback(async () => {
+    setErrorMessage(null);
+    
+    if (!title.trim()) {
+      const errMsg = "Başlık alanı zorunludur";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
 
     if (!editorContent) {
-      console.error("İçerik alanı zorunludur");
+      const errMsg = "İçerik alanı zorunludur";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
 
     if (selectedCategories.length === 0) {
-      console.error("Ən azı bir kateqoriya seçilməlidir");
+      const errMsg = "Ən azı bir kateqoriya seçilməlidir";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
     }
 
     if (!coverImage) {
-      console.error("Kapak şəkli zorunludur");
+      const errMsg = "Kapak şəkli zorunludur";
+      console.error(errMsg);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
       return;
@@ -256,13 +291,26 @@ export default function Editor({ author }: any) {
         window.location.href = `/posts/${data.slug}`;
       }, 2000);
     } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "Kaydetme hatası";
       console.error("Kaydetme hatası:", error);
+      setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     } finally {
       setIsSaving(false);
     }
-  };
+  }, [
+    title,
+    editorContent,
+    selectedCategories,
+    coverImage,
+    coverImageBlurhash,
+    description,
+    audioFile,
+    audioTitle,
+    audioArtist,
+    author,
+  ]);
 
   /**
    * Tiptap JSON içeriğini Markdown formatına dönüştürür
@@ -537,6 +585,7 @@ export default function Editor({ author }: any) {
         !coverImage,
     });
   }, [
+    handleSave,
     editorContent,
     title,
     isSaving,
@@ -562,6 +611,17 @@ export default function Editor({ author }: any) {
         onAudioTitleChange={setAudioTitle}
         audioArtist={audioArtist}
         onAudioArtistChange={setAudioArtist}
+        author={author}
+      />
+
+      <EditorActionButtons 
+        previewData={{
+          title,
+          description,
+          content: editorContent,
+          coverImageUrl: coverImagePreview,
+          categories: selectedCategories,
+        }}
       />
 
       <style>{`

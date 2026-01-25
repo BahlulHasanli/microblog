@@ -1,12 +1,29 @@
 import type { APIRoute } from "astro";
 import { getUserFromCookies } from "@/utils/auth";
 
-const BUNNY_API_KEY = import.meta.env.BUNNY_API_KEY;
-const BUNNY_STORAGE_ZONE = import.meta.env.BUNNY_STORAGE_ZONE;
-const BUNNY_PULL_ZONE = import.meta.env.BUNNY_PULL_ZONE;
-
 export const POST: APIRoute = async (context) => {
+  console.log("[share-image] === API ÇAĞIRILDI ===");
   try {
+    // Cloudflare Workers üçün runtime.env, lokal üçün import.meta.env
+    const runtime = (context.locals as any).runtime;
+    console.log("[share-image] Runtime:", !!runtime);
+    const BUNNY_API_KEY = runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+    const BUNNY_STORAGE_ZONE = runtime?.env?.BUNNY_STORAGE_ZONE || import.meta.env.BUNNY_STORAGE_ZONE || "the99-storage";
+    
+    if (!BUNNY_API_KEY) {
+      console.error("BUNNY_API_KEY environment variable tapılmadı");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Server konfiqurasiya xətası: BUNNY_API_KEY təyin edilməyib",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Istifadəçi məlumatlarını al
     const user = await getUserFromCookies(context.cookies, () => null);
 
@@ -89,27 +106,38 @@ export const POST: APIRoute = async (context) => {
     const fileExtension = file.name.split(".").pop();
     const fileName = `shares/${shareId}/${timestamp}-${random}.${fileExtension}`;
 
+    console.log("[share-image] Yükləmə başlayır:", {
+      fileName,
+      fileSize: file.size,
+      fileType: file.type,
+      storageZone: BUNNY_STORAGE_ZONE,
+    });
+
     // BunnyCDN-ə yüklə
     const arrayBuffer = await file.arrayBuffer();
 
-    const uploadResponse = await fetch(
-      `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${fileName}`,
-      {
-        method: "PUT",
-        headers: {
-          AccessKey: BUNNY_API_KEY,
-          "Content-Type": file.type,
-        },
-        body: arrayBuffer,
-      }
-    );
+    const uploadUrl = `https://storage.bunnycdn.com/${BUNNY_STORAGE_ZONE}/${fileName}`;
+    console.log("[share-image] Upload URL:", uploadUrl);
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        AccessKey: BUNNY_API_KEY,
+        "Content-Type": "application/octet-stream",
+        "Content-Length": arrayBuffer.byteLength.toString(),
+      },
+      body: arrayBuffer,
+    });
+
+    console.log("[share-image] BunnyCDN cavabı:", uploadResponse.status, uploadResponse.statusText);
 
     if (!uploadResponse.ok) {
-      console.error("BunnyCDN upload error:", await uploadResponse.text());
+      const errorText = await uploadResponse.text();
+      console.error("[share-image] BunnyCDN upload error:", errorText);
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Şəkil yüklənərkən xəta baş verdi",
+          message: `Şəkil yüklənərkən xəta baş verdi: ${uploadResponse.status} - ${errorText}`,
         }),
         {
           status: 500,

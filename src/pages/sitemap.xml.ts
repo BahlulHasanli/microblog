@@ -86,7 +86,7 @@ export const GET: APIRoute = async () => {
   if (users) {
     for (const user of users) {
       xml += `  <url>
-    <loc>${site}/user/@${user.username}</loc>
+    <loc>${site}/@${user.username}</loc>
     <lastmod>${today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>

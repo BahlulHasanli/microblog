@@ -168,7 +168,7 @@ const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveIm
     
     if (userProfile && userName) {
       userProfile.addEventListener("click", () => {
-        navigate(`/user/@${userName.getAttribute("data-username")}`);
+        navigate(`/@${userName.getAttribute("data-username")}`);
       });
     }
   }

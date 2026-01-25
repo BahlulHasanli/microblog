@@ -1,10 +1,10 @@
 import * as React from "react";
-import { EditorContent, EditorContext, useEditor, Node } from "@tiptap/react";
-import { ChangeEvent, useRef } from "react";
+import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import { ChangeEvent, useRef, useCallback } from "react";
 
 // --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
-import { Image } from "@tiptap/extension-image";
+import { ImageWithDelete } from "@/components/tiptap-node/image-node/image-with-delete";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
@@ -59,6 +59,8 @@ import {
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
+import { GifButton } from "@/components/tiptap-ui/gif-button";
+import { HorizontalRuleButton } from "@/components/tiptap-ui/horizontal-rule-button";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
@@ -80,15 +82,28 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
 import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 import { supabase } from "@/db/supabase";
+import { AudioButton } from "@/components/tiptap-ui/audio-button";
+
+// Global tip tanımlaması
+declare global {
+  interface Window {
+    _currentAudioFile?: File | null;
+    _audioRemoved?: boolean;
+  }
+}
 
 const MainToolbarContent = ({
   onHighlighterClick,
   onLinkClick,
+  onAudioClick,
+  hasAudio,
   isMobile,
   editor,
 }: {
   onHighlighterClick: () => void;
   onLinkClick: () => void;
+  onAudioClick: () => void;
+  hasAudio: boolean;
   isMobile: boolean;
   editor: any;
 }) => {
@@ -121,7 +136,7 @@ const MainToolbarContent = ({
 
     const addYoutubeVideo = () => {
       try {
-        const url = prompt("YouTube URL'sini girin");
+        const url = prompt("YouTube URL");
 
         if (url) {
           console.log("YouTube video ekleme deneniyor:", url);
@@ -150,6 +165,7 @@ const MainToolbarContent = ({
         data-style="ghost"
         role="button"
         tabIndex={-1}
+        title="YouTube video əlavə et"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -165,7 +181,6 @@ const MainToolbarContent = ({
             d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
           />
         </svg>
-        YouTube
       </Button>
     );
   };
@@ -175,79 +190,54 @@ const MainToolbarContent = ({
       <Spacer />
 
       <ToolbarGroup>
-        <UndoRedoButton action="undo" />
-        <UndoRedoButton action="redo" />
+        <MarkButton type="bold" />
+        <MarkButton type="italic" />
+        <MarkButton type="strike" />
+        <MarkButton type="code" />
       </ToolbarGroup>
 
       <ToolbarSeparator />
 
       <ToolbarGroup>
         <HeadingDropdownMenu levels={[1, 2, 3, 4]} portal={isMobile} />
-        <ListDropdownMenu
-          types={["bulletList", "orderedList", "taskList"]}
-          portal={isMobile}
-        />
-        <BlockquoteButton />
-        <CodeBlockButton />
       </ToolbarGroup>
 
       <ToolbarSeparator />
 
       <ToolbarGroup>
-        <MarkButton type="bold" />
-        <MarkButton type="italic" />
-        <MarkButton type="strike" />
-        <MarkButton type="code" />
-        <MarkButton type="underline" />
+        <BlockquoteButton />
+        <CodeBlockButton />
+        <ListDropdownMenu
+          types={["bulletList", "orderedList", "taskList"]}
+          portal={isMobile}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      <ToolbarGroup>
+        {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
         {!isMobile ? (
           <ColorHighlightPopover />
         ) : (
           <ColorHighlightPopoverButton onClick={onHighlighterClick} />
         )}
-        {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
       </ToolbarGroup>
 
       <ToolbarSeparator />
 
       <ToolbarGroup>
-        <MarkButton type="superscript" />
-        <MarkButton type="subscript" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <TextAlignButton align="left" />
-        <TextAlignButton align="center" />
-        <TextAlignButton align="right" />
-        <TextAlignButton align="justify" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <ImageUploadButton text="Şəkil" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <RatingButton editor={editor} />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
+        <ImageUploadButton text="" />
+        <GifButton />
         <MenuBar editor={editor} />
+        <AudioButton onClick={onAudioClick} hasAudio={hasAudio} />
+        <HorizontalRuleButton />
+        <RatingButton editor={editor} />
       </ToolbarGroup>
 
       <Spacer />
 
       {isMobile && <ToolbarSeparator />}
-
-      {/* <ToolbarGroup>
-        <ThemeToggle />
-      </ToolbarGroup> */}
     </>
   );
 };
@@ -302,6 +292,19 @@ interface SimpleEditorProps {
   onAudioArtistChange?: (artist: string) => void;
   initialAudioUrl?: string;
   onAudioRemove?: () => void;
+  // Author info
+  author?: {
+    avatar?: string;
+    avatar_url?: string;
+    fullName?: string;
+    full_name?: string;
+    display_name?: string;
+    fullname?: string;
+    name?: string;
+    username?: string;
+    verified?: boolean;
+    is_verified?: boolean;
+  };
 }
 
 export function SimpleEditor({
@@ -325,12 +328,15 @@ export function SimpleEditor({
   onAudioArtistChange,
   initialAudioUrl = "",
   onAudioRemove,
+  // Author info
+  author,
 }: SimpleEditorProps) {
   const isMobile = useIsMobile();
   const { height } = useWindowSize();
   const [mobileView, setMobileView] = React.useState<
     "main" | "highlighter" | "link"
   >("main");
+  const [isCategoriesExpanded, setIsCategoriesExpanded] = React.useState(false);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
@@ -362,6 +368,19 @@ export function SimpleEditor({
       }
     };
     fetchCategories();
+  }, []);
+
+  // Komponent sökülməsində cleanup
+  React.useEffect(() => {
+    return () => {
+      // Preview URL-ləri azad et (data URL-lər için lazım deyil, amma blob URL-lər varsa azad edilir)
+      if (coverImagePreview && coverImagePreview.startsWith("blob:")) {
+        URL.revokeObjectURL(coverImagePreview);
+      }
+      // Window global dəyişənlərini təmizlə
+      delete window._currentAudioFile;
+      delete window._audioRemoved;
+    };
   }, []);
 
   const FixedDocument = Document.extend({
@@ -437,7 +456,7 @@ export function SimpleEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       Highlight.configure({ multicolor: true }),
-      Image,
+      ImageWithDelete,
       Typography,
       Superscript,
       Subscript,
@@ -580,29 +599,32 @@ export function SimpleEditor({
   }, [categories, onCategoriesChange]);
 
   // Kapak resmi yükleme işleyicisi
-  const handleCoverImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (onCoverImageChange) {
-        onCoverImageChange(file);
-      }
+  const handleCoverImageChange = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        if (onCoverImageChange) {
+          onCoverImageChange(file);
+        }
 
-      // Resim önizlemesi oluştur
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCoverImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+        // Resim önizlemesi oluştur
+        const reader = new FileReader();
+        reader.onload = () => {
+          setCoverImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [onCoverImageChange]
+  );
 
   // Kapak resmi seçme dialogunu açma
-  const handleSelectCoverImage = () => {
+  const handleSelectCoverImage = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
   // Kapak resmini kaldırma
-  const handleRemoveCoverImage = () => {
+  const handleRemoveCoverImage = useCallback(() => {
     // Cover image silmə - clearExisting=true ilə çağır ki, köhnə URL sıfırlansın
     if (onCoverImageChange) {
       onCoverImageChange(null, true);
@@ -611,70 +633,76 @@ export function SimpleEditor({
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
+  }, [onCoverImageChange]);
 
   // Kategori seçme/kaldırma işleyicisi
-  const handleCategoryToggle = (categoryId: string) => {
-    setCategories((prev) => {
-      const newCategories = prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId];
+  const handleCategoryToggle = useCallback(
+    (categoryId: string) => {
+      setCategories((prev) => {
+        const newCategories = prev.includes(categoryId)
+          ? prev.filter((id) => id !== categoryId)
+          : [...prev, categoryId];
 
-      // Kategorileri dışarıya bildir
-      if (onCategoriesChange) {
-        onCategoriesChange(newCategories);
-      }
+        // Kategorileri dışarıya bildir
+        if (onCategoriesChange) {
+          onCategoriesChange(newCategories);
+        }
 
-      return newCategories;
-    });
-  };
+        return newCategories;
+      });
+    },
+    [onCategoriesChange]
+  );
 
   // Musiqi faylı seçmə
-  const handleAudioFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    console.log(
-      "SimpleEditor: Audio fayl seçildi:",
-      file?.name,
-      file?.type,
-      file?.size
-    );
-    console.log(
-      "SimpleEditor: onAudioFileChange mövcuddur:",
-      !!onAudioFileChange
-    );
-    if (file) {
-      // MP3 faylları üçün tip yoxlaması (audio/mpeg, audio/mp3)
-      const isAudio =
-        file.type.startsWith("audio/") || file.name.endsWith(".mp3");
-      console.log("SimpleEditor: isAudio:", isAudio);
-      if (isAudio) {
-        setLocalAudioFile(file);
-        // Birbaşa window-a yaz
-        (window as any)._currentAudioFile = file;
-        console.log(
-          "SimpleEditor: window._currentAudioFile yazıldı:",
-          file.name
-        );
-        // Callback-i də çağır
-        if (onAudioFileChange) {
-          onAudioFileChange(file);
+  const handleAudioFileChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      console.log(
+        "SimpleEditor: Audio fayl seçildi:",
+        file?.name,
+        file?.type,
+        file?.size
+      );
+      console.log(
+        "SimpleEditor: onAudioFileChange mövcuddur:",
+        !!onAudioFileChange
+      );
+      if (file) {
+        // MP3 faylları üçün tip yoxlaması (audio/mpeg, audio/mp3)
+        const isAudio =
+          file.type.startsWith("audio/") || file.name.endsWith(".mp3");
+        console.log("SimpleEditor: isAudio:", isAudio);
+        if (isAudio) {
+          setLocalAudioFile(file);
+          // Birbaşa window-a yaz
+          window._currentAudioFile = file;
+          console.log(
+            "SimpleEditor: window._currentAudioFile yazıldı:",
+            file.name
+          );
+          // Callback-i də çağır
+          if (onAudioFileChange) {
+            onAudioFileChange(file);
+          }
+        } else {
+          console.warn("SimpleEditor: Seçilən fayl audio deyil:", file.type);
         }
-      } else {
-        console.warn("SimpleEditor: Seçilən fayl audio deyil:", file.type);
       }
-    }
-  };
+    },
+    [onAudioFileChange]
+  );
 
   // Musiqi faylını silmə
-  const handleRemoveAudio = () => {
+  const handleRemoveAudio = useCallback(() => {
     console.log("SimpleEditor: handleRemoveAudio çağırıldı");
     setLocalAudioFile(null);
     setLocalAudioTitle("");
     setLocalAudioArtist("");
     setExistingAudioUrl(""); // Mövcud URL-i də sıfırla
     // Window-a da yaz
-    (window as any)._currentAudioFile = null;
-    (window as any)._audioRemoved = true;
+    window._currentAudioFile = null;
+    window._audioRemoved = true;
     if (onAudioFileChange) onAudioFileChange(null);
     if (onAudioTitleChange) onAudioTitleChange("");
     if (onAudioArtistChange) onAudioArtistChange("");
@@ -682,23 +710,29 @@ export function SimpleEditor({
     if (audioInputRef.current) {
       audioInputRef.current.value = "";
     }
-  };
+  }, [onAudioFileChange, onAudioTitleChange, onAudioArtistChange, onAudioRemove]);
 
   // Musiqi başlığı dəyişikliyi
-  const handleAudioTitleChange = (value: string) => {
-    setLocalAudioTitle(value);
-    if (onAudioTitleChange) onAudioTitleChange(value);
-  };
+  const handleAudioTitleChange = useCallback(
+    (value: string) => {
+      setLocalAudioTitle(value);
+      if (onAudioTitleChange) onAudioTitleChange(value);
+    },
+    [onAudioTitleChange]
+  );
 
   // Musiqi artist dəyişikliyi
-  const handleAudioArtistChange = (value: string) => {
-    setLocalAudioArtist(value);
-    if (onAudioArtistChange) onAudioArtistChange(value);
-  };
+  const handleAudioArtistChange = useCallback(
+    (value: string) => {
+      setLocalAudioArtist(value);
+      if (onAudioArtistChange) onAudioArtistChange(value);
+    },
+    [onAudioArtistChange]
+  );
 
   return (
     <>
-      <div className="simple-editor-wrapper mt-8">
+      <div className="simple-editor-wrapper">
         <EditorContext.Provider value={{ editor }}>
           <Toolbar
             ref={toolbarRef}
@@ -714,6 +748,8 @@ export function SimpleEditor({
               <MainToolbarContent
                 onHighlighterClick={() => setMobileView("highlighter")}
                 onLinkClick={() => setMobileView("link")}
+                onAudioClick={() => audioInputRef.current?.click()}
+                hasAudio={!!localAudioFile || !!existingAudioUrl}
                 isMobile={isMobile}
                 editor={editor}
               />
@@ -726,27 +762,7 @@ export function SimpleEditor({
           </Toolbar>
 
           <div className="simple-editor-content">
-            {/* Kategoriler Bölümü */}
-            <div className="categories-container mt-8 mb-5">
-              <div className="flex flex-wrap gap-2">
-                {supabaseCategories.map((category) => (
-                  <button
-                    key={category.slug}
-                    type="button"
-                    className={`cursor-pointer px-3 py-1 rounded-full text-sm bg-neutral-100 transition-all font-medium hover:bg-neutral-200 hover:text-base-800 ${
-                      categories.includes(category.slug)
-                        ? "bg-rose-500 text-white"
-                        : ""
-                    }`}
-                    onClick={() => handleCategoryToggle(category.slug)}
-                  >
-                    {category.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Kapak resmi alanı */}
+            {/* Kapak resmi alanı - X/Twitter Style */}
             <div className="editor-cover-image-container">
               <input
                 type="file"
@@ -760,7 +776,7 @@ export function SimpleEditor({
                 <button
                   type="button"
                   onClick={handleSelectCoverImage}
-                  className="cover-image-button font-medium font-display flex items-center gap-2"
+                  className="cover-image-placeholder"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -768,7 +784,7 @@ export function SimpleEditor({
                     viewBox="0 0 24 24"
                     strokeWidth="1.5"
                     stroke="currentColor"
-                    className="size-6 stroke-rose-400"
+                    className="placeholder-icon"
                   >
                     <path
                       strokeLinecap="round"
@@ -776,7 +792,9 @@ export function SimpleEditor({
                       d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
                     />
                   </svg>
-                  Örtük şəkli əlavə et
+                  <span className="placeholder-text">
+                    Ən yaxşı nəticələr üçün 5:2 en boy nisbətinə sahib bir şəkil istifadə etməyinizi tövsiyə edirik.
+                  </span>
                 </button>
               ) : (
                 <div className="cover-image-preview-container">
@@ -796,188 +814,85 @@ export function SimpleEditor({
               )}
             </div>
 
-            {/* Musiqi yükləmə sahəsi */}
-            <div className="audio-upload-container mt-4 mb-4">
-              <input
-                type="file"
-                ref={audioInputRef}
-                onChange={handleAudioFileChange}
-                accept=".mp3,audio/*"
-                style={{ display: "none" }}
-              />
+            {/* Author Info Section */}
+            {author && (
+              <div className="author-info-section">
+                <img
+                  src={author.avatar || author.avatar_url || "/default-avatar.png"}
+                  alt={author.fullName || author.full_name || "Author"}
+                  className="author-avatar squircle"
+                />
+                <div className="author-details">
+                  <div className="author-name-row">
+                    <span className="author-name">
+                      {author.fullName || author.full_name || author.display_name || author.fullname || author.name || "Anonim"}
+                    </span>
+                    {(author.verified || author.is_verified) && (
+                      <svg className="verified-badge" viewBox="0 0 22 22" fill="currentColor">
+                        <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="author-username">@{author.username || "user"}</span>
+                </div>
+              </div>
+            )}
 
-              {!localAudioFile && !existingAudioUrl ? (
+            {/* Kategoriler Bölümü - Compact & Scrollable */}
+            <div className={`categories-container ${isCategoriesExpanded ? "expanded" : ""}`}>
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-inter">Kateqoriyalar</span>
                 <button
                   type="button"
-                  onClick={() => audioInputRef.current?.click()}
-                  className="audio-upload-button font-medium font-display flex items-center gap-2 px-4 py-3 border-2 border-dashed border-zinc-300 rounded-xl hover:border-rose-400 hover:bg-rose-50 transition-all w-full justify-center text-zinc-500 hover:text-rose-500"
+                  onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+                  className="text-zinc-400 hover:text-zinc-600 transition-colors p-1 rounded-md hover:bg-zinc-100"
+                  title={isCategoriesExpanded ? "Yığcam görünüş" : "Genişləndir"}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth="1.5"
+                    strokeWidth={2}
                     stroke="currentColor"
-                    className="size-6"
+                    className={`tiptap-button-icon w-3.5 h-3.5 transition-transform duration-200 ${
+                      isCategoriesExpanded ? "rotate-180" : ""
+                    }`}
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
+                      d="m19.5 8.25-7.5 7.5-7.5-7.5"
                     />
                   </svg>
-                  Musiqi əlavə et (MP3)
                 </button>
-              ) : existingAudioUrl && !localAudioFile ? (
-                <div className="audio-preview-container p-4 bg-zinc-50 rounded-xl border border-zinc-200">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center shrink-0">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="size-6 text-rose-500"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-700 truncate mb-2">
-                        Mövcud musiqi
-                      </p>
-                      <p className="text-xs text-zinc-400 mb-3 truncate">
-                        {existingAudioUrl.split("/").pop()}
-                      </p>
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Mahnı adı"
-                          value={localAudioTitle}
-                          onChange={(e) =>
-                            handleAudioTitleChange(e.target.value)
-                          }
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                        />
-                        <input
-                          type="text"
-                          placeholder="İfaçı adı"
-                          value={localAudioArtist}
-                          onChange={(e) =>
-                            handleAudioArtistChange(e.target.value)
-                          }
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => audioInputRef.current?.click()}
-                        className="mt-3 text-xs text-rose-500 hover:text-rose-600 font-medium"
-                      >
-                        Yeni musiqi seç
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExistingAudioUrl("");
-                        handleRemoveAudio();
-                      }}
-                      className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="size-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18 18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="audio-preview-container p-4 bg-zinc-50 rounded-xl border border-zinc-200">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-rose-100 rounded-lg flex items-center justify-center shrink-0">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="size-6 text-rose-500"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-zinc-700 truncate mb-2">
-                        {localAudioFile.name}
-                      </p>
-                      <p className="text-xs text-zinc-400 mb-3">
-                        {(localAudioFile.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Mahnı adı"
-                          value={localAudioTitle}
-                          onChange={(e) =>
-                            handleAudioTitleChange(e.target.value)
-                          }
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                        />
-                        <input
-                          type="text"
-                          placeholder="İfaçı adı"
-                          value={localAudioArtist}
-                          onChange={(e) =>
-                            handleAudioArtistChange(e.target.value)
-                          }
-                          className="w-full px-3 py-2 text-sm border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleRemoveAudio}
-                      className="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="size-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18 18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
+
+              <div className="categories-list">
+                {supabaseCategories.map((category) => (
+                  <button
+                    key={category.slug}
+                    type="button"
+                    className={`category-item cursor-pointer ${
+                      categories.includes(category.slug)
+                        ? "bg-rose-500 text-white"
+                        : ""
+                    }`}
+                    onClick={() => handleCategoryToggle(category.slug)}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Hidden inputs for functionality */}
+            <input
+              type="file"
+              ref={audioInputRef}
+              onChange={handleAudioFileChange}
+              accept=".mp3,audio/*"
+              style={{ display: "none" }}
+            />
 
             <EditorContent
               editor={editor}

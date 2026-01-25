@@ -201,7 +201,7 @@
       avatar.addEventListener('click', () => {
         const username = avatar.getAttribute('data-username');
         if (username) {
-          window.location.href = `/user/@${username}`;
+          window.location.href = `/@${username}`;
         }
       });
     });
@@ -278,7 +278,7 @@
                       class="w-full h-full object-cover"
                   />
                 </button>
-                <a href={`/user/@${post.data.author?.username}`} class="font-medium hover:text-white transition-colors truncate">
+                <a href={`/@${post.data.author?.username}`} class="font-medium hover:text-white transition-colors truncate">
                   {post.data.author?.fullname}
                 </a>
                 {#if post.data.pubDate}
@@ -357,7 +357,7 @@
                     class="w-full h-full object-cover"
                 />
               </button>
-              <a href={`/user/@${post.data.author?.username}`} class="font-medium hover:text-rose-600 transition-colors truncate">
+              <a href={`/@${post.data.author?.username}`} class="font-medium hover:text-rose-600 transition-colors truncate">
                 {post.data.author?.fullname}
               </a>
               {#if post.data.categories && post.data.categories.length > 0}

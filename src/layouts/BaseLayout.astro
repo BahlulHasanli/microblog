@@ -10,10 +10,11 @@ interface Props {
   title?: string;
   description?: string;
   hideFooter?: boolean;
+  hideHeader?: boolean;
   image?: string;
 }
 
-const { title: pageTitle, description: pageDescription, hideFooter = false, image } = Astro.props;
+const { title: pageTitle, description: pageDescription, hideFooter = false, hideHeader = false, image } = Astro.props;
 const isLoggedIn = isAuthenticated(Astro.cookies);
 let user = null;
 
@@ -64,7 +65,7 @@ const finalDescription = pageDescription || siteDescription;
     <slot name="head" />
   </head>
   <body class=`flex flex-col min-h-screen px-4 sm:px-6 md:px-8 mx-auto bg-white`>
-    <Navigation isLoggedIn={isLoggedIn} user={user} /> 
+    {!hideHeader && <Navigation isLoggedIn={isLoggedIn} user={user} />} 
     <main class="grow">
       <slot />
     </main>

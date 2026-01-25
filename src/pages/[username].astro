@@ -8,13 +8,15 @@ import { formatISO } from "@/utils/date";
 
 export const prerender = false;
 
-const { slug } = Astro.params;
+const { username: usernameParam } = Astro.params;
 
-// Extract username from slug (remove @ prefix if present)
-let username = slug;
-if (username?.startsWith("@")) {
-  username = username.slice(1);
+// @ prefiksi məcburidir - profil səhifəsi identifikatorudur
+if (!usernameParam?.startsWith("@")) {
+  return Astro.redirect("/404");
 }
+
+// @ prefiksini sil (məs: @hasanli -> hasanli)
+const username = usernameParam.slice(1);
 
 // İstifadəçi məlumatlarını username ilə al
 const { data: userData, error: userError } = await supabase
