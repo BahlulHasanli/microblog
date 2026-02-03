@@ -3,8 +3,10 @@ import BaseHead from "@/components/BaseHead.astro";
 import Navigation from "@/components/global/Navigation.astro";
 import Footer from "@/components/global/Footer.astro";
 import ChangelogModal from "@/components/changelog/ChangelogModal.svelte";
+import LanguageSwitcher from "@/components/global/LanguageSwitcher.astro";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { supabase } from "@/db/supabase";
+import { getLocaleFromCookie, defaultLocale, type Locale } from "@/utils/i18n";
 
 interface Props {
   title?: string;
@@ -12,9 +14,13 @@ interface Props {
   hideFooter?: boolean;
   hideHeader?: boolean;
   image?: string;
+  locale?: Locale;
 }
 
-const { title: pageTitle, description: pageDescription, hideFooter = false, hideHeader = false, image } = Astro.props;
+const { title: pageTitle, description: pageDescription, hideFooter = false, hideHeader = false, image, locale: propLocale } = Astro.props;
+
+// Dil ayarını cookie-dən və ya props-dan al
+const locale = propLocale || getLocaleFromCookie(Astro.cookies);
 const isLoggedIn = isAuthenticated(Astro.cookies);
 let user = null;
 
@@ -59,17 +65,18 @@ const finalTitle = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
 const finalDescription = pageDescription || siteDescription;
 ---
 
-<html lang="az">  
+<html lang={locale}>  
   <head>   
     <BaseHead title={finalTitle} description={finalDescription} image={image} />
     <slot name="head" />
   </head>
   <body class=`flex flex-col min-h-screen px-4 sm:px-6 md:px-8 mx-auto bg-white`>
-    {!hideHeader && <Navigation isLoggedIn={isLoggedIn} user={user} />} 
+    {!hideHeader && <Navigation isLoggedIn={isLoggedIn} user={user} locale={locale} />}
+    <LanguageSwitcher locale={locale} /> 
     <main class="grow">
       <slot />
     </main>
-    {!hideFooter && <Footer />}
+    {!hideFooter && <Footer locale={locale} />}
     
     <!-- Changelog Modal -->
     <ChangelogModal client:load />

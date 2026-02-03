@@ -3,6 +3,10 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import VacancyForm from "@/components/vacancy/VacancyForm.svelte";
 import { isAuthenticated } from "@/utils/auth";
 import { getUserFromCookies } from "@/utils/auth";
+import { getLocaleFromCookie, useTranslations } from "@/utils/i18n";
+
+const locale = getLocaleFromCookie(Astro.cookies);
+const t = useTranslations(locale);
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 let userFullName = "";
@@ -16,35 +20,36 @@ if (isLoggedIn) {
 ---
 
 <BaseLayout
-  title="Vakansiya"
-  description="The 99-da yazmağa, düşünməyə və araşdırmağa həvəsi olan istedadlara yer var."
+  title={t.pages.vacancy.title}
+  description={t.pages.vacancy.description}
+  locale={locale}
 >
   <section class="max-w-3xl mx-auto py-8 px-4 sm:px-0">
     <div class="bg-white rounded-lg p-4">
       <!-- Başlıq -->
       <div class="mb-8">
         <h1 class="text-3xl font-nouvelr-semibold text-base-900 mb-2">
-          Vakansiya
+          {t.pages.vacancy.title}
         </h1>
       </div>
 
       <!-- Məzmun -->
       <div class="prose prose-sm max-w-none text-slate-500! font-display space-y-4 text-light! *:mt-5! *:text-[15px]">
         <p class="text-base leading-relaxed">
-          The99-da yazmağa, düşünməyə və araşdırmağa həvəsi olan istedadlara həmişə yer var. Əgər pop-mədəniyyət, oyunlar, filmlər, trend mövzular və ümumən maraq dairənizdə olanları paylaşmaqdan zövq alırsınızsa — siz tam doğru yerdəsiniz.
+          {t.pages.vacancy.paragraph1}
         </p>
 
         <p class="text-base leading-relaxed">
-          Düşünürsünüzsə ki, özünüzü məhz bizim platformada sınamalısınız, sadəcə aşağıdakı mətn bölməsini doldurun, adınızı və e-poçtunuzu qeyd edin və Enter-ə basın.
+          {t.pages.vacancy.paragraph2}
         </p>
 
         <p class="text-base leading-relaxed">
-          Daha təcrübəli və peşəkar yazar olduğunuzu hesab edirsinizsə, birbaşa <a href="mailto:we@the99.az" class="text-rose-500 hover:text-rose-600 transition-colors font-medium">we@the99.az</a> ünvanına yaza bilərsiniz.
+          {t.pages.vacancy.paragraph3} <a href={`mailto:${t.pages.vacancy.emailLink}`} class="text-rose-500 hover:text-rose-600 transition-colors font-medium">{t.pages.vacancy.emailLink}</a> {t.pages.vacancy.emailText}
         </p>
       </div>
 
       <!-- Form Component -->
-      <VacancyForm client:load isLoggedIn={isLoggedIn} userFullName={userFullName} />
+      <VacancyForm client:load isLoggedIn={isLoggedIn} userFullName={userFullName} t={t} />
     </div>
   </section>
 </BaseLayout>

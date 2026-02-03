@@ -3,8 +3,35 @@ import { navigate } from "astro:transitions/client";
 import { Toaster, toast } from 'svelte-sonner'
 import { createClient } from '@supabase/supabase-js'
 
+interface Props {
+  t: {
+    auth: {
+      signIn: string;
+      signInDescription: string;
+      email: string;
+      emailPlaceholder: string;
+      password: string;
+      passwordPlaceholder: string;
+      forgotPassword: string;
+      signingIn: string;
+      noAccount: string;
+      register: string;
+      successLogin: string;
+      errorOccurred: string;
+      networkError: string;
+      googleError: string;
+      appleError: string;
+    };
+    common: {
+      or: string;
+    };
+  };
+}
+
+let { t }: Props = $props();
+
 const supabaseClient = createClient(
-  import.meta.env.PUBLIC_SUPABASE_URL, 
+  import.meta.env.PUBLIC_SUPABASE_URL,
   import.meta.env.PUBLIC_SUPABASE_KEY
 );
 
@@ -16,7 +43,7 @@ const supabaseClient = createClient(
 
  const isSubmitting = $state({
     value: false,
- }); 
+ });
 
  const isGoogleLoading = $state({
     value: false,
@@ -38,12 +65,12 @@ const supabaseClient = createClient(
       });
 
       if (error) {
-        toast.error(error.message || "Google ilə giriş xətası");
+        toast.error(error.message || t.auth.googleError);
         isGoogleLoading.value = false;
       }
     } catch (error) {
       console.error("Google sign in error:", error);
-      toast.error("Şəbəkə xətası baş verdi");
+      toast.error(t.auth.networkError);
       isGoogleLoading.value = false;
     }
  };
@@ -60,12 +87,12 @@ const supabaseClient = createClient(
       });
 
       if (error) {
-        toast.error(error.message || "Apple ilə giriş xətası");
+        toast.error(error.message || t.auth.appleError);
         isAppleLoading.value = false;
       }
     } catch (error) {
       console.error("Apple sign in error:", error);
-      toast.error("Şəbəkə xətası baş verdi");
+      toast.error(t.auth.networkError);
       isAppleLoading.value = false;
     }
  };
@@ -93,18 +120,18 @@ const supabaseClient = createClient(
         const result = await response.json();
 
         if (response.ok) {
-            toast.success(result.message || "Uğurla daxil oldunuz!");
+            toast.success(result.message || t.auth.successLogin);
 
             setTimeout(() => {
                 navigate("/"); 
             }, 500);
         } else {
-            toast.error(result.message || "Bir xəta baş verdi");
+            toast.error(result.message || t.auth.errorOccurred);
         }
     } catch (error) {
       console.error("Error:", error);
 
-      toast.error("Şəbəkə xətası baş verdi");
+      toast.error(t.auth.networkError);
     } finally {
       isSubmitting.value = false;
     }
@@ -118,42 +145,42 @@ const supabaseClient = createClient(
   <div class="bg-white rounded-lg p-4">
     <div class="text-center mb-6">
       <h1 class="text-xl md:text-3xl font-big-shoulders font-bold text-base-900 mb-1">
-        Daxil Ol
+        {t.auth.signIn}
       </h1>
-      <p class="text-base-600 text-sm">Hesabınıza daxil olun</p>
+      <p class="text-base-600 text-sm">{t.auth.signInDescription}</p>
     </div>
 
     <form id="signinForm" class="space-y-5" onsubmit={handleSubmit}>
-      <div> 
-        <label  
+      <div>
+        <label
           for="email"
           class="block text-xs font-medium text-base-700 mb-1"
         >
-          Email
+          {t.auth.email}
         </label>
         <input
           type="email"
           id="email"
           name="email"
-          placeholder="email@the99.az"
+          placeholder={t.auth.emailPlaceholder}
           required
           bind:value={formState.email}
           class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
         />
       </div>
 
-      <div> 
+      <div>
         <label
           for="password"
           class="block text-xs font-medium text-base-700 mb-1"
         >
-          Şifrə
+          {t.auth.password}
         </label>
         <input
           type="password"
           id="password"
           name="password"
-          placeholder="Şifrənizi daxil edin"
+          placeholder={t.auth.passwordPlaceholder}
           required
           bind:value={formState.password}
           class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -165,7 +192,7 @@ const supabaseClient = createClient(
           href="/forgot-password"
           class="text-xs text-rose-500 hover:text-rose-600 transition-colors"
         >
-          Şifrəni unutdun?
+          {t.auth.forgotPassword}
         </a>
       </div>
 
@@ -175,9 +202,9 @@ const supabaseClient = createClient(
         class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
       > 
         {#if isSubmitting.value}
-          Giriş edilir...
+          {t.auth.signingIn}
         {:else}
-          Daxil Ol
+          {t.auth.signIn}
         {/if}
       </button> 
     </form>
@@ -187,7 +214,7 @@ const supabaseClient = createClient(
         <div class="w-full border-t border-base-200"></div>
       </div>
       <div class="relative flex justify-center text-xs">
-        <span class="bg-white px-2 text-base-500">və ya</span>
+        <span class="bg-white px-2 text-base-500">{t.common.or}</span>
       </div>
     </div>
 
@@ -205,7 +232,7 @@ const supabaseClient = createClient(
         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
       </svg>
       {#if isGoogleLoading.value}
-        Giriş edilir...
+        {t.auth.signingIn}
       {/if} 
     </button>
 
@@ -219,19 +246,19 @@ const supabaseClient = createClient(
         <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
       </svg>
       {#if isAppleLoading.value}
-        Giriş edilir...
+        {t.auth.signingIn}
       {/if}
     </button>
    </div>
 
     <div class="text-center mt-4 pt-3 border-t border-base-100">
       <p class="text-base-600 text-xs">
-        Hesabınız yoxdur?
+        {t.auth.noAccount}
         <a
           href="/signup"
           class="text-rose-500 hover:text-rose-600 font-medium transition-colors"
         >
-          Qeydiyyatdan keçin
+          {t.auth.register}
         </a>
       </p>
     </div>

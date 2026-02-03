@@ -1,21 +1,25 @@
 ---
+import { useTranslations, type Locale } from "@/utils/i18n";
+
 interface Props {
   activeTab?: 'weekly' | 'gossip' | 'window';
+  locale?: Locale;
 }
 
-const { activeTab = 'weekly' } = Astro.props;
+const { activeTab = 'weekly', locale = 'az' } = Astro.props;
+const t = useTranslations(locale);
 ---
 
 <div id="fixed-tabs" class="fixed top-0 left-0 right-0 z-50 bg-white/60 backdrop-blur-2xl border-b border-base-100 py-3 px-4 opacity-0 -translate-y-full transition-all duration-300 pointer-events-none">
   <ul class="flex justify-between w-full max-w-3xl mx-auto gap-2">
     <li data-tab="weekly" data-fixed="true" class={`cursor-pointer text-sm sm:text-lg transition-colors duration-200 ${activeTab === 'weekly' ? 'text-base-900' : 'font-light font-display text-slate-700'}`}>
-      <div class="font-nouvelr-semibold">Həftəbécər</div>
+      <div class="font-nouvelr-semibold">{t.tabs.weekly}</div>
     </li>
     <li data-tab="gossip" data-fixed="true" class={`cursor-pointer text-sm sm:text-lg transition-colors duration-200 ${activeTab === 'gossip' ? 'text-base-900' : 'font-light font-display text-slate-700'}`}>
-      <div class="font-nouvelr-semibold">Dédi-qodu</div>
+      <div class="font-nouvelr-semibold">{t.tabs.gossip}</div>
     </li>
     <li data-tab="window" data-fixed="true" class={`cursor-pointer text-sm sm:text-lg transition-colors duration-200 ${activeTab === 'window' ? 'text-base-900' : 'font-light font-display text-slate-700'}`}>
-      <div class="font-nouvelr-semibold">Pəncərələr</div>
+      <div class="font-nouvelr-semibold">{t.tabs.windows}</div>
     </li>
   </ul>
 </div>

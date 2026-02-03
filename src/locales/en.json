@@ -1,0 +1,174 @@
+{
+  "nav": {
+    "menu": "Menu",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "admin": "Admin",
+    "moderator": "Moderator",
+    "panel": "Panel"
+  },
+  "footer": {
+    "about": "ABOUT",
+    "contact": "CONTACT",
+    "advertising": "ADVERTISING",
+    "vacancy": "VACANCY",
+    "squad": "SQUAD",
+    "randomPost": "Random post",
+    "copyright": "\"The Doxsandoqquz\". All images, videos and texts used in the materials on the site belong directly to the authors.",
+    "ageWarning": "There may be materials here that are not intended for persons under the age of +18."
+  },
+  "home": {
+    "noPosts": "No posts yet",
+    "noPostsDescription": "New content will be added soon. Stay tuned!"
+  },
+  "tabs": {
+    "weekly": "Weekly",
+    "gossip": "Gossip",
+    "windows": "Windows"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "readMore": "Read more",
+    "or": "or"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signInDescription": "Sign in to your account",
+    "signUp": "Sign Up",
+    "signUpDescription": "Create a new account and join us",
+    "email": "Email",
+    "emailPlaceholder": "email@the99.az",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "signingIn": "Signing in...",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "Enter your full name",
+    "chooseStrongPassword": "Choose a strong password",
+    "passwordRequirements": "Minimum 8 characters, uppercase and lowercase letters, numbers and special characters",
+    "noAccount": "Don't have an account?",
+    "register": "Register",
+    "haveAccount": "Already have an account?",
+    "loginNow": "Sign in",
+    "successLogin": "Successfully signed in!",
+    "successRegister": "Registration completed successfully!",
+    "errorOccurred": "An error occurred",
+    "networkError": "Network error occurred",
+    "googleError": "Google sign in error",
+    "appleError": "Apple sign in error",
+    "googleRegisterError": "Google registration error",
+    "appleRegisterError": "Apple registration error"
+  },
+  "language": {
+    "az": "Azərbaycan",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "pages": {
+    "about": {
+      "title": "About Us",
+      "description": "The 99 - A reliable source of information about pop culture, entertainment and modern culture in Azerbaijani. Daily updated content, trends and analytical articles.",
+      "paragraph1": "The 99 is a daily online magazine designed for everyone. The goal of our platform is to present pop culture and entertainment in Azerbaijani in a more accessible, higher quality and more comprehensive way. We follow various directions of modern culture and deliver them to readers as clear, neat and reliable information.",
+      "paragraph2": "The 99 is not just a collection of news and articles. This is a media space that keeps the rhythm of the ever-changing digital world, presenting trends and innovations without losing their relevance. Articles are prepared here that are adapted to the rapid flow of the agenda, but at the same time maintain an analytical approach. Readers both get information quickly and gain a deeper understanding of these topics.",
+      "paragraph3": "The most important principle for us is that quality content can be presented at a high level in Azerbaijani as well. The DOXSANDOQQUZ was created to fill this gap and continues its activities in this direction.",
+      "paragraph4": "We try to provide our readers with an easy-to-use, visually neat and modern platform. Our goal is to be a reliable reference point for digital culture and bring together people with different interests under one roof.",
+      "paragraph5": "As The99, we build a dynamic, creative and wide-reaching information ecosystem with daily updated content. For anyone interested in culture, entertainment and pop culture, this is both a daily source of information and a comfortable reading space."
+    },
+    "vacancy": {
+      "title": "Vacancy",
+      "description": "There is always room for talents who are eager to write, think and research at The 99.",
+      "paragraph1": "There is always room at The99 for talents who are eager to write, think and research. If you enjoy sharing pop culture, games, movies, trending topics and generally what's in your circle of interest — you're in the right place.",
+      "paragraph2": "If you think you should try yourself on our platform, just fill in the text section below, enter your name and email and press Enter.",
+      "paragraph3": "If you consider yourself a more experienced and professional writer, you can write directly to",
+      "emailLink": "we@the99.az",
+      "emailText": "address."
+    },
+    "squad": {
+      "title": "Squad",
+      "description": "The 99 editorial team of editors, moderators and editors. Meet our content creators.",
+      "subtitle": "The creative team of The DOXSANDOQQUZ"
+    },
+    "adv": {
+      "title": "Advertising",
+      "description": "Showcase your brand on The 99. Contact us for banners, press releases and creative advertising materials. Advertise on the Azerbaijani entertainment platform.",
+      "paragraph1": "Do you want to showcase your brand in the dynamic and colorful environment of The DOXSANDOQQUZ? The doors are open for your banners, press releases and all creative advertising materials. Take your place in the new generation Azerbaijani entertainment online magazine.",
+      "paragraph2": "In short, we have an audience, and you have advertising — we complement each other.",
+      "paragraph3": "To apply:",
+      "emailLink": "we@the99.az",
+      "emailText": "it is enough to write to the address."
+    },
+    "contact": {
+      "title": "Contact",
+      "description": "Contact The 99 editorial team. Send us your thoughts, suggestions and complaints. Official email: we@the99.az",
+      "subtitle": "If you want to share your opinion with our editorial and management team, you can fill out the form below or",
+      "emailLink": "we@the99.az",
+      "emailText": "you can write to the address."
+    },
+    "forgotPassword": {
+      "title": "Forgot Your Password?",
+      "description": "Reset your The 99 account password. Enter your email address and set a new password."
+    }
+  },
+  "forms": {
+    "vacancy": {
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "email@the99.az",
+      "messageLabel": "Application",
+      "messagePlaceholder": "Tell us about yourself...",
+      "submitButton": "Submit",
+      "submitting": "Submitting...",
+      "errorNameRequired": "Name field cannot be empty",
+      "errorEmailRequired": "Email field cannot be empty",
+      "errorEmailInvalid": "Enter a valid email address",
+      "errorMessageRequired": "Application field cannot be empty",
+      "successMessage": "Your application has been sent successfully!",
+      "errorMessage": "An error occurred",
+      "networkError": "Network error occurred"
+    },
+    "contact": {
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "email@the99.az",
+      "subjectLabel": "Subject",
+      "subjectPlaceholder": "Select a subject",
+      "subjectSuggestion": "Suggestion",
+      "subjectComplaint": "Complaint",
+      "subjectCollaboration": "Collaboration",
+      "subjectOther": "Other",
+      "messageLabel": "Message",
+      "messagePlaceholder": "I think that...",
+      "submitButton": "Submit",
+      "submitting": "Submitting...",
+      "errorNameRequired": "Name field cannot be empty",
+      "errorEmailRequired": "Email field cannot be empty",
+      "errorEmailInvalid": "Enter a valid email address",
+      "errorSubjectRequired": "Subject field cannot be empty",
+      "errorMessageRequired": "Message field cannot be empty",
+      "successMessage": "Your message has been sent successfully!",
+      "errorMessage": "An error occurred",
+      "networkError": "Network error occurred"
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your email address to reset your password",
+      "emailLabel": "Email",
+      "emailPlaceholder": "email@the99.az",
+      "submitButton": "Send reset link",
+      "submitting": "Sending...",
+      "successMessage": "Password reset link sent to email!",
+      "successInfo": "Password reset link has been sent to {email}. Please check your email.",
+      "errorMessage": "An error occurred",
+      "networkError": "Network error occurred",
+      "backToSignIn": "Back to sign in page"
+    }
+  }
+}

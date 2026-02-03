@@ -1,23 +1,27 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
-// import SigninView from "@/components/auth/signinView";
 import SignInView from "@/components/auth/SignInView.svelte";
+import { getLocaleFromCookie, useTranslations } from "@/utils/i18n";
 
 export const prerender = false
 
-const { cookies, redirect } = Astro;  
+const { cookies, redirect } = Astro;
+
+const locale = getLocaleFromCookie(cookies);
+const t = useTranslations(locale);
 
 const accessToken = cookies.get("sb-access-token");
 const refreshToken = cookies.get("sb-refresh-token");
 
-if (accessToken && refreshToken) { 
+if (accessToken && refreshToken) {
   return redirect("/");
 }
----  
- 
+---
+
 <BaseLayout
-  title="Daxil Ol"
+  title={t.auth.signIn}
   description="The 99 hesabınıza daxil olun. E-mail və şifrə ilə giriş edin."
+  locale={locale}
 >
-  <SignInView client:load />
+  <SignInView client:load t={t} />
 </BaseLayout>

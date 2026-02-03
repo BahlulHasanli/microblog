@@ -2,6 +2,10 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { isAuthenticated } from "@/utils/auth";
 import { supabase } from "@/db/supabase";
+import { getLocaleFromCookie, useTranslations } from "@/utils/i18n";
+
+const locale = getLocaleFromCookie(Astro.cookies);
+const t = useTranslations(locale);
 
 // Check if user is already authenticated
 if (isAuthenticated(Astro.cookies)) {
@@ -15,7 +19,7 @@ try {
     .select("value")
     .eq("key", "enable_registration")
     .single();
-  
+
   if (registrationSetting) {
     enableRegistration = registrationSetting.value === 'true' || registrationSetting.value === true;
   }
@@ -30,18 +34,19 @@ if (!enableRegistration) {
 ---
 
 <BaseLayout
-  title="Qeydiyyat"
+  title={t.auth.signUp}
   description="The 99-da yeni hesab yaradın. Qeydiyyatdan keçin və pop-mədəniyyət, oyunlar, filmlərin dünyasına qoşulun."
+  locale={locale}
 >
     <section class="max-w-md mx-auto py-8 px-4 sm:px-0">
         <div class="bg-white rounded-lg p-4">
             <!-- Başlık -->
             <div class="text-center mb-6">
                 <h1 class="text-xl md:text-3xl font-big-shoulders font-bold text-base-900 mb-1">
-                    Qeydiyyat
+                    {t.auth.signUp}
                 </h1>
                 <p class="text-base-600 text-sm">
-                    Yeni hesab yaradın və bizə qoşulun
+                    {t.auth.signUpDescription}
                 </p>
             </div>
 
@@ -50,28 +55,28 @@ if (!enableRegistration) {
                 <!-- Ad Soyad -->
                 <div>
                     <label for="fullName" class="block text-xs font-medium text-base-700 mb-1">
-                        Ad Soyad
+                        {t.auth.fullName}
                     </label>
                     <input
                         type="text"
                         id="fullName"
                         name="fullName"
-                        placeholder="Ad və soyadınızı daxil edin"
+                        placeholder={t.auth.fullNamePlaceholder}
                         required
                         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
                     />
-                </div> 
+                </div>
 
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-xs font-medium text-base-700 mb-1">
-                        Email
+                        {t.auth.email}
                     </label>
                     <input
                         type="email"
                         id="email"
                         name="email"
-                        placeholder="email@ethe99.az"
+                        placeholder={t.auth.emailPlaceholder}
                         required
                         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
                     />
@@ -80,18 +85,18 @@ if (!enableRegistration) {
                 <!-- Şifrə -->
                 <div>
                     <label for="password" class="block text-xs font-medium text-base-700 mb-1">
-                        Şifrə
+                        {t.auth.password}
                     </label>
                     <input
                         type="password"
                         id="password"
                         name="password"
-                        placeholder="Güclü bir şifrə seçin"
+                        placeholder={t.auth.chooseStrongPassword}
                         required
                         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
                     />
                     <p class="text-xs text-base-500 mt-0.5">
-                        Minimum 8 karakter, böyük və kiçik hərf, rəqəm və xüsusi simvol
+                        {t.auth.passwordRequirements}
                     </p>
                 </div>
 
@@ -101,7 +106,7 @@ if (!enableRegistration) {
                     id="submitButton"
                     class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    Qeydiyyat
+                    {t.auth.signUp}
                 </button>
 
                 <!-- Error/Success Messages -->
@@ -114,7 +119,7 @@ if (!enableRegistration) {
                     <div class="w-full border-t border-base-200"></div>
                 </div>
                 <div class="relative flex justify-center text-xs">
-                    <span class="bg-white px-2 text-base-500">və ya</span>
+                    <span class="bg-white px-2 text-base-500">{t.common.or}</span>
                 </div>
             </div>
 
@@ -148,17 +153,22 @@ if (!enableRegistration) {
             <!-- Login Link -->
             <div class="text-center mt-4 pt-3 border-t border-base-100">
                 <p class="text-base-600 text-xs">
-                    Artıq hesabınız var?
+                    {t.auth.haveAccount}
                     <a href="/signin" class="text-rose-500 hover:text-rose-600 font-medium transition-colors">
-                        Daxil olun
+                        {t.auth.loginNow}
                     </a>
                 </p>
             </div>
         </div>
     </section>
 
+    <script define:vars={{ authTranslations: t.auth }}>
+        window.__authTranslations = authTranslations;
+    </script>
     <script>
         import { createClient } from '@supabase/supabase-js';
+
+        const t = (window as any).__authTranslations;
 
         const supabaseClient = createClient(
             import.meta.env.PUBLIC_SUPABASE_URL,
@@ -167,11 +177,11 @@ if (!enableRegistration) {
 
         document.getElementById('googleSignupBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('googleSignupBtn') as HTMLButtonElement;
-            
+
             if (!btn) return;
-            
+
             btn.disabled = true;
-            
+
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
@@ -181,23 +191,23 @@ if (!enableRegistration) {
                 });
 
                 if (error) {
-                    alert(error.message || 'Google ilə qeydiyyat xətası');
+                    alert(error.message || t.googleRegisterError);
                     btn.disabled = false;
                 }
             } catch (error) {
                 console.error('Google signup error:', error);
-                alert('Şəbəkə xətası baş verdi');
+                alert(t.networkError);
                 btn.disabled = false;
             }
         });
 
         document.getElementById('appleSignupBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('appleSignupBtn') as HTMLButtonElement;
-            
+
             if (!btn) return;
-            
+
             btn.disabled = true;
-            
+
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'apple',
@@ -207,35 +217,35 @@ if (!enableRegistration) {
                 });
 
                 if (error) {
-                    alert(error.message || 'Apple ilə qeydiyyat xətası');
+                    alert(error.message || t.appleRegisterError);
                     btn.disabled = false;
                 }
             } catch (error) {
                 console.error('Apple signup error:', error);
-                alert('Şəbəkə xətası baş verdi');
+                alert(t.networkError);
                 btn.disabled = false;
             }
         });
 
         document.getElementById('signupForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const form = e.target as HTMLFormElement;
             const formData = new FormData(form);
             const messageDiv = document.getElementById('message');
-             
+
             if (!messageDiv) return;
-            
+
             // Hide previous messages
             messageDiv.classList.add('hidden');
-            
+
             // Get form data
             const data = {
                 email: formData.get('email') as string,
                 fullName: formData.get('fullName') as string,
                 password: formData.get('password') as string
             };
-             
+
             try {
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
@@ -244,12 +254,12 @@ if (!enableRegistration) {
                     },
                     body: JSON.stringify(data)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (response.ok) {
                     // Success
-                    messageDiv.textContent = result.message || 'Qeydiyyat uğurla tamamlandı!';
+                    messageDiv.textContent = result.message || t.successRegister;
                     messageDiv.className = 'block p-3 rounded-lg text-sm font-medium bg-green-100 text-green-800 border border-green-200';
                     form.reset();
 
@@ -258,11 +268,11 @@ if (!enableRegistration) {
                     }, 2000);
                 } else {
                     // Error
-                    messageDiv.textContent = result.message || 'Bir xəta baş verdi';
+                    messageDiv.textContent = result.message || t.errorOccurred;
                     messageDiv.className = 'block p-3 rounded-lg text-sm font-medium bg-red-100 text-red-800 border border-red-200';
                 }
             } catch (error) {
-                messageDiv.textContent = 'Şəbəkə xətası baş verdi';
+                messageDiv.textContent = t.networkError;
                 messageDiv.className = 'block p-3 rounded-lg text-sm font-medium bg-red-100 text-red-800 border border-red-200';
             }
         });

@@ -1,18 +1,25 @@
+---
+import { useTranslations, type Locale } from "@/utils/i18n";
+
+const { locale = 'az' as Locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
 <!-- Footer -->
 <footer class="max-w-3xl mx-auto text-base-800 bg-base-50 p-4 sm:p-6 md:p-8 rounded-lg sm:rounded-xl lg:p-10 my-6 sm:my-8 md:my-10">
   <div class="mx-auto max-w-6xl flex justify-center flex-col items-center gap-3 sm:gap-5">
     <ul class="flex flex-wrap justify-center gap-2 sm:gap-4 md:gap-6">
-      <li><a href="/about" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">HAQQINDA</a></li>
-      <li><a href="/contact" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">ƏLAQƏ</a></li>
-      <li><a href="/adv" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">REKLAM</a></li>
-      <li><a href="/vacancy" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">VAKANSİYA</a></li>
-      <li><a href="/squad" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">SQUAD</a></li>
+      <li><a href="/about" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">{t.footer.about}</a></li>
+      <li><a href="/contact" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">{t.footer.contact}</a></li>
+      <li><a href="/adv" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">{t.footer.advertising}</a></li>
+      <li><a href="/vacancy" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">{t.footer.vacancy}</a></li>
+      <li><a href="/squad" class="text-[11px] sm:text-[12px] md:text-[13px] hover:text-base-700/80 font-semibold">{t.footer.squad}</a></li>
       <li class="relative">
         <button
         id="random-post-btn"
-        aria-label="Təsadüfi post"
+        aria-label={t.footer.randomPost}
         class="text-lg cursor-pointer absolute -top-2 sm:text-xl md:text-3xl hover:text-base-700 font-semibold"
-        title="Təsadüfi"
+        title={t.footer.randomPost}
       >
         🎲
       </button></li>
@@ -20,11 +27,11 @@
     </ul>
 
     <p class="text-[10px] sm:text-[11px] md:text-[12px] text-base-700 text-center cursor-default px-2">
-      1999 - 2025 "The Doxsandoqquz". Saytdakı materiallarda istifadə olunan bütün şəkillər, videolar və mətnlərin hüququ, müəlliflərin birbaşa özlərinə məxsusdur.
+      1999 - 2025 {t.footer.copyright}
     </p>
 
     <div class="bg-base-200/40 text-base-700 text-[10px] sm:text-[11px] md:text-[12px] px-3 sm:px-5 py-1 rounded-full cursor-default">
-      Burada <span class="font-semibold">+18</span> yaşından aşağı olan şəxslər üçün nəzərdə tutulmayan materiallar ola bilər.
+      {t.footer.ageWarning}
     </div>
   </div>
 </footer>

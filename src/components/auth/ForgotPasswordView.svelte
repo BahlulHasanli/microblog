@@ -2,6 +2,12 @@
 import { navigate } from "astro:transitions/client";
 import { Toaster, toast } from 'svelte-sonner'
 
+interface Props {
+  t: any;
+}
+
+let { t }: Props = $props();
+
 const formState = $state.raw({
     email: "",
 });
@@ -34,15 +40,15 @@ const handleSubmit = async (e: Event) => {
         const result = await response.json();
 
         if (response.ok) {
-            toast.success(result.message || "Şifirə sıfırlama linki email-ə göndərildi!");
+            toast.success(result.message || t.forms.forgotPassword.successMessage);
             isEmailSent.value = true;
             formState.email = "";
         } else {
-            toast.error(result.message || "Bir xəta baş verdi");
+            toast.error(result.message || t.forms.forgotPassword.errorMessage);
         }
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Şəbəkə xətası baş verdi");
+      toast.error(t.forms.forgotPassword.networkError);
     } finally {
       isSubmitting.value = false;
     }
@@ -59,9 +65,9 @@ const handleBackToSignIn = () => {
   <div class="bg-white rounded-lg p-4">
     <div class="text-center mb-6">
       <h1 class="text-xl font-big-shoulders font-bold text-base-900 mb-1">
-        Şifrəni Sıfırla
+        {t.forms.forgotPassword.title}
       </h1>
-      <p class="text-base-600 text-sm">Şifrənizi sıfırlamaq üçün email ünvanınızı daxil edin</p>
+      <p class="text-base-600 text-sm">{t.forms.forgotPassword.subtitle}</p>
     </div>
 
     {#if !isEmailSent.value}
@@ -71,13 +77,13 @@ const handleBackToSignIn = () => {
             for="email"
             class="block text-xs font-medium text-base-700 mb-1"
           >
-            Email
+            {t.forms.forgotPassword.emailLabel}
           </label>
           <input
             type="email"
             id="email"
             name="email"
-            placeholder="email@the99.az"
+            placeholder={t.forms.forgotPassword.emailPlaceholder}
             required
             bind:value={formState.email}
             class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -90,16 +96,16 @@ const handleBackToSignIn = () => {
           class="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {#if isSubmitting.value}
-            Göndərilir...
+            {t.forms.forgotPassword.submitting}
           {:else}
-            Sıfırlama linki göndər
+            {t.forms.forgotPassword.submitButton}
           {/if}
         </button> 
       </form>
     {:else}
       <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
         <p class="text-green-700 text-sm">
-          Şifirə sıfırlama linki <strong>{formState.email}</strong> email ünvanına göndərildi. Lütfən email-inizi yoxlayın.
+          {t.forms.forgotPassword.successInfo.replace('{email}', formState.email)}
         </p>
       </div>
     {/if}
@@ -111,7 +117,7 @@ const handleBackToSignIn = () => {
           onclick={handleBackToSignIn}
           class="text-rose-500 hover:text-rose-600 font-medium transition-colors cursor-pointer"
         >
-          Daxil ol səhifəsinə qayıt
+          {t.forms.forgotPassword.backToSignIn}
         </button>
       </p>
     </div>

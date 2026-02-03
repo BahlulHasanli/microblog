@@ -1,0 +1,174 @@
+{
+  "nav": {
+    "menu": "Menyu",
+    "signIn": "Giriş",
+    "signUp": "Qeydiyyat",
+    "admin": "Admin",
+    "moderator": "Moderator",
+    "panel": "Panel"
+  },
+  "footer": {
+    "about": "HAQQINDA",
+    "contact": "ƏLAQƏ",
+    "advertising": "REKLAM",
+    "vacancy": "VAKANSİYA",
+    "squad": "SQUAD",
+    "randomPost": "Təsadüfi post",
+    "copyright": "\"The Doxsandoqquz\". Saytdakı materiallarda istifadə olunan bütün şəkillər, videolar və mətnlərin hüququ, müəlliflərin birbaşa özlərinə məxsusdur.",
+    "ageWarning": "Burada +18 yaşından aşağı olan şəxslər üçün nəzərdə tutulmayan materiallar ola bilər."
+  },
+  "home": {
+    "noPosts": "Hələ ki, post yoxdur",
+    "noPostsDescription": "Yeni məzmun tezliklə əlavə olunacaq. Bizi izləyin!"
+  },
+  "tabs": {
+    "weekly": "Həftəbécər",
+    "gossip": "Dédi-qodu",
+    "windows": "Pəncərələr"
+  },
+  "common": {
+    "loading": "Yüklənir...",
+    "error": "Xəta baş verdi",
+    "save": "Yadda saxla",
+    "cancel": "Ləğv et",
+    "delete": "Sil",
+    "edit": "Redaktə et",
+    "search": "Axtar",
+    "readMore": "Daha çox oxu",
+    "or": "və ya"
+  },
+  "auth": {
+    "signIn": "Daxil Ol",
+    "signInDescription": "Hesabınıza daxil olun",
+    "signUp": "Qeydiyyat",
+    "signUpDescription": "Yeni hesab yaradın və bizə qoşulun",
+    "email": "Email",
+    "emailPlaceholder": "email@the99.az",
+    "password": "Şifrə",
+    "passwordPlaceholder": "Şifrənizi daxil edin",
+    "forgotPassword": "Şifrəni unutdun?",
+    "signingIn": "Giriş edilir...",
+    "fullName": "Ad Soyad",
+    "fullNamePlaceholder": "Ad və soyadınızı daxil edin",
+    "chooseStrongPassword": "Güclü bir şifrə seçin",
+    "passwordRequirements": "Minimum 8 karakter, böyük və kiçik hərf, rəqəm və xüsusi simvol",
+    "noAccount": "Hesabınız yoxdur?",
+    "register": "Qeydiyyatdan keçin",
+    "haveAccount": "Artıq hesabınız var?",
+    "loginNow": "Daxil olun",
+    "successLogin": "Uğurla daxil oldunuz!",
+    "successRegister": "Qeydiyyat uğurla tamamlandı!",
+    "errorOccurred": "Bir xəta baş verdi",
+    "networkError": "Şəbəkə xətası baş verdi",
+    "googleError": "Google ilə giriş xətası",
+    "appleError": "Apple ilə giriş xətası",
+    "googleRegisterError": "Google ilə qeydiyyat xətası",
+    "appleRegisterError": "Apple ilə qeydiyyat xətası"
+  },
+  "language": {
+    "az": "Azərbaycan",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "pages": {
+    "about": {
+      "title": "Haqqımızda",
+      "description": "The 99 - Azərbaycan dilində pop-kultura, əyləncə və müasir mədəniyyət haqqında etibarlı məlumat mənbəyi. Gündəlik yenilənən məzmun, trend və analitik yazılar.",
+      "paragraph1": "The 99 - Hər kəs üçün nəzərdə tutulmuş gündəlik internet-dərgisidir. Platformamızın məqsədi Azərbaycan dilində pop-kultura və əyləncə sahələrini daha əlçatan, daha keyfiyyətli və daha dolğun şəkildə təqdim etməkdir. Biz müasir mədəniyyətin müxtəlif istiqamətlərini izləyir, onları oxuculara aydın, səliqəli və etibarlı informasiya kimi çatdırırıq.",
+      "paragraph2": "The 99, yalnız xəbərlər və məqalələr toplusu deyil. Bu, daim dəyişən rəqəmsal dünyanın ritmini tutan, trend və yenilikləri aktuallığını itirmədən təqdim edən bir media məkanıdır. Burada gündəmin sürətli axınına uyğunlaşmış, lakin eyni zamanda analitik yanaşmanı qoruyan yazılar hazırlanır. Oxucular həm informasiyanı tez əldə edir, həm də həmin mövzular haqqında daha dərin anlayış qazanırlar.",
+      "paragraph3": "Bizim üçün ən önəmli prinsip — keyfiyyətli məzmunun Azərbaycan dilində də yüksək səviyyədə təqdim oluna bilməsidir. The DOXSANDOQQUZ bu boşluğu doldurmaq üçün yaradılıb və fəaliyyətini bu istiqamətdə davam etdirir.",
+      "paragraph4": "Oxucularımıza rahat istifadə olunan, vizual baxımdan səliqəli və müasir platforma təqdim etməyə çalışırıq. Məqsədimiz rəqəmsal mədəniyyətə dair etibarlı istinad nöqtəsi olmaq və müxtəlif maraqlara sahib insanları eyni məkan altında birləşdirməkdir.",
+      "paragraph5": "The99 olaraq, hər gün yenilənən məzmunla dinamik, kreativ və geniş auditoriyanı əhatə edən bir informasiya ekosistemi qururuq. Mədəniyyət, əyləncə və pop-kultura sahələrində marağı olan hər kəs üçün burası həm gündəlik məlumat mənbəyi, həm də rahat bir oxu məkanıdır."
+    },
+    "vacancy": {
+      "title": "Vakansiya",
+      "description": "The 99-da yazmağa, düşünməyə və araşdırmağa həvəsi olan istedadlara yer var.",
+      "paragraph1": "The99-da yazmağa, düşünməyə və araşdırmağa həvəsi olan istedadlara həmişə yer var. Əgər pop-mədəniyyət, oyunlar, filmlər, trend mövzular və ümumən maraq dairənizdə olanları paylaşmaqdan zövq alırsınızsa — siz tam doğru yerdəsiniz.",
+      "paragraph2": "Düşünürsünüzsə ki, özünüzü məhz bizim platformada sınamalısınız, sadəcə aşağıdakı mətn bölməsini doldurun, adınızı və e-poçtunuzu qeyd edin və Enter-ə basın.",
+      "paragraph3": "Daha təcrübəli və peşəkar yazar olduğunuzu hesab edirsinizsə, birbaşa",
+      "emailLink": "we@the99.az",
+      "emailText": "ünvanına yaza bilərsiniz."
+    },
+    "squad": {
+      "title": "Squad",
+      "description": "The 99 redaksiyasının redaktor, moderator və editor komandası. Məzmun yaradıcılarımızı tanıyın.",
+      "subtitle": "The DOXSANDOQQUZUN yaradıcı komandası"
+    },
+    "adv": {
+      "title": "Reklam",
+      "description": "The 99-da brendinizi nümayiş etdirin. Banner, pres-reliz və kreativ reklam materialları üçün əlaqə saxlayın. Azərbaycan dilli əyləncə platformasında reklam verin.",
+      "paragraph1": "Brendinizi The DOXSANDOQQUZUN-un dinamik və rəngarəng mühitində nümayiş etdirmək istəyirsiniz? Bannerləriniz, pres-relizləriniz və bütün kreativ reklam materiallarınız üçün qapılar açıqdır. Azərbaycan dilli yeni nəsil əyləncə internet-dərgisin də, siz də öz yerinizi tutun.",
+      "paragraph2": "Qısası, bizdə auditoriya var, sizdə isə reklam — bir-birimizi tamamlayırıq.",
+      "paragraph3": "Müraciət etmək üçün:",
+      "emailLink": "we@the99.az",
+      "emailText": "ünvanına yazmağınız kifayətdir."
+    },
+    "contact": {
+      "title": "Əlaqə",
+      "description": "The 99 redaksiyası ilə əlaqə saxlayın. Fikir, təklif və şikayətlərinizi bizə göndərin. Rəsmi e-mail: we@the99.az",
+      "subtitle": "Redaktor və idarəçi komandamıza fikrinizi bildirmək istəyirsinizsə, aşağıdakı formu doldura və ya",
+      "emailLink": "we@the99.az",
+      "emailText": "ünvanına yaza bilərsiniz."
+    },
+    "forgotPassword": {
+      "title": "Parolunuzu Unutdunuz?",
+      "description": "The 99 hesabınızın parolunu sıfırlayın. E-poçt ünvanınızı daxil edin və yeni parol təyin edin."
+    }
+  },
+  "forms": {
+    "vacancy": {
+      "nameLabel": "Ad Soyad",
+      "namePlaceholder": "Ad və soyadınızı daxil edin",
+      "emailLabel": "Email",
+      "emailPlaceholder": "email@the99.az",
+      "messageLabel": "Müraciət",
+      "messagePlaceholder": "Özünüz haqqında məlumat verin...",
+      "submitButton": "Göndər",
+      "submitting": "Göndərilir...",
+      "errorNameRequired": "Ad soyad xanası boş ola bilməz",
+      "errorEmailRequired": "Email xanası boş ola bilməz",
+      "errorEmailInvalid": "Düzgün email ünvanı daxil edin",
+      "errorMessageRequired": "Müraciət xanası boş ola bilməz",
+      "successMessage": "Müraciətiniz uğurla göndərildi!",
+      "errorMessage": "Bir xəta baş verdi",
+      "networkError": "Şəbəkə xətası baş verdi"
+    },
+    "contact": {
+      "nameLabel": "Ad Soyad",
+      "namePlaceholder": "Ad və soyadınızı daxil edin",
+      "emailLabel": "Email",
+      "emailPlaceholder": "email@the99.az",
+      "subjectLabel": "Mövzu",
+      "subjectPlaceholder": "Mövzunu seçin",
+      "subjectSuggestion": "Təklif",
+      "subjectComplaint": "Şikayət",
+      "subjectCollaboration": "Əməkdaşlıq",
+      "subjectOther": "Digər",
+      "messageLabel": "Müraciət",
+      "messagePlaceholder": "Mən düşünürəm ki...",
+      "submitButton": "Göndər",
+      "submitting": "Göndərilir...",
+      "errorNameRequired": "Ad soyad xanası boş ola bilməz",
+      "errorEmailRequired": "Email xanası boş ola bilməz",
+      "errorEmailInvalid": "Düzgün email ünvanı daxil edin",
+      "errorSubjectRequired": "Mövzu xanası boş ola bilməz",
+      "errorMessageRequired": "Müraciət xanası boş ola bilməz",
+      "successMessage": "Müraciətiniz uğurla göndərildi!",
+      "errorMessage": "Bir xəta baş verdi",
+      "networkError": "Şəbəkə xətası baş verdi"
+    },
+    "forgotPassword": {
+      "title": "Şifrəni Sıfırla",
+      "subtitle": "Şifrənizi sıfırlamaq üçün email ünvanınızı daxil edin",
+      "emailLabel": "Email",
+      "emailPlaceholder": "email@the99.az",
+      "submitButton": "Sıfırlama linki göndər",
+      "submitting": "Göndərilir...",
+      "successMessage": "Şifirə sıfırlama linki email-ə göndərildi!",
+      "successInfo": "Şifirə sıfırlama linki {email} email ünvanına göndərildi. Lütfən email-inizi yoxlayın.",
+      "errorMessage": "Bir xəta baş verdi",
+      "networkError": "Şəbəkə xətası baş verdi",
+      "backToSignIn": "Daxil ol səhifəsinə qayıt"
+    }
+  }
+}

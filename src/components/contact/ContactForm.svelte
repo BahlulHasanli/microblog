@@ -4,9 +4,10 @@ import { Toaster, toast } from 'svelte-sonner'
 interface Props {
   isLoggedIn: boolean;
   userFullName?: string;
+  t: any;
 }
 
-let { isLoggedIn = false, userFullName = "" }: Props = $props();
+let { isLoggedIn = false, userFullName = "", t }: Props = $props();
 
 let formState = $state({
   fullName: userFullName,
@@ -26,29 +27,29 @@ const handleSubmit = async (e: Event) => {
   // Validation
   if (!isLoggedIn) {
     if (!formState.fullName || formState.fullName.trim() === "") {
-      toast.error("Ad soyad xanası boş ola bilməz");
+      toast.error(t.forms.contact.errorNameRequired);
       return;
     }
 
     if (!formState.email || formState.email.trim() === "") {
-      toast.error("Email xanası boş ola bilməz");
+      toast.error(t.forms.contact.errorEmailRequired);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formState.email)) {
-      toast.error("Düzgün email ünvanı daxil edin");
+      toast.error(t.forms.contact.errorEmailInvalid);
       return;
     }
   }
 
   if (!formState.subject || formState.subject.trim() === "") {
-    toast.error("Mövzu xanası boş ola bilməz");
+    toast.error(t.forms.contact.errorSubjectRequired);
     return;
   }
 
   if (!formState.message || formState.message.trim() === "") {
-    toast.error("Müraciət xanası boş ola bilməz");
+    toast.error(t.forms.contact.errorMessageRequired);
     return;
   }
 
@@ -71,7 +72,7 @@ const handleSubmit = async (e: Event) => {
     const result = await response.json();
 
     if (response.ok) {
-      toast.success(result.message || "Müraciətiniz uğurla göndərildi!");
+      toast.success(result.message || t.forms.contact.successMessage);
       // Toast görünəndən sonra formu sıfırla
       setTimeout(() => {
         formState.fullName = userFullName;
@@ -80,11 +81,11 @@ const handleSubmit = async (e: Event) => {
         formState.message = "";
       }, 100);
     } else {
-      toast.error(result.message || "Bir xəta baş verdi");
+      toast.error(result.message || t.forms.contact.errorMessage);
     }
   } catch (error) {
     console.error("Error:", error);
-    toast.error("Şəbəkə xətası baş verdi");
+    toast.error(t.forms.contact.networkError);
   } finally {
     isSubmitting.value = false;
   }
@@ -98,13 +99,13 @@ const handleSubmit = async (e: Event) => {
   {#if !isLoggedIn}
     <div>
       <label for="fullName" class="block text-xs font-medium text-base-700 mb-1">
-        Ad Soyad
+        {t.forms.contact.nameLabel}
       </label>
       <input
         type="text"
         id="fullName"
         name="fullName"
-        placeholder="Ad və soyadınızı daxil edin"
+        placeholder={t.forms.contact.namePlaceholder}
         required
         bind:value={formState.fullName}
         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -116,13 +117,13 @@ const handleSubmit = async (e: Event) => {
   {#if !isLoggedIn}
     <div>
       <label for="email" class="block text-xs font-medium text-base-700 mb-1">
-        Email
+        {t.forms.contact.emailLabel}
       </label>
       <input
         type="email"
         id="email"
         name="email"
-        placeholder="email@the99.az"
+        placeholder={t.forms.contact.emailPlaceholder}
         required
         bind:value={formState.email}
         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -133,7 +134,7 @@ const handleSubmit = async (e: Event) => {
   <!-- Mövzu -->
   <div>
     <label for="subject" class="block text-xs font-medium text-base-700 mb-1">
-      Mövzu
+      {t.forms.contact.subjectLabel}
     </label>
     <select
       id="subject"
@@ -142,23 +143,23 @@ const handleSubmit = async (e: Event) => {
       bind:value={formState.subject}
       class="cursor-pointer w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 bg-white"
     >
-      <option value="" disabled>Mövzunu seçin</option>
-      <option value="teklif">Təklif</option>
-      <option value="shikayet">Şikayət</option>
-      <option value="emekdasliq">Əməkdaşlıq</option>
-      <option value="diger">Digər</option>
+      <option value="" disabled>{t.forms.contact.subjectPlaceholder}</option>
+      <option value="teklif">{t.forms.contact.subjectSuggestion}</option>
+      <option value="shikayet">{t.forms.contact.subjectComplaint}</option>
+      <option value="emekdasliq">{t.forms.contact.subjectCollaboration}</option>
+      <option value="diger">{t.forms.contact.subjectOther}</option>
     </select>
   </div>
 
   <!-- Müraciət Mətni -->
   <div>
     <label for="message" class="block text-xs font-medium text-base-700 mb-1">
-      Müraciət
+      {t.forms.contact.messageLabel}
     </label>
     <textarea
       id="message"
       name="message"
-      placeholder="Mən düşünürəm ki..."
+      placeholder={t.forms.contact.messagePlaceholder}
       required
       rows="6"
       bind:value={formState.message}
@@ -174,9 +175,9 @@ const handleSubmit = async (e: Event) => {
       class="cursor-pointer bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-8 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       {#if isSubmitting.value}
-        Göndərilir...
+        {t.forms.contact.submitting}
       {:else}
-        Göndər
+        {t.forms.contact.submitButton}
       {/if}
     </button>
   </div>

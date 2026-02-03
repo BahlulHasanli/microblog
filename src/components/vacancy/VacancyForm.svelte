@@ -4,9 +4,10 @@ import { Toaster, toast } from 'svelte-sonner'
 interface Props {
   isLoggedIn: boolean;
   userFullName?: string;
+  t: any;
 }
 
-let { isLoggedIn = false, userFullName = "" }: Props = $props();
+let { isLoggedIn = false, userFullName = "", t }: Props = $props();
 
 let formState = $state({
   name: userFullName,
@@ -24,23 +25,23 @@ const handleSubmit = async (e: Event) => {
 
   // Validation
   if (!formState.name || formState.name.trim() === "") {
-    toast.error("Ad soyad xanası boş ola bilməz");
+    toast.error(t.forms.vacancy.errorNameRequired);
     return;
   }
 
   if (!formState.email || formState.email.trim() === "") {
-    toast.error("Email xanası boş ola bilməz");
+    toast.error(t.forms.vacancy.errorEmailRequired);
     return;
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(formState.email)) {
-    toast.error("Düzgün email ünvanı daxil edin");
+    toast.error(t.forms.vacancy.errorEmailInvalid);
     return;
   }
 
   if (!formState.message || formState.message.trim() === "") {
-    toast.error("Müraciət xanası boş ola bilməz");
+    toast.error(t.forms.vacancy.errorMessageRequired);
     return;
   }
 
@@ -62,7 +63,7 @@ const handleSubmit = async (e: Event) => {
     const result = await response.json();
 
     if (response.ok) {
-      toast.success(result.message || "Müraciətiniz uğurla göndərildi!");
+      toast.success(result.message || t.forms.vacancy.successMessage);
       // Toast görünəndən sonra formu sıfırla
       setTimeout(() => {
         formState.name = userFullName;
@@ -70,11 +71,11 @@ const handleSubmit = async (e: Event) => {
         formState.message = "";
       }, 100);
     } else {
-      toast.error(result.message || "Bir xəta baş verdi");
+      toast.error(result.message || t.forms.vacancy.errorMessage);
     }
   } catch (error) {
     console.error("Error:", error);
-    toast.error("Şəbəkə xətası baş verdi");
+    toast.error(t.forms.vacancy.networkError);
   } finally {
     isSubmitting.value = false;
   }
@@ -88,13 +89,13 @@ const handleSubmit = async (e: Event) => {
   {#if !isLoggedIn}
     <div>
       <label for="name" class="block text-xs font-medium text-base-700 mb-1">
-        Ad Soyad
+        {t.forms.vacancy.nameLabel}
       </label>
       <input
         type="text"
         id="name"
         name="name"
-        placeholder="Ad və soyadınızı daxil edin"
+        placeholder={t.forms.vacancy.namePlaceholder}
         required
         bind:value={formState.name}
         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -106,13 +107,13 @@ const handleSubmit = async (e: Event) => {
   {#if !isLoggedIn}
     <div>
       <label for="email" class="block text-xs font-medium text-base-700 mb-1">
-        Email
+        {t.forms.vacancy.emailLabel}
       </label>
       <input
         type="email"
         id="email"
         name="email"
-        placeholder="email@the99.az"
+        placeholder={t.forms.vacancy.emailPlaceholder}
         required
         bind:value={formState.email}
         class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
@@ -123,12 +124,12 @@ const handleSubmit = async (e: Event) => {
   <!-- Müraciət -->
   <div>
     <label for="message" class="block text-xs font-medium text-base-700 mb-1">
-      Müraciət
+      {t.forms.vacancy.messageLabel}
     </label>
     <textarea
       id="message"
       name="message"
-      placeholder="Özünüz haqqında məlumat verin..."
+      placeholder={t.forms.vacancy.messagePlaceholder}
       required
       rows="6"
       bind:value={formState.message}
@@ -144,9 +145,9 @@ const handleSubmit = async (e: Event) => {
       class="cursor-pointer bg-rose-500 hover:bg-rose-600 text-white font-medium py-1.5 px-8 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       {#if isSubmitting.value}
-        Göndərilir...
+        {t.forms.vacancy.submitting}
       {:else}
-        Göndər
+        {t.forms.vacancy.submitButton}
       {/if}
     </button>
   </div>

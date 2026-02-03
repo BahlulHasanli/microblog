@@ -1,40 +1,45 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getLocaleFromCookie, useTranslations } from "@/utils/i18n";
+
+const locale = getLocaleFromCookie(Astro.cookies);
+const t = useTranslations(locale);
 ---
 
 <BaseLayout 
-  title="Haqqımızda"
-  description="The 99 - Azərbaycan dilində pop-kultura, əyləncə və müasir mədəniyyət haqqında etibarlı məlumat mənbəyi. Gündəlik yenilənən məzmun, trend və analitik yazılar."
+  title={t.pages.about.title}
+  description={t.pages.about.description}
+  locale={locale}
 >
   <section class="max-w-3xl mx-auto py-8 px-4 sm:px-0">
     <div class="bg-white rounded-lg p-4">
       <!-- Başlıq -->
       <div class="mb-8">
         <h1 class="text-3xl font-nouvelr-semibold text-base-900 mb-2">
-          Haqqımızda
+          {t.pages.about.title}
         </h1>
       </div>
 
       <!-- Məzmun -->
       <div class="prose prose-sm max-w-none text-slate-500! font-display space-y-4 text-light! *:mt-5! *:text-[15px]">
         <p class="text-base leading-relaxed">
-          The 99 - Hər kəs üçün nəzərdə tutulmuş gündəlik internet-dərgisidir. Platformamızın məqsədi Azərbaycan dilində pop-kultura və əyləncə sahələrini daha əlçatan, daha keyfiyyətli və daha dolğun şəkildə təqdim etməkdir. Biz müasir mədəniyyətin müxtəlif istiqamətlərini izləyir, onları oxuculara aydın, səliqəli və etibarlı informasiya kimi çatdırırıq.
+          {t.pages.about.paragraph1}
         </p>
 
         <p class="text-base leading-relaxed">
-          The 99, yalnız xəbərlər və məqalələr toplusu deyil. Bu, daim dəyişən rəqəmsal dünyanın ritmini tutan, trend və yenilikləri aktuallığını itirmədən təqdim edən bir media məkanıdır. Burada gündəmin sürətli axınına uyğunlaşmış, lakin eyni zamanda analitik yanaşmanı qoruyan yazılar hazırlanır. Oxucular həm informasiyanı tez əldə edir, həm də həmin mövzular haqqında daha dərin anlayış qazanırlar.
+          {t.pages.about.paragraph2}
         </p>
 
         <p class="text-base leading-relaxed">
-          Bizim üçün ən önəmli prinsip — keyfiyyətli məzmunun Azərbaycan dilində də yüksək səviyyədə təqdim oluna bilməsidir. The DOXSANDOQQUZ bu boşluğu doldurmaq üçün yaradılıb və fəaliyyətini bu istiqamətdə davam etdirir.
+          {t.pages.about.paragraph3}
         </p>
 
         <p class="text-base leading-relaxed">
-          Oxucularımıza rahat istifadə olunan, vizual baxımdan səliqəli və müasir platforma təqdim etməyə çalışırıq. Məqsədimiz rəqəmsal mədəniyyətə dair etibarlı istinad nöqtəsi olmaq və müxtəlif maraqlara sahib insanları eyni məkan altında birləşdirməkdir.
+          {t.pages.about.paragraph4}
         </p>
 
         <p class="text-base leading-relaxed">
-          The99 olaraq, hər gün yenilənən məzmunla dinamik, kreativ və geniş auditoriyanı əhatə edən bir informasiya ekosistemi qururuq. Mədəniyyət, əyləncə və pop-kultura sahələrində marağı olan hər kəs üçün burası həm gündəlik məlumat mənbəyi, həm də rahat bir oxu məkanıdır.
+          {t.pages.about.paragraph5}
         </p>
       </div>
     </div>

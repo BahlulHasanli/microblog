@@ -55,6 +55,7 @@ export default defineConfig({
         locales: {
           az: "az-AZ",
           en: "en-US",
+          ru: "ru-RU",
         },
       },
     }),

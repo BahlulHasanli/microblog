@@ -1,6 +1,10 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { supabase } from "@/db/supabase";
+import { getLocaleFromCookie, useTranslations } from "@/utils/i18n";
+
+const locale = getLocaleFromCookie(Astro.cookies);
+const t = useTranslations(locale);
 
 // Supabase-dən role_id 1, 2, 3 olan istifadəçiləri çək
 const { data: teamMembers, error } = await supabase
@@ -35,18 +39,19 @@ const optimizedMembers = await Promise.all(
 ---
 
 <BaseLayout
-  title="Squad"
-  description="The 99 redaksiyasının redaktor, moderator və editor komandası. Məzmun yaradıcılarımızı tanıyın."
+  title={t.pages.squad.title}
+  description={t.pages.squad.description}
+  locale={locale}
 >
   <section class="max-w-3xl mx-auto py-8 px-4 sm:px-0">
     <div class="bg-white rounded-lg p-4">
       <!-- Başlıq -->
       <div class="mb-8">
         <h1 class="text-3xl font-nouvelr-semibold text-base-900 mb-2">
-          Squad
+          {t.pages.squad.title}
         </h1>
         <p class="text-base-600 text-sm">
-          The DOXSANDOQQUZUN yaradıcı komandası
+          {t.pages.squad.subtitle}
         </p>
       </div>
 
