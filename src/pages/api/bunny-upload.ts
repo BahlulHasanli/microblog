@@ -47,6 +47,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       finalFileName = `${slug}-${uuid}.${fileExtension}`;
       finalFilePath = `posts/${slug}/images/${finalFileName}`;
       console.log(`Post resmi yükleniyor: ${finalFileName}, slug: ${slug}`);
+    } else if (uploadType === "post-audio") {
+      // Audio faylı üçün post-a özəl qovluq + audio subfolder
+      // Client-dən `path` parametri gələ bilər: posts/[slug]
+      const customPath = formData.get("path") as string;
+      // UUID əlavə edirik ki, eyni adlı fayllar üst-üstə düşməsin
+      const uuid = generateUUID().substring(0, 8);
+      finalFileName = `${slug}-audio-${uuid}.${fileExtension}`;
+      
+      if (customPath) {
+        // Əgər path varsa, sonuna /audio əlavə et (əgər yoxdursa)
+        const basePath = customPath.endsWith('/') ? customPath.slice(0, -1) : customPath;
+        finalFilePath = `${basePath}/audio/${finalFileName}`;
+      } else {
+        finalFilePath = `posts/${slug}/audio/${finalFileName}`;
+      }
+      console.log(`Post audio yüklənir: ${finalFileName}, path: ${finalFilePath}`);
     } else if (uploadType === "avatar") {
       // Avatar için dosya adı oluştur
       const userId = formData.get("userId") as string;

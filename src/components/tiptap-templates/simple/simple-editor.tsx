@@ -15,6 +15,8 @@ import { Selection, Placeholder, Focus } from "@tiptap/extensions";
 // import Youtube from "@tiptap/extension-youtube";
 import { YoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node-extension";
 import { Rating } from "@/components/tiptap-node/rating-node/rating";
+import { AudioNode } from "@/components/tiptap-node/audio-node/audio-node-extension";
+import { AudioUploadExtension } from "@/components/tiptap-node/audio-upload-node/audio-upload-node-extension";
 
 import { Document } from "@tiptap/extension-document";
 
@@ -61,6 +63,7 @@ import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
 import { GifButton } from "@/components/tiptap-ui/gif-button";
 import { HorizontalRuleButton } from "@/components/tiptap-ui/horizontal-rule-button";
+import { AudioUploadButton } from "@/components/tiptap-ui/audio-upload-button";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
@@ -76,7 +79,7 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
+import { handleImageUpload, handleAudioUpload, MAX_FILE_SIZE, MAX_AUDIO_SIZE } from "@/lib/tiptap-utils";
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
@@ -231,6 +234,7 @@ const MainToolbarContent = ({
         <GifButton />
         <MenuBar editor={editor} />
         <AudioButton onClick={onAudioClick} hasAudio={hasAudio} />
+        <AudioUploadButton editor={editor} />
         <HorizontalRuleButton />
         <RatingButton editor={editor} />
       </ToolbarGroup>
@@ -467,6 +471,14 @@ export function SimpleEditor({
         limit: 3,
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
+      }),
+      AudioNode,
+      AudioUploadExtension.configure({
+        limit: 1,
+        maxSize: MAX_AUDIO_SIZE,
+        accept: "audio/*",
+        upload: handleAudioUpload,
+        onError: (error) => console.error("Audio Upload failed:", error),
       }),
       Rating,
     ],

@@ -1,5 +1,36 @@
 [
   {
+    "version": "1.0.1",
+    "date": "2026-01-30",
+    "title": "Wind",
+    "changes": [
+      {
+        "type": "improvement",
+        "text": "Update"
+      },
+      {
+        "type": "fix",
+        "text": "Grid bug fix"
+      },
+      {
+        "type": "fix",
+        "text": "Font və optimizasiya düzəliş"
+      },
+      {
+        "type": "improvement",
+        "text": "Google & Apple auth update register"
+      },
+      {
+        "type": "improvement",
+        "text": "Update Apple və Google ilə giriş etmək və qeydiyyatdan keçmək artıq mümkündür."
+      },
+      {
+        "type": "improvement",
+        "text": "Update [...slug].astro"
+      }
+    ]
+  },
+  {
     "version": "1.0.0",
     "date": "2026-01-17",
     "title": "Wind",
