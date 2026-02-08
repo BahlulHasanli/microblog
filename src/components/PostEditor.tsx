@@ -29,6 +29,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [existingImageUrl, setExistingImageUrl] = useState<string>(
     post.image?.url || ""
   );
+  const existingImageUrlRef = useRef<string>(post.image?.url || "");
   // Preview URL referansı - memory leak önleme üçün
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
@@ -147,11 +148,13 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
   const handleCoverImageChange = useCallback(
     (file: File | null, clearExisting?: boolean) => {
+      console.log("handleCoverImageChange çağırıldı:", { file: file?.name, clearExisting });
       setCoverImage(file);
       if (!file) {
         if (clearExisting) {
           // İstifadəçi şəkli sildi - existingImageUrl-i də sıfırla
           setExistingImageUrl("");
+          existingImageUrlRef.current = "";
           setCoverImagePreview((prev) => {
             // Əvvəlki blob URL-i azad et
             if (prev && prev.startsWith("blob:")) {
@@ -159,12 +162,15 @@ export default function PostEditor({ post, content, slug, author }: any) {
             }
             return "";
           });
+          console.log("Cover image silindi, existingImageUrl sıfırlandı");
         } else {
-          setCoverImagePreview(existingImageUrl);
+          // Ref-dən oxu ki, həmişə aktual dəyəri əldə edək
+          setCoverImagePreview(existingImageUrlRef.current);
         }
       } else {
         // Yeni şəkil seçildi - köhnə şəkil URL-ini sıfırla
         setExistingImageUrl("");
+        existingImageUrlRef.current = "";
         // Əvvəlki blob URL-i azad et
         setCoverImagePreview((prev) => {
           if (prev && prev.startsWith("blob:")) {
@@ -172,9 +178,10 @@ export default function PostEditor({ post, content, slug, author }: any) {
           }
           return URL.createObjectURL(file);
         });
+        console.log("Yeni cover image seçildi, existingImageUrl sıfırlandı");
       }
     },
-    [existingImageUrl]
+    [] // Boş asılılıq array-i - ref istifadə etdiyimiz üçün asılılıq lazım deyil
   );
 
   const handleSave = useCallback(async () => {

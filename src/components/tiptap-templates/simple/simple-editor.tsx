@@ -347,6 +347,7 @@ export function SimpleEditor({
   const [coverImagePreview, setCoverImagePreview] = React.useState<string>(
     initialCoverImageUrl || ""
   );
+  const [coverImageCleared, setCoverImageCleared] = React.useState(false);
   const [categories, setCategories] = React.useState<string[]>(
     selectedCategories || []
   );
@@ -595,13 +596,15 @@ export function SimpleEditor({
         setCoverImagePreview(reader.result as string);
       };
       reader.readAsDataURL(coverImage);
-    } else if (initialCoverImageUrl) {
-      // Eğer mevcut bir kapağımız varsa onu kullan
+      // Yeni cover seçildi, cleared flag-i sıfırla
+      setCoverImageCleared(false);
+    } else if (initialCoverImageUrl && !coverImageCleared) {
+      // Eğer mevcut bir kapağımız varsa ve silinmemişse onu kullan
       setCoverImagePreview(initialCoverImageUrl);
     } else {
       setCoverImagePreview("");
     }
-  }, [coverImage, initialCoverImageUrl]);
+  }, [coverImage, initialCoverImageUrl, coverImageCleared]);
 
   // Kategoriler değiştiğinde dışarıya bildir
   React.useEffect(() => {
@@ -626,6 +629,8 @@ export function SimpleEditor({
         };
         reader.readAsDataURL(file);
       }
+      // Input-u sıfırla ki, eyni faylı yenidən seçmək mümkün olsun
+      e.target.value = "";
     },
     [onCoverImageChange]
   );
@@ -642,6 +647,8 @@ export function SimpleEditor({
       onCoverImageChange(null, true);
     }
     setCoverImagePreview("");
+    setCoverImageCleared(true); // İmage silinib işarəsi
+    // Input-u tamamilə sıfırla
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }

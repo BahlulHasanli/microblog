@@ -18,8 +18,8 @@ export const temporaryImages = new Map<string, File>();
 // Geçici audio deposu
 export const temporaryAudio = new Map<string, File>();
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-export const MAX_AUDIO_SIZE = 20 * 1024 * 1024 // 20MB
+export const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+export const MAX_AUDIO_SIZE = 100 * 1024 * 1024 // 100MB
 
 export const MAC_SYMBOLS: Record<string, string> = {
   mod: "⌘",
