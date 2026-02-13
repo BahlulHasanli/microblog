@@ -126,16 +126,43 @@ const posts = (postsData || []).map(post => {
         <div class="cat-bar">
           <div class="cat-track">
             {
-              categoryTree.map((parentCat) => (
-                <a 
-                  href={`/category/${parentCat.slug}`}
-                  class="cat-link"
-                  data-has-children={parentCat.children && parentCat.children.length > 0 ? "true" : "false"}
-                  data-slug={parentCat.slug}
-                >
-                  {parentCat.name}
-                </a>
-              ))
+              categoryTree.map((parentCat) => {
+                const hasChildren = parentCat.children && parentCat.children.length > 0;
+                
+                if (hasChildren) {
+                  return (
+                    <div 
+                      class="cat-link group"
+                      data-has-children="true"
+                      data-slug={parentCat.slug}
+                    >
+                      <span>{parentCat.name}</span>
+                      <a 
+                        href={`/category/${parentCat.slug}`}
+                        class="cat-link-icon"
+                        title="Bölməyə keç"
+                        aria-label={`${parentCat.name} səhifəsinə keç`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
+                          <path fill-rule="evenodd" d="M4.25 5.5a.75.75 0 0 0-.75.75v8.5c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75v-4a.75.75 0 0 1 1.5 0v4A2.25 2.25 0 0 1 12.75 17h-8.5A2.25 2.25 0 0 1 2 14.75v-8.5A2.25 2.25 0 0 1 4.25 4h5a.75.75 0 0 1 0 1.5h-5Z" clip-rule="evenodd" />
+                          <path fill-rule="evenodd" d="M6.194 12.753a.75.75 0 0 0 1.06.053L16.5 4.44v2.81a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75h-4.5a.75.75 0 0 0 0 1.5h2.553l-9.056 8.194a.75.75 0 0 0-.053 1.06Z" clip-rule="evenodd" />
+                        </svg>
+                      </a>
+                    </div>
+                  );
+                }
+
+                return (
+                  <a 
+                    href={`/category/${parentCat.slug}`}
+                    class="cat-link"
+                    data-has-children="false"
+                    data-slug={parentCat.slug}
+                  >
+                    {parentCat.name}
+                  </a>
+                );
+              })
             }
           </div>
         </div>
@@ -218,6 +245,27 @@ const posts = (postsData || []).map(post => {
     transition: all 0.15s ease;
     white-space: nowrap;
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+  }
+
+  .cat-link-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    opacity: 0.4;
+    transition: all 0.2s ease;
+    padding: 2px;
+    border-radius: 4px;
+  }
+
+  .cat-link-icon:hover {
+    opacity: 1;
+    background-color: rgba(0,0,0,0.05);
+    color: #f43f5e;
   }
 
   .cat-link:hover {
@@ -299,24 +347,40 @@ const posts = (postsData || []).map(post => {
 
 <script>
   document.addEventListener('astro:page-load', () => {
-    const links = document.querySelectorAll<HTMLAnchorElement>('.cat-link');
+    const links = document.querySelectorAll('.cat-link');
     const subRow = document.getElementById('cat-sub-row');
-    const subGroups = document.querySelectorAll<HTMLElement>('.cat-sub-group');
+    const subGroups = document.querySelectorAll('.cat-sub-group');
+    const catBar = document.querySelector('.cat-bar');
+
+    // Link icon kliklərini tutubstopPropagation (JS) edək
+    const linkIcons = document.querySelectorAll('.cat-link-icon');
+    linkIcons.forEach(icon => {
+      icon.addEventListener('click', (e) => {
+        e.stopPropagation();
+      });
+    });
+
     let activeSlug: string | null = null;
+    
+    // Səhifə yeniləndikdə və ya geri qayıtdıqda state sıfırlanır, ona görə null start ok.
 
     links.forEach(link => {
-      const hasChildren = link.dataset.hasChildren === 'true';
-      const slug = link.dataset.slug!;
+      // HTMLElement kimi cast edirik ki, dataset-ə çata bilək
+      const el = link as HTMLElement;
+      const hasChildren = el.dataset.hasChildren === 'true';
+      const slug = el.dataset.slug!;
 
-      link.addEventListener('click', (e) => {
-        if (!hasChildren) return;
-
+      el.addEventListener('click', (e) => {
+        if (!hasChildren) return; 
+        
+        // Əgər birbaşa linkdirsə (hasChildren=false), bu handler onsuz da href-ə mane olmur, 
+        // amma div olduğu üçün (hasChildren=true) default yoxdur.
+        
+        // Ctrl/Cmd dəstəyi
         const ev = e as MouseEvent;
-        if (ev.ctrlKey || ev.metaKey) return;
+        if (ev.ctrlKey || ev.metaKey) return; 
 
         e.preventDefault();
-
-        const catBar = document.querySelector('.cat-bar');
 
         if (activeSlug === slug) {
           activeSlug = null;
@@ -327,13 +391,14 @@ const posts = (postsData || []).map(post => {
         } else {
           activeSlug = slug;
           links.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
+          el.classList.add('active');
 
           subGroups.forEach(g => {
-            if (g.dataset.parentSlug === slug) {
-              g.classList.add('visible');
+            const groupEl = g as HTMLElement;
+            if (groupEl.dataset.parentSlug === slug) {
+              groupEl.classList.add('visible');
             } else {
-              g.classList.remove('visible');
+              groupEl.classList.remove('visible');
             }
           });
           subRow?.classList.add('open');
