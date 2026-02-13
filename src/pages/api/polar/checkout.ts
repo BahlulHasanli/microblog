@@ -1,13 +1,41 @@
 import type { APIRoute } from "astro";
 import { Checkout } from "@polar-sh/astro";
+import { getUserFromCookies } from "@/utils/auth";
 
-const POLAR_ACCESS_TOKEN = import.meta.env.POLAR_ACCESS_TOKEN;
-const POLAR_SUCCESS_URL = "https://the99.az/posts/";
+/**
+ * Polar Checkout Endpoint
+ * İstifadəçinin autentifikasiyasını yoxlayır və Polar checkout-a yönləndirir
+ */
+export const GET: APIRoute = async (context) => {
+  try {
+    // İstifadəçinin login olub-olmadığını yoxla
+    const user = await getUserFromCookies(context.cookies, context.redirect);
+    
+    if (!user) {
+      // Login olmayan istifadəçiləri login səhifəsinə yönləndir
+      return context.redirect("/login?redirect=/notes/" + (context.url.searchParams.get("redirect") || ""));
+    }
 
-// Product ID URL-dən keçir: /api/polar/checkout?productId=b8986c2f-f33f-4ef4-ae21-9b68a81b6e9c
-export const GET: APIRoute = Checkout({
-  accessToken: POLAR_ACCESS_TOKEN,
-  successUrl: POLAR_SUCCESS_URL,
-  server: "sandbox",
-  theme: "dark",
-});
+    // İstifadəçi login olubsa, Polar checkout-a yönləndir
+    const checkoutHandler = Checkout({
+      accessToken: import.meta.env.POLAR_ACCESS_TOKEN_TEST,
+      successUrl: import.meta.env.POLAR_SUCCESS_URL_TEST,
+      server: "sandbox",
+      theme: "light",
+    });
+
+    return checkoutHandler(context);
+  } catch (error) {
+    console.error("Checkout error:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: "Checkout zamanı xəta baş verdi",
+        message: error.message 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
