@@ -62,7 +62,9 @@ body,
 
   @media screen and (max-width: 480px) {
     padding-top: 0;
-    padding-bottom: calc(var(--tt-toolbar-height) + var(--tt-safe-area-bottom, 0px));
+    padding-bottom: calc(
+      var(--tt-toolbar-height) + var(--tt-safe-area-bottom, 0px)
+    );
   }
 }
 
@@ -234,7 +236,9 @@ body,
 }
 
 // Editor Content Area
-.simple-editor-content .tiptap-editor-content .tiptap.ProseMirror.simple-editor {
+.simple-editor-content
+  .tiptap-editor-content
+  .tiptap.ProseMirror.simple-editor {
   flex: 1;
   padding: 0 0 30vh;
   font-family: "DM Sans", sans-serif;
@@ -303,6 +307,25 @@ body,
     overflow-x: visible;
     padding-bottom: 0;
   }
+
+  // Hierarchical category styles
+  .category-parent {
+    font-weight: 600;
+    border-color: #d1d5db;
+    color: #374151;
+  }
+
+  .category-child {
+    font-size: 0.6875rem;
+    padding: 0.2rem 0.625rem;
+    border-style: dashed;
+
+    .category-child-indicator {
+      font-size: 0.625rem;
+      margin-right: 0.125rem;
+      opacity: 0.4;
+    }
+  }
 }
 
 // Audio Upload - Compact Style
@@ -344,7 +367,9 @@ body,
 
 // Mobile Adjustments
 @media screen and (max-width: 480px) {
-  .simple-editor-content .tiptap-editor-content .tiptap.ProseMirror.simple-editor {
+  .simple-editor-content
+    .tiptap-editor-content
+    .tiptap.ProseMirror.simple-editor {
     padding: 0 0 20vh;
   }
 

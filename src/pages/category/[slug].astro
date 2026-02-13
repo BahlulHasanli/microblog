@@ -3,6 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import BlogEntries from "@/components/entries/BlogEntry.astro";
 import { supabase } from "@/db/supabase";
 import { formatSimpleDate } from "@/utils/date";
+import { getCategoryBreadcrumb, getDirectChildren, getAllChildSlugs, type Category } from "@/utils/category-helpers";
 
 export const prerender = false;
 
@@ -11,10 +12,12 @@ const { slug } = Astro.params;
 // Supabase-dən kateqoriyaları al
 const { data: categoriesData } = await supabase
   .from("categories")
-  .select("slug, name");
-const categories = categoriesData || [];
+  .select("*")
+  .order("sort_order", { ascending: true })
+  .order("id", { ascending: true });
+const categories = (categoriesData || []) as Category[];
 
-const category = categories.find((cat: { slug: string; name: string }) => cat.slug === slug);
+const category = categories.find((cat) => cat.slug === slug);
 
 if (!category) {
   return new Response(null, {
@@ -22,22 +25,49 @@ if (!category) {
   });
 }
 
-// Supabase-dən kateqoriyaya görə postları al
-const { data: postsData, error } = await supabase
-  .from("posts")
-  .select(`
-    *,
-    users:author_id (avatar, fullname, username)
-  `)
-  .eq("approved", true)
-  .filter("categories", "cs", `["${category.slug}"]`)
-  .order("pub_date", { ascending: false });
+// Breadcrumb yolu
+const breadcrumb = getCategoryBreadcrumb(categories, slug!);
 
-if (error) {
-  console.error('Kateqoriya postları yüklənərkən xəta:', error);
+// Alt kateqoriyalar
+const childCategories = getDirectChildren(categories, slug!);
+
+// Bu kateqoriyanın bütün alt slugları (postlar üçün filtr)
+const allChildSlugs = getAllChildSlugs(categories, slug!);
+const slugsToFilter = [category.slug, ...allChildSlugs];
+
+// Supabase-dən kateqoriyaya görə postları al
+// Həm bu kateqoriyanın, həm də alt kateqoriyaların postlarını göstər
+let allPosts: any[] = [];
+
+for (const filterSlug of slugsToFilter) {
+  const { data: postsData, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      users:author_id (avatar, fullname, username)
+    `)
+    .eq("approved", true)
+    .filter("categories", "cs", `["${filterSlug}"]`)
+    .order("pub_date", { ascending: false });
+
+  if (error) {
+    console.error('Kateqoriya postları yüklənərkən xəta:', error);
+  }
+
+  if (postsData) {
+    // Dublikat postları əlavə etmə
+    for (const post of postsData) {
+      if (!allPosts.find(p => p.id === post.id)) {
+        allPosts.push(post);
+      }
+    }
+  }
 }
 
-const filteredPosts = postsData || [];
+// Tarixə görə sıralamaq
+allPosts.sort((a, b) => new Date(b.pub_date).getTime() - new Date(a.pub_date).getTime());
+
+const filteredPosts = allPosts;
 
 console.log(`Kateqoriya: ${category.slug}, Tapılan post sayı: ${filteredPosts.length}`);
 
@@ -58,8 +88,6 @@ const sortedPosts = (filteredPosts || []).map(post => ({
   }
 }));
 
-console.log('category', category)
-
 const older = [
   {category: 'oyun', older: "https://the99.b-cdn.net/older/older_game.svg"},
   {category: 'film-serial', older: "https://the99.b-cdn.net/older/older_movie.svg"}, 
@@ -76,24 +104,61 @@ const older = [
   {category: 'retro', older: "https://the99.b-cdn.net/older/older_retro.svg"},
   {category: 'icmal', older: "https://the99.b-cdn.net/older/older_icmal.svg"},
 ]
+
+// Şəkil: parent-in şəklini tapmağa çalışaq, sonra özününkünü
+const olderImage = older.find(cat => cat.category === category.slug)?.older
+  || (breadcrumb.length > 1 ? older.find(cat => cat.category === breadcrumb[0].slug)?.older : undefined);
 ---
 
 <BaseLayout title={`${category.name}`}>
   <section>
     <div class="py-8 sm:py-12 md:py-18 max-w-3xl mx-auto px-4 sm:px-0">
-      <div class="flex items-center gap-2 mb-4 sm:mb-6">
+      {/* Breadcrumb */}
+      <div class="flex items-center gap-2 mb-4 sm:mb-6 flex-wrap">
         <a href="/" class="text-xs sm:text-sm text-base-500 hover:text-base-900">Ana Səhifə</a>
-        <span class="text-base-400">/</span>
-        <span class="text-xs sm:text-sm font-medium text-base-900">{category.name}</span>
+        {breadcrumb.map((crumb, index) => (
+          <>
+            <span class="text-base-400">/</span>
+            {index === breadcrumb.length - 1 ? (
+              <span class="text-xs sm:text-sm font-medium text-base-900">{crumb.name}</span>
+            ) : (
+              <a href={`/category/${crumb.slug}`} class="text-xs sm:text-sm text-base-500 hover:text-base-900">
+                {crumb.name}
+              </a>
+            )}
+          </>
+        ))}
       </div>
 
     <div class="flex items-center justify-between px-14">
-        <img src={older.find((cat: { category: string; older: string }) => cat.category === category.slug)?.older} alt="Old Gamer" class="size-[320px]" />
+        {olderImage && (
+          <img src={olderImage} alt="Old Gamer" class="size-[320px]" />
+        )}
 
           <h1 class="text-2xl sm:text-3xl md:text-4xl text-balance font-light font-display text-base-900 mb-4 sm:mb-6">
             <span class="font-semibold">{category.name}</span> bölməsi
           </h1>
     </div>
+
+    {/* Alt kateqoriyalar */}
+    {childCategories.length > 0 && (
+      <div class="flex flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6 mb-2">
+        <a 
+          href={`/category/${category.slug}`}
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-base-900 text-white transition-all"
+        >
+          Hamısı
+        </a>
+        {childCategories.map((child) => (
+          <a 
+            href={`/category/${child.slug}`}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium bg-base-100 text-base-700 hover:bg-base-200 hover:text-base-900 transition-all"
+          >
+            {child.name}
+          </a>
+        ))}
+      </div>
+    )}
 
      {sortedPosts?.length > 0 && (
        <div class="grid grid-cols-1 mt-6 sm:mt-8 gap-6 sm:gap-8 gap-y-16 sm:gap-y-24 sm:grid-cols-2">

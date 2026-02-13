@@ -116,7 +116,7 @@ const MainToolbarContent = ({
 
     // Image upload button click handler
     const imageButton = document.querySelector(
-      '[data-testid="image-upload-button"]'
+      '[data-testid="image-upload-button"]',
     );
     if (imageButton) {
       imageButton.addEventListener("click", handleBeforeCreate);
@@ -153,7 +153,7 @@ const MainToolbarContent = ({
       } catch (error) {
         console.error("YouTube video ekleme hatası:", error);
         alert(
-          "YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin."
+          "YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin.",
         );
       }
     };
@@ -341,16 +341,22 @@ export function SimpleEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
   const [coverImagePreview, setCoverImagePreview] = React.useState<string>(
-    initialCoverImageUrl || ""
+    initialCoverImageUrl || "",
   );
   const [categories, setCategories] = React.useState<string[]>(
-    selectedCategories || []
+    selectedCategories || [],
   );
   const [supabaseCategories, setSupabaseCategories] = React.useState<
-    { slug: string; name: string }[]
+    {
+      id: number;
+      slug: string;
+      name: string;
+      parent_id: number | null;
+      sort_order?: number;
+    }[]
   >([]);
   const [localAudioFile, setLocalAudioFile] = React.useState<File | null>(
-    audioFile
+    audioFile,
   );
   const [localAudioTitle, setLocalAudioTitle] = React.useState(audioTitle);
   const [localAudioArtist, setLocalAudioArtist] = React.useState(audioArtist);
@@ -361,7 +367,11 @@ export function SimpleEditor({
   React.useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const { data } = await supabase.from("categories").select("slug, name");
+        const { data } = await supabase
+          .from("categories")
+          .select("id, slug, name, parent_id, sort_order")
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true });
         if (data) setSupabaseCategories(data);
       } catch (error) {
         console.warn("Kategoriyalar çəkilərkən xəta:", error);
@@ -428,7 +438,7 @@ export function SimpleEditor({
           if (node.type.name === "heading") {
             // Yalnız ilk başlığa "Başlıq" placeholder ver
             const firstHeadingIndex = nodes.findIndex(
-              (n) => n.type.name === "heading"
+              (n) => n.type.name === "heading",
             );
             const currentIndex = nodes.findIndex((n) => n === node);
 
@@ -439,7 +449,7 @@ export function SimpleEditor({
 
           if (node.type.name === "paragraph") {
             const firstParagraphIndex = nodes.findIndex(
-              (n) => n.type.name === "paragraph"
+              (n) => n.type.name === "paragraph",
             );
             const currentIndex = nodes.findIndex((n) => n === node);
 
@@ -615,7 +625,7 @@ export function SimpleEditor({
         reader.readAsDataURL(file);
       }
     },
-    [onCoverImageChange]
+    [onCoverImageChange],
   );
 
   // Kapak resmi seçme dialogunu açma
@@ -651,7 +661,7 @@ export function SimpleEditor({
         return newCategories;
       });
     },
-    [onCategoriesChange]
+    [onCategoriesChange],
   );
 
   // Musiqi faylı seçmə
@@ -662,11 +672,11 @@ export function SimpleEditor({
         "SimpleEditor: Audio fayl seçildi:",
         file?.name,
         file?.type,
-        file?.size
+        file?.size,
       );
       console.log(
         "SimpleEditor: onAudioFileChange mövcuddur:",
-        !!onAudioFileChange
+        !!onAudioFileChange,
       );
       if (file) {
         // MP3 faylları üçün tip yoxlaması (audio/mpeg, audio/mp3)
@@ -679,7 +689,7 @@ export function SimpleEditor({
           window._currentAudioFile = file;
           console.log(
             "SimpleEditor: window._currentAudioFile yazıldı:",
-            file.name
+            file.name,
           );
           // Callback-i də çağır
           if (onAudioFileChange) {
@@ -690,7 +700,7 @@ export function SimpleEditor({
         }
       }
     },
-    [onAudioFileChange]
+    [onAudioFileChange],
   );
 
   // Musiqi faylını silmə
@@ -710,7 +720,12 @@ export function SimpleEditor({
     if (audioInputRef.current) {
       audioInputRef.current.value = "";
     }
-  }, [onAudioFileChange, onAudioTitleChange, onAudioArtistChange, onAudioRemove]);
+  }, [
+    onAudioFileChange,
+    onAudioTitleChange,
+    onAudioArtistChange,
+    onAudioRemove,
+  ]);
 
   // Musiqi başlığı dəyişikliyi
   const handleAudioTitleChange = useCallback(
@@ -718,7 +733,7 @@ export function SimpleEditor({
       setLocalAudioTitle(value);
       if (onAudioTitleChange) onAudioTitleChange(value);
     },
-    [onAudioTitleChange]
+    [onAudioTitleChange],
   );
 
   // Musiqi artist dəyişikliyi
@@ -727,7 +742,7 @@ export function SimpleEditor({
       setLocalAudioArtist(value);
       if (onAudioArtistChange) onAudioArtistChange(value);
     },
-    [onAudioArtistChange]
+    [onAudioArtistChange],
   );
 
   return (
@@ -793,7 +808,8 @@ export function SimpleEditor({
                     />
                   </svg>
                   <span className="placeholder-text">
-                    Ən yaxşı nəticələr üçün 5:2 en boy nisbətinə sahib bir şəkil istifadə etməyinizi tövsiyə edirik.
+                    Ən yaxşı nəticələr üçün 5:2 en boy nisbətinə sahib bir şəkil
+                    istifadə etməyinizi tövsiyə edirik.
                   </span>
                 </button>
               ) : (
@@ -818,35 +834,54 @@ export function SimpleEditor({
             {author && (
               <div className="author-info-section">
                 <img
-                  src={author.avatar || author.avatar_url || "/default-avatar.png"}
+                  src={
+                    author.avatar || author.avatar_url || "/default-avatar.png"
+                  }
                   alt={author.fullName || author.full_name || "Author"}
                   className="author-avatar squircle"
                 />
                 <div className="author-details">
                   <div className="author-name-row">
                     <span className="author-name">
-                      {author.fullName || author.full_name || author.display_name || author.fullname || author.name || "Anonim"}
+                      {author.fullName ||
+                        author.full_name ||
+                        author.display_name ||
+                        author.fullname ||
+                        author.name ||
+                        "Anonim"}
                     </span>
                     {(author.verified || author.is_verified) && (
-                      <svg className="verified-badge" viewBox="0 0 22 22" fill="currentColor">
+                      <svg
+                        className="verified-badge"
+                        viewBox="0 0 22 22"
+                        fill="currentColor"
+                      >
                         <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z" />
                       </svg>
                     )}
                   </div>
-                  <span className="author-username">@{author.username || "user"}</span>
+                  <span className="author-username">
+                    @{author.username || "user"}
+                  </span>
                 </div>
               </div>
             )}
 
-            {/* Kategoriler Bölümü - Compact & Scrollable */}
-            <div className={`categories-container ${isCategoriesExpanded ? "expanded" : ""}`}>
+            {/* Kategoriler Bölümü - Compact & Scrollable & Hierarchical */}
+            <div
+              className={`categories-container ${isCategoriesExpanded ? "expanded" : ""}`}
+            >
               <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-inter">Kateqoriyalar</span>
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-inter">
+                  Kateqoriyalar
+                </span>
                 <button
                   type="button"
                   onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
                   className="text-zinc-400 hover:text-zinc-600 transition-colors p-1 rounded-md hover:bg-zinc-100"
-                  title={isCategoriesExpanded ? "Yığcam görünüş" : "Genişləndir"}
+                  title={
+                    isCategoriesExpanded ? "Yığcam görünüş" : "Genişləndir"
+                  }
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -868,20 +903,67 @@ export function SimpleEditor({
               </div>
 
               <div className="categories-list">
-                {supabaseCategories.map((category) => (
-                  <button
-                    key={category.slug}
-                    type="button"
-                    className={`category-item cursor-pointer ${
-                      categories.includes(category.slug)
-                        ? "bg-rose-500 text-white"
-                        : ""
-                    }`}
-                    onClick={() => handleCategoryToggle(category.slug)}
-                  >
-                    {category.name}
-                  </button>
-                ))}
+                {(() => {
+                  // Parent kateqoriyaları (parent_id === null) tap
+                  const parentCategories = supabaseCategories.filter(
+                    (c) => c.parent_id === null,
+                  );
+                  // Heç bir parent yoxdursa, hamısını flat göstər
+                  if (parentCategories.length === 0) {
+                    return supabaseCategories.map((category) => (
+                      <button
+                        key={category.slug}
+                        type="button"
+                        className={`category-item cursor-pointer ${
+                          categories.includes(category.slug)
+                            ? "bg-rose-500 text-white"
+                            : ""
+                        }`}
+                        onClick={() => handleCategoryToggle(category.slug)}
+                      >
+                        {category.name}
+                      </button>
+                    ));
+                  }
+
+                  return parentCategories.map((parent) => {
+                    const children = supabaseCategories.filter(
+                      (c) => c.parent_id === parent.id,
+                    );
+                    return (
+                      <React.Fragment key={parent.slug}>
+                        {/* Parent kateqoriya */}
+                        <button
+                          type="button"
+                          className={`category-item category-parent cursor-pointer ${
+                            categories.includes(parent.slug)
+                              ? "bg-rose-500 text-white"
+                              : ""
+                          }`}
+                          onClick={() => handleCategoryToggle(parent.slug)}
+                        >
+                          {parent.name}
+                        </button>
+                        {/* Alt kateqoriyalar */}
+                        {children.map((child) => (
+                          <button
+                            key={child.slug}
+                            type="button"
+                            className={`category-item category-child cursor-pointer ${
+                              categories.includes(child.slug)
+                                ? "bg-rose-500 text-white"
+                                : "text-zinc-500"
+                            }`}
+                            onClick={() => handleCategoryToggle(child.slug)}
+                          >
+                            <span className="category-child-indicator">└</span>
+                            {child.name}
+                          </button>
+                        ))}
+                      </React.Fragment>
+                    );
+                  });
+                })()}
               </div>
             </div>
 

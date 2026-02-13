@@ -12,7 +12,7 @@ interface Props {
   author?: { avatar?: string; fullname?: string; username?: string };
   pubDate?: Date;
   blurhash?: string;
-  allCategories?: { slug: string; name: string }[];
+  allCategories?: { slug: string; name: string; parent_id?: number | null }[];
   postId?: string;
   page?: 'home' | 'category';
 }
