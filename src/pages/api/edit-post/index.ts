@@ -530,56 +530,49 @@ export const POST: APIRoute = async (context) => {
     const newContentHasAudio = content.includes('<audio');
     
     // Əgər köhnə content-də audio var idi amma yeni content-də yoxdur
-    if (existingContentHasAudio && !newContentHasAudio && !removeAudio) {
+    // Bu, database audio_url-dən fərqlidir - content-dəki embedded audio-dur
+    if (existingContentHasAudio && !newContentHasAudio) {
       console.log("Content-dəki audio tag silindi");
       
-      // Audio URL-i əldə et - əvvəlcə database-dən, yoxdursa content-dən extract et
-      let audioToDelete = existingPost.audio_url || "";
-      
-      // Əgər database-də audio_url yoxdursa, content-dən extract et
-      if (!audioToDelete) {
-        // Content-dəki audio src-ni tap: <audio controls src="URL"...>
-        const audioSrcMatch = existingPost.content.match(/<audio[^>]+src=["']([^"']+)["']/);
-        if (audioSrcMatch && audioSrcMatch[1]) {
-          audioToDelete = audioSrcMatch[1];
-          console.log("Audio URL content-dən extract edildi:", audioToDelete);
-        }
-      }
-      
-      if (audioToDelete && audioToDelete.includes("the99.b-cdn.net")) {
-        console.log("Audio BunnyCDN-dən silinir:", audioToDelete);
-        try {
-          const audioUrlPath = audioToDelete.replace(
-            "https://the99.b-cdn.net/",
-            ""
-          );
-          const deleteAudioResponse = await fetch(
-            `https://storage.bunnycdn.com/${storageZoneName}/${audioUrlPath}`,
-            {
-              method: "DELETE",
-              headers: {
-                AccessKey: bunnyApiKey,
-              },
-            }
-          );
-
-          if (deleteAudioResponse.ok) {
-            console.log("Audio BunnyCDN-dən silindi (content dəyişikliyi):", audioUrlPath);
-            // Audio məlumatlarını sıfırla
-            audioUrl = "";
-            audioTitleFinal = "";
-            audioArtistFinal = "";
-          } else {
-            console.error(
-              "Audio silmə xətası (content):",
-              await deleteAudioResponse.text()
+      // Content-dəki audio src-ni tap: <audio controls src="URL"...>
+      const audioSrcMatch = existingPost.content.match(/<audio[^>]+src=["']([^"']+)["']/);
+      if (audioSrcMatch && audioSrcMatch[1]) {
+        const contentAudioUrl = audioSrcMatch[1];
+        console.log("Content-dən audio URL extract edildi:", contentAudioUrl);
+        
+        // Bu URL database audio_url-dən fərqlidirsə sil
+        // Əgər eyni URL-dirsə, removeAudio flag-i ilə artıq silinib
+        if (contentAudioUrl.includes("the99.b-cdn.net") && contentAudioUrl !== existingPost.audio_url) {
+          console.log("Content audio BunnyCDN-dən silinir:", contentAudioUrl);
+          try {
+            const audioUrlPath = contentAudioUrl.replace(
+              "https://the99.b-cdn.net/",
+              ""
             );
+            const deleteAudioResponse = await fetch(
+              `https://storage.bunnycdn.com/${storageZoneName}/${audioUrlPath}`,
+              {
+                method: "DELETE",
+                headers: {
+                  AccessKey: bunnyApiKey,
+                },
+              }
+            );
+
+            if (deleteAudioResponse.ok) {
+              console.log("Content audio BunnyCDN-dən silindi:", audioUrlPath);
+            } else {
+              console.error(
+                "Content audio silmə xətası:",
+                await deleteAudioResponse.text()
+              );
+            }
+          } catch (deleteError) {
+            console.error("Content audio silmə xətası:", deleteError);
           }
-        } catch (deleteError) {
-          console.error("Audio silmə xətası (content):", deleteError);
+        } else if (contentAudioUrl === existingPost.audio_url) {
+          console.log("Content audio URL database audio_url ilə eynidir, removeAudio ilə idarə olunur");
         }
-      } else {
-        console.log("Silinəcək audio URL tapılmadı");
       }
     }
 

@@ -921,6 +921,77 @@ export function SimpleEditor({
           </div>
         </EditorContext.Provider>
       </div>
+
+      {/* Fixed Audio Player - audio seçildikdə görünür */}
+      {(localAudioFile || existingAudioUrl) && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 p-4 z-50">
+          <div className="max-w-3xl mx-auto flex items-center gap-4">
+            {/* Audio icon */}
+            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-6 h-6 text-rose-500"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
+                />
+              </svg>
+            </div>
+
+            {/* Audio info & inputs */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={localAudioTitle}
+                  onChange={(e) => handleAudioTitleChange(e.target.value)}
+                  placeholder="Musiqi başlığı..."
+                  className="text-sm font-medium bg-transparent border-b border-zinc-200 dark:border-zinc-700 focus:border-rose-500 outline-none py-1 text-zinc-900 dark:text-white"
+                />
+                <input
+                  type="text"
+                  value={localAudioArtist}
+                  onChange={(e) => handleAudioArtistChange(e.target.value)}
+                  placeholder="İfaçı adı..."
+                  className="text-xs bg-transparent border-b border-zinc-200 dark:border-zinc-700 focus:border-rose-500 outline-none py-1 text-zinc-500 dark:text-zinc-400"
+                />
+              </div>
+              <p className="text-xs text-zinc-400 mt-1 truncate">
+                {localAudioFile ? localAudioFile.name : existingAudioUrl ? "Mövcud audio" : ""}
+              </p>
+            </div>
+
+            {/* Remove button */}
+            <button
+              type="button"
+              onClick={handleRemoveAudio}
+              className="p-2 text-zinc-400 hover:text-red-500 transition-colors"
+              title="Musiqini sil"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
