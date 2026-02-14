@@ -45,7 +45,7 @@
     "@tiptap/starter-kit": "^3.1.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "astro": "^5.16.11",
+    "astro": "^5.17.1",
     "astro-seo": "^0.8.4",
     "bcrypt": "^6.0.0",
     "blurhash": "^2.0.5",

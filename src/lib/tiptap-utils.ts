@@ -15,8 +15,11 @@ declare global {
 
 // Geçici resim deposu
 export const temporaryImages = new Map<string, File>();
+// Geçici audio deposu
+export const temporaryAudio = new Map<string, File>();
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+export const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+export const MAX_AUDIO_SIZE = 100 * 1024 * 1024 // 100MB
 
 export const MAC_SYMBOLS: Record<string, string> = {
   mod: "⌘",
@@ -428,7 +431,7 @@ export const uploadTemporaryImages = async (
 }
 
 // Yardımcı fonksiyon: Dosyayı BunnyCDN'e yükle
-async function uploadFileToBunnyCDN(file: File): Promise<string> {
+async function uploadFileToBunnyCDN(file: File, uploadType?: string): Promise<string> {
   // Makale başlığını al
   const title = window._currentEditorTitle || '';
   const { slugify } = await import('../utils/slugify');
@@ -444,7 +447,14 @@ async function uploadFileToBunnyCDN(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("slug", slug);
-  formData.append("uploadType", "post-image");
+  formData.append("uploadType", uploadType || "post-image");
+
+  // Eğer uploadType 'post-audio' ise, custom path oluştur
+  if (uploadType === "post-audio") {
+    // Backend tərəfdə bu `path` parametri istifadə olunacaq
+    // Məsələn: posts/[slug]/audio-fayl.mp3
+    formData.append("path", `posts/${slug}`);
+  }
   
   // API'ye istek gönder
   console.log(`API'ye resim yükleme isteği gönderiliyor: /api/bunny-upload`);
@@ -464,6 +474,144 @@ async function uploadFileToBunnyCDN(file: File): Promise<string> {
   
   return data.imageUrl;
 }
+
+/**
+ * Handles audio upload with progress tracking and abort capability
+ */
+export const handleAudioUpload = async (
+  file: File,
+  onProgress?: (event: { progress: number }) => void,
+  abortSignal?: AbortSignal
+): Promise<string> => {
+  // Validate file
+  if (!file) {
+    throw new Error("No file provided");
+  }
+
+  if (file.size > MAX_AUDIO_SIZE) {
+    throw new Error(
+      `File size exceeds maximum allowed (${MAX_AUDIO_SIZE / (1024 * 1024)}MB)`
+    );
+  }
+
+  try {
+    // Dosya formatını al
+    const fileExtension = file.name.split('.').pop() || 'mp3';
+    
+    // Dosya için benzersiz bir ID oluştur
+    const timestamp = Date.now();
+    const tempId = `temp-audio-${timestamp}-${fileExtension}`;
+    
+    console.log(`Geçici audio oluşturuluyor: ${tempId}, boyut: ${file.size} bytes`);
+    
+    // İlerleme simülasyonu
+    let progressInterval: NodeJS.Timeout | null = null;
+    if (onProgress) {
+      let progress = 0;
+      progressInterval = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) {
+          onProgress({ progress });
+        } else {
+          clearInterval(progressInterval!);
+          progressInterval = null;
+        }
+      }, 100);
+    }
+    
+    const tempUrl = URL.createObjectURL(file);
+    temporaryAudio.set(tempUrl, file);
+    
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+    
+    if (onProgress) {
+      onProgress({ progress: 100 });
+    }
+    
+    console.log(`Geçici Audio URL oluşturuldu: ${tempUrl}`);
+    return tempUrl;
+  } catch (error) {
+    console.error('Audio işleme hatası:', error);
+    throw new Error(`Audio işlenirken bir hata oluştu: ${error instanceof Error ? error.message : String(error)}`);
+  }
+};
+
+// Geçici audioları gerçek CDN URL'lerine dönüştürme
+export const uploadTemporaryAudio = async (
+  content: any,
+  onProgress?: (current: number, total: number) => void
+): Promise<any> => {
+  if (!content || !content.content) return content;
+  
+  console.log("uploadTemporaryAudio başlatılıyor...");
+  
+  // İçeriği kopyala
+  const newContent = JSON.parse(JSON.stringify(content)); // Shallow copy might not be enough if we mutate deeply
+  
+  const audioNodes: {node: any, path: (string | number)[]}[] = [];
+  
+  const findAudioNodes = (node: any, path: (string | number)[] = []) => {
+    if (node.type === 'audio' && node.attrs?.src) {
+      audioNodes.push({node, path});
+    }
+    
+    if (node.content && Array.isArray(node.content)) {
+      node.content.forEach((child: any, index: number) => {
+        findAudioNodes(child, [...path, 'content', index]);
+      });
+    }
+  };
+  
+  findAudioNodes(newContent);
+  console.log(`Toplam ${audioNodes.length} audio düğümü bulundu`);
+  
+  let uploadedCount = 0;
+  const totalAudio = audioNodes.length;
+  
+  for (const {node, path} of audioNodes) {
+    const src = node.attrs.src;
+    
+    if (src.startsWith('blob:')) {
+      console.log(`Geçici audio bulundu: ${src}`);
+      
+      try {
+        const file = temporaryAudio.get(src);
+        
+        if (!file) {
+          console.error(`Dosya geçici audio deposunda bulunamadı: ${src}`);
+          // Belki depodan silinib, amma blob hələ də işləyir? 
+          // Risklidir, amma fetch edib yenidən yükləməyə cəhd edə bilərik
+          // Hələlik sadəcə xəbərdarlıq edək
+        } else {
+          console.log(`Audio faylı yüklənir: ${file.name}`);
+          
+          // Audio üçün uploadFileToBunnyCDN funksiyasını istifadə edirik
+          // Amma uploadType fərqli ola bilər
+          const cdnUrl = await uploadFileToBunnyCDN(file, "post-audio");
+          
+          node.attrs.src = cdnUrl;
+          console.log(`Audio URL güncellendi: ${src} -> ${cdnUrl}`);
+          
+          URL.revokeObjectURL(src);
+          temporaryAudio.delete(src);
+        }
+      } catch (error) {
+        console.error(`Audio yükleme hatası:`, error);
+        throw error;
+      }
+    }
+    
+    uploadedCount++;
+    if (onProgress) {
+      onProgress(uploadedCount, totalAudio);
+    }
+  }
+  
+  return newContent;
+};
 
 type ProtocolOptions = {
   /**

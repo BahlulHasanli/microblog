@@ -211,6 +211,22 @@ export function markdownToTiptap(
       continue;
     }
 
+    // Audio elementi
+    const audioMatch = line.match(/<audio\s+controls\s+src="([^"]+)"(?:\s+data-title="([^"]*)")?(?:\s+data-artist="([^"]*)")?>.*?<\/audio>/);
+    if (audioMatch) {
+      const src = audioMatch[1];
+      const title = audioMatch[2] || "";
+      const artist = audioMatch[3] || "";
+      
+      console.log("Audio node tapıldı:", { src, title, artist });
+      
+      document.content.push({
+        type: "audio",
+        attrs: { src, title, artist },
+      });
+      continue;
+    }
+
     // Rating komponenti
     if (line.includes("<Rating")) {
       const scoreMatch = line.match(/score="([^"]+)"/);

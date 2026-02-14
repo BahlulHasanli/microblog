@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { isSaveBtn } from "@/store/buttonStore";
-import { uploadTemporaryImages } from "@/lib/tiptap-utils";
+import { uploadTemporaryImages, uploadTemporaryAudio } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
 import EditorActionButtons from "@/components/EditorActionButtons";
 
@@ -29,6 +29,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [existingImageUrl, setExistingImageUrl] = useState<string>(
     post.image?.url || ""
   );
+  const existingImageUrlRef = useRef<string>(post.image?.url || "");
   // Preview URL referansı - memory leak önleme üçün
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
@@ -147,11 +148,13 @@ export default function PostEditor({ post, content, slug, author }: any) {
 
   const handleCoverImageChange = useCallback(
     (file: File | null, clearExisting?: boolean) => {
+      console.log("handleCoverImageChange çağırıldı:", { file: file?.name, clearExisting });
       setCoverImage(file);
       if (!file) {
         if (clearExisting) {
           // İstifadəçi şəkli sildi - existingImageUrl-i də sıfırla
           setExistingImageUrl("");
+          existingImageUrlRef.current = "";
           setCoverImagePreview((prev) => {
             // Əvvəlki blob URL-i azad et
             if (prev && prev.startsWith("blob:")) {
@@ -159,12 +162,15 @@ export default function PostEditor({ post, content, slug, author }: any) {
             }
             return "";
           });
+          console.log("Cover image silindi, existingImageUrl sıfırlandı");
         } else {
-          setCoverImagePreview(existingImageUrl);
+          // Ref-dən oxu ki, həmişə aktual dəyəri əldə edək
+          setCoverImagePreview(existingImageUrlRef.current);
         }
       } else {
         // Yeni şəkil seçildi - köhnə şəkil URL-ini sıfırla
         setExistingImageUrl("");
+        existingImageUrlRef.current = "";
         // Əvvəlki blob URL-i azad et
         setCoverImagePreview((prev) => {
           if (prev && prev.startsWith("blob:")) {
@@ -172,9 +178,10 @@ export default function PostEditor({ post, content, slug, author }: any) {
           }
           return URL.createObjectURL(file);
         });
+        console.log("Yeni cover image seçildi, existingImageUrl sıfırlandı");
       }
     },
-    [existingImageUrl]
+    [] // Boş asılılıq array-i - ref istifadə etdiyimiz üçün asılılıq lazım deyil
   );
 
   const handleSave = useCallback(async () => {
@@ -241,6 +248,14 @@ export default function PostEditor({ post, content, slug, author }: any) {
         }
       );
 
+      // Audio faylları yüklə
+      const fullyUpdatedContent = await uploadTemporaryAudio(
+        updatedContent,
+        (current, total) => {
+            console.log(`Audio yükleniyor: ${current}/${total}`);
+        }
+      );
+
       // Yükleme sonrası güncel resim ID'lerini al
       if (window._imageIdMap && window._imageIdMap.size > 0) {
         console.log(
@@ -250,15 +265,15 @@ export default function PostEditor({ post, content, slug, author }: any) {
         imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
       }
 
-      const markdownContent = convertJsonToMarkdown(updatedContent);
+      const markdownContent = convertJsonToMarkdown(fullyUpdatedContent);
 
       let descriptionValue = description;
       if (
-        updatedContent &&
-        updatedContent.content &&
-        updatedContent.content.length >= 2
+        fullyUpdatedContent &&
+        fullyUpdatedContent.content &&
+        fullyUpdatedContent.content.length >= 2
       ) {
-        const descNode = updatedContent.content[1];
+        const descNode = fullyUpdatedContent.content[1];
         if (descNode && descNode.type === "description" && descNode.content) {
           // Description düğümünden metin içeriğini al
           const descText = descNode.content
@@ -516,6 +531,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
         return processYoutubeVideo(node) + "\n\n";
       case "rating":
         return processRating(node) + "\n\n";
+      case "audio":
+        return processAudio(node) + "\n\n";
       default:
         if (node.content) {
           return node.content.map(processNode).join("");
@@ -659,6 +676,21 @@ export default function PostEditor({ post, content, slug, author }: any) {
   function processRating(node: any): string {
     const score = node.attrs?.score || 0;
     return `<Rating score="${score}" />`;
+  }
+
+  function processAudio(node: any): string {
+    const src = node.attrs?.src || "";
+    const title = node.attrs?.title || "";
+    const artist = node.attrs?.artist || "";
+    
+    // HTML audio tagi qaytar
+    // Markdown-da standart audio yoxdur, ona görə də HTML işlədirik
+    let audioTag = `<audio controls src="${src}"`;
+    if (title) audioTag += ` data-title="${title}"`;
+    if (artist) audioTag += ` data-artist="${artist}"`;
+    audioTag += `></audio>`;
+    
+    return audioTag;
   }
 
   function processTextNode(node: any): string {

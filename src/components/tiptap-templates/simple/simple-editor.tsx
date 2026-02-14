@@ -15,6 +15,8 @@ import { Selection, Placeholder, Focus } from "@tiptap/extensions";
 // import Youtube from "@tiptap/extension-youtube";
 import { YoutubeNode } from "@/components/tiptap-node/youtube-node/youtube-node-extension";
 import { Rating } from "@/components/tiptap-node/rating-node/rating";
+import { AudioNode } from "@/components/tiptap-node/audio-node/audio-node-extension";
+import { AudioUploadExtension } from "@/components/tiptap-node/audio-upload-node/audio-upload-node-extension";
 
 import { Document } from "@tiptap/extension-document";
 
@@ -61,6 +63,7 @@ import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
 import { GifButton } from "@/components/tiptap-ui/gif-button";
 import { HorizontalRuleButton } from "@/components/tiptap-ui/horizontal-rule-button";
+import { AudioUploadButton } from "@/components/tiptap-ui/audio-upload-button";
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon";
@@ -76,7 +79,7 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
 
 // --- Lib ---
-import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
+import { handleImageUpload, handleAudioUpload, MAX_FILE_SIZE, MAX_AUDIO_SIZE } from "@/lib/tiptap-utils";
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
@@ -231,6 +234,7 @@ const MainToolbarContent = ({
         <GifButton />
         <MenuBar editor={editor} />
         <AudioButton onClick={onAudioClick} hasAudio={hasAudio} />
+        <AudioUploadButton editor={editor} />
         <HorizontalRuleButton />
         <RatingButton editor={editor} />
       </ToolbarGroup>
@@ -343,6 +347,7 @@ export function SimpleEditor({
   const [coverImagePreview, setCoverImagePreview] = React.useState<string>(
     initialCoverImageUrl || "",
   );
+  const [coverImageCleared, setCoverImageCleared] = React.useState(false);
   const [categories, setCategories] = React.useState<string[]>(
     selectedCategories || [],
   );
@@ -478,6 +483,14 @@ export function SimpleEditor({
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
+      AudioNode,
+      AudioUploadExtension.configure({
+        limit: 1,
+        maxSize: MAX_AUDIO_SIZE,
+        accept: "audio/*",
+        upload: handleAudioUpload,
+        onError: (error) => console.error("Audio Upload failed:", error),
+      }),
       Rating,
     ],
     autofocus: true,
@@ -593,13 +606,15 @@ export function SimpleEditor({
         setCoverImagePreview(reader.result as string);
       };
       reader.readAsDataURL(coverImage);
-    } else if (initialCoverImageUrl) {
-      // Eğer mevcut bir kapağımız varsa onu kullan
+      // Yeni cover seçildi, cleared flag-i sıfırla
+      setCoverImageCleared(false);
+    } else if (initialCoverImageUrl && !coverImageCleared) {
+      // Eğer mevcut bir kapağımız varsa ve silinmemişse onu kullan
       setCoverImagePreview(initialCoverImageUrl);
     } else {
       setCoverImagePreview("");
     }
-  }, [coverImage, initialCoverImageUrl]);
+  }, [coverImage, initialCoverImageUrl, coverImageCleared]);
 
   // Kategoriler değiştiğinde dışarıya bildir
   React.useEffect(() => {
@@ -624,6 +639,8 @@ export function SimpleEditor({
         };
         reader.readAsDataURL(file);
       }
+      // Input-u sıfırla ki, eyni faylı yenidən seçmək mümkün olsun
+      e.target.value = "";
     },
     [onCoverImageChange],
   );
@@ -640,6 +657,8 @@ export function SimpleEditor({
       onCoverImageChange(null, true);
     }
     setCoverImagePreview("");
+    setCoverImageCleared(true); // İmage silinib işarəsi
+    // Input-u tamamilə sıfırla
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -984,6 +1003,77 @@ export function SimpleEditor({
           </div>
         </EditorContext.Provider>
       </div>
+
+      {/* Fixed Audio Player - audio seçildikdə görünür */}
+      {(localAudioFile || existingAudioUrl) && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 p-4 z-50">
+          <div className="max-w-3xl mx-auto flex items-center gap-4">
+            {/* Audio icon */}
+            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-6 h-6 text-rose-500"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m9 9 10.5-3m0 6.553v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 1 1-.99-3.467l2.31-.66a2.25 2.25 0 0 0 1.632-2.163Zm0 0V2.25L9 5.25v10.303m0 0v3.75a2.25 2.25 0 0 1-1.632 2.163l-1.32.377a1.803 1.803 0 0 1-.99-3.467l2.31-.66A2.25 2.25 0 0 0 9 15.553Z"
+                />
+              </svg>
+            </div>
+
+            {/* Audio info & inputs */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={localAudioTitle}
+                  onChange={(e) => handleAudioTitleChange(e.target.value)}
+                  placeholder="Musiqi başlığı..."
+                  className="text-sm font-medium bg-transparent border-b border-zinc-200 dark:border-zinc-700 focus:border-rose-500 outline-none py-1 text-zinc-900 dark:text-white"
+                />
+                <input
+                  type="text"
+                  value={localAudioArtist}
+                  onChange={(e) => handleAudioArtistChange(e.target.value)}
+                  placeholder="İfaçı adı..."
+                  className="text-xs bg-transparent border-b border-zinc-200 dark:border-zinc-700 focus:border-rose-500 outline-none py-1 text-zinc-500 dark:text-zinc-400"
+                />
+              </div>
+              <p className="text-xs text-zinc-400 mt-1 truncate">
+                {localAudioFile ? localAudioFile.name : existingAudioUrl ? "Mövcud audio" : ""}
+              </p>
+            </div>
+
+            {/* Remove button */}
+            <button
+              type="button"
+              onClick={handleRemoveAudio}
+              className="p-2 text-zinc-400 hover:text-red-500 transition-colors"
+              title="Musiqini sil"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-5 h-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

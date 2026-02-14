@@ -13,7 +13,7 @@ export const INITIAL_POWERS: PowerState[] = [
   },
   {
     type: PowerType.SwapReveal,
-    uses: 1,
+    uses: 10,
     icon: "✨",
     label: "İpucu",
     description: "Təsadüfi bir hərf açar.",
@@ -397,7 +397,7 @@ export const LEVELS: Level[] = [
     words: [
       {
         id: "1",
-        word: "ÇINAR",
+        word: "ÇİNAR",
         x: 0,
         y: 0,
         direction: "H",
@@ -542,7 +542,7 @@ export const LEVELS: Level[] = [
     words: [
       {
         id: "1",
-        word: "MUSIQI",
+        word: "MUSİQİ",
         x: 0,
         y: 0,
         direction: "H",
@@ -716,4 +716,14 @@ export const getDailyLevelIndex = () => {
 
 export const getTodayDateKey = () => {
   return new Date().toISOString().split("T")[0]; // YYYY-MM-DD formatı
+};
+
+// Ayın son gününə 1 gün qaldığını yoxla (son gün = oyun dayanır)
+export const isMonthEndPause = () => {
+  const today = new Date();
+  const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const currentDay = today.getDate();
+  
+  // Son günə 1 gün qalmış və ya son gündə dayanır
+  return currentDay >= lastDayOfMonth;
 };
