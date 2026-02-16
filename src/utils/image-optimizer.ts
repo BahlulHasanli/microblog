@@ -1,6 +1,6 @@
 /**
  * CDN resimləri üçün responsive srcset və sizes yaradır
- * b-cdn.net bunnycdn istifadə edir və query parametrləri ilə optimize edir
+ * wasm-image-optimization istifadə edərək /api/image-optimize endpoint üzərindən optimize edir
  */
 
 export interface ImageOptimizerOptions {
@@ -18,41 +18,49 @@ export interface ResponsiveImageResult {
 }
 
 /**
- * BunnyCDN üçün resim URL-ni optimize edir
+ * Şəkil URL-ni optimize edir - WASM endpoint üzərindən
+ * SSR tərəfdə (Astro) relative URL istifadə edilir
+ */
+export function generateOptimizedUrl(
+  src: string,
+  width?: number,
+  height?: number,
+  quality: number = 80,
+  format: "webp" | "avif" | "jpeg" | "png" = "webp",
+): string {
+  if (!src || !src.includes("b-cdn.net")) {
+    return src;
+  }
+
+  const params = new URLSearchParams();
+  params.set("url", src);
+  if (width) params.set("w", width.toString());
+  if (quality) params.set("q", quality.toString());
+  if (format) params.set("f", format);
+
+  return `/api/image-optimize?${params.toString()}`;
+}
+
+/**
+ * Köhnə funksiya adı ilə geriyə uyğunluq (backward compatibility)
+ * generateBunnyCDNUrl -> generateOptimizedUrl
  */
 export function generateBunnyCDNUrl(
   src: string,
   width?: number,
   height?: number,
   quality: number = 80,
-  format: "webp" | "avif" | "auto" = "webp",
+  format: "webp" | "avif" | "auto" | "jpeg" | "png" = "webp",
 ): string {
-  if (!src.includes("b-cdn.net")) {
-    return src;
-  }
-
-  const url = new URL(src);
-  const params = new URLSearchParams(url.search);
-
-  if (width) {
-    params.set("width", width.toString());
-  }
-  if (height) {
-    params.set("height", height.toString());
-  }
-  params.set("quality", quality.toString());
-
-  // WebP formatına çevir (daha kiçik fayl ölçüsü)
-  if (format !== "auto") {
-    params.set("format", format);
-  }
-
-  // Aspect ratio yalnız hər ikisi varsa
-  if (width && height) {
-    params.set("aspect_ratio", `${width}:${height}`);
-  }
-
-  return `${url.origin}${url.pathname}?${params.toString()}`;
+  // "auto" formatı webp-yə çevir
+  const actualFormat = format === "auto" ? "webp" : format;
+  return generateOptimizedUrl(
+    src,
+    width,
+    height,
+    quality,
+    actualFormat as "webp" | "avif" | "jpeg" | "png",
+  );
 }
 
 /**
@@ -64,7 +72,7 @@ export function generateResponsiveImages(
   const { src, width = 800, quality = 80 } = options;
 
   // CDN dəstəyi yoxdursa, sadəcə original src qaytarırıq
-  if (!src.includes("b-cdn.net")) {
+  if (!src || !src.includes("b-cdn.net")) {
     return {
       src,
       srcset: src,
@@ -84,7 +92,7 @@ export function generateResponsiveImages(
   }
 
   const srcsetParts = applicableWidths.map((w) => {
-    const optimizedUrl = generateBunnyCDNUrl(
+    const optimizedUrl = generateOptimizedUrl(
       src,
       w,
       undefined,
@@ -107,7 +115,7 @@ export function generateResponsiveImages(
       .replace(/\s+/g, " ");
 
   return {
-    src: generateBunnyCDNUrl(src, width, undefined, quality, "webp"),
+    src: generateOptimizedUrl(src, width, undefined, quality, "webp"),
     srcset: srcsetParts.join(", "),
     sizes: defaultSizes,
   };

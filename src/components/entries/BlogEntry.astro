@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import { formatSimpleDate } from "@/utils/date";
 import { generateResponsiveImages, generateBunnyCDNUrl, getBlogEntrySizes, getHeroImageSizes } from "@/utils/image-optimizer";
+import { blurhashToDataURL } from "@/utils/blurhash-utils";
 
 interface Props {
   title: string;
@@ -32,6 +33,9 @@ const responsiveImageData = generateResponsiveImages({
 
 // Background blur üçün kiçik şəkil
 const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp');
+
+// Blurhash-ı instant data URL-ə çevir (ağ boşluq əvəzinə anında göstərilir)
+const blurhashDataUrl = blurhashToDataURL(blurhash);
  
 ---
  
@@ -45,7 +49,8 @@ const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp')
     
     <div class="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center">
       <a href={url} title={title} class="block w-full sm:w-1/2 shrink-0">
-        <div class="relative blurhash-container" data-blurhash={blurhash}>
+        <div class="relative blurhash-container overflow-hidden rounded-2xl" data-blurhash={blurhash}
+             style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
           {blurhash && (
             <canvas
               class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-2xl"
@@ -151,7 +156,8 @@ const blurBackgroundUrl = generateBunnyCDNUrl(image, 200, undefined, 60, 'webp')
 ) : (
   <article class="flex flex-col flex-1 h-full group">
     <a href={url} title={title} class="block">
-      <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden" data-blurhash={blurhash}>
+      <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden rounded-xl" data-blurhash={blurhash}
+           style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
         {blurhash && (
           <canvas
             class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl"

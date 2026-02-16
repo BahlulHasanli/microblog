@@ -8,6 +8,7 @@ import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
 import { generateBunnyCDNUrl, generateResponsiveImages, getHeroImageSizes, getAvatarSizes } from "@/utils/image-optimizer";
+import { blurhashToDataURL } from "@/utils/blurhash-utils";
  
 const { frontmatter } = Astro.props;
 
@@ -99,6 +100,9 @@ const heroImageData = frontmatter.image?.url ? generateResponsiveImages({
 // Avatar optimizasiyası
 const avatarUrl = frontmatter.author?.avatar ? generateBunnyCDNUrl(frontmatter.author.avatar, 96, undefined, 80) : null;
 const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontmatter.author.avatar, 48)} 48w, ${generateBunnyCDNUrl(frontmatter.author.avatar, 96)} 96w, ${generateBunnyCDNUrl(frontmatter.author.avatar, 192)} 192w` : '';
+
+// Blurhash-ı instant data URL-ə çevir
+const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
 
 ---
 <BaseLayout 
@@ -243,7 +247,8 @@ const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontma
           </div>
 
           {frontmatter.image && frontmatter.image.url && heroImageData && (
-            <div class="relative blurhash-container mt-4" data-blurhash={imageBlurhash}>
+            <div class="relative blurhash-container mt-4 overflow-hidden rounded-xl" data-blurhash={imageBlurhash}
+                 style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
               {imageBlurhash && (
                 <canvas 
                   class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl z-10" 

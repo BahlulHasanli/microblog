@@ -2,6 +2,7 @@
 import { supabase } from "@/db/supabase";
 import { formatShortDate, formatSimpleDate } from "@/utils/date";
 import { generateResponsiveImages, generateBunnyCDNUrl, getAvatarSizes, getHeroImageSizes } from "@/utils/image-optimizer";
+import { blurhashToDataURL } from "@/utils/blurhash-utils";
 
 // Supabase-dən featured postları al
 const { data: featuredPostsData, error } = await supabase
@@ -47,8 +48,11 @@ const heroImageData = backgroundImage ? generateResponsiveImages({
   sizes: getHeroImageSizes()
 }) : null;
 
-// Blur background üçün kiçik ölçülü şəkil (200px, 60% quality)
-const blurBackgroundUrl = backgroundImage ? generateBunnyCDNUrl(backgroundImage, 200, undefined, 60, 'webp') : null;
+// Arxa plan blur üçün kiçik ölçülü şəkil (ayrı URL - dublikat sorğu olmasın)
+const bgBlurUrl = backgroundImage ? generateBunnyCDNUrl(backgroundImage, 320, undefined, 50, 'webp') : null;
+
+// Blurhash-dan daha böyük data URL (sol tərəf blur üçün - ayrı network sorğusu lazım deyil)
+const blurhashBlurUrl = blurhashToDataURL(featuredPostData?.image_blurhash, 8, 6);
 
 const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveImages({
   src: featuredPost.data.author.avatar,
@@ -57,25 +61,27 @@ const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveIm
   sizes: getAvatarSizes()
 }) : null;
 
+// Blurhash instant placeholder
+const imageBlurhash = featuredPostData?.image_blurhash || null;
+const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
+
 ---
 
 {featuredPost && (
   <>
     <div class="absolute inset-0 h-[300px] sm:h-[500px] md:h-[700px] overflow-hidden -z-10">
       <img
-        src={heroImageData?.src || backgroundImage}
-        srcset={heroImageData?.srcset}
-        sizes={heroImageData?.sizes}
-        alt={featuredPost.data.title}
+        src={bgBlurUrl || backgroundImage}
+        alt=""
         loading="eager"
-        fetchpriority="high"
         decoding="async"
         class="w-full h-full object-cover opacity-40"
       />
       <div class="absolute inset-0 bg-linear-to-t from-white to-transparent backdrop-blur-xs"></div>
     </div>
 
-    <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl">
+    <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl"
+         style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
     <!-- Right Side - Hidden on mobile -->
     <div class="hidden sm:block absolute right-0 top-0 w-1/2 h-full">
         <img
@@ -92,16 +98,16 @@ const avatarImageData = featuredPost?.data.author?.avatar ? generateResponsiveIm
   
       <!-- Left Side -->
     <div class="absolute left-0 top-0 w-full sm:w-[855px] h-full z-10">
-        <!-- Mobil üçün blur arxa plan -->
+        <!-- Blur arxa plan - blurhash data URL istifadə edir (network sorğusu yoxdur) -->
         <img
-          src={blurBackgroundUrl || backgroundImage}
+          src={blurhashBlurUrl || bgBlurUrl || backgroundImage}
           alt=""
           loading="eager"
           decoding="async"
           class="sm:hidden absolute inset-0 w-full h-full object-cover blur-2xl opacity-80"
         />
         <img
-          src={blurBackgroundUrl || backgroundImage}
+          src={blurhashBlurUrl || bgBlurUrl || backgroundImage}
           alt=""
           loading="eager"
           decoding="async"

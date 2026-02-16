@@ -1,5 +1,6 @@
 ---
 import { generateResponsiveImages } from "@/utils/image-optimizer";
+import { blurhashToDataURL } from "@/utils/blurhash-utils";
 
 interface Props {
   src: string;
@@ -20,9 +21,12 @@ const responsiveImageData = generateResponsiveImages({
   quality,
   sizes: sizes || '100vw'
 });
+
+const blurhashDataUrl = blurhashToDataURL(blurhash);
 ---
 
-<div class={`blurhash-container relative overflow-hidden ${className}`} data-blurhash={blurhash}>
+<div class={`blurhash-container relative overflow-hidden ${className}`} data-blurhash={blurhash}
+     style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
   {blurhash && (
     <canvas
       class="blurhash-canvas absolute inset-0 w-full h-full object-cover"

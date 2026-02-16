@@ -2,6 +2,41 @@
   import { onMount } from 'svelte';
   import { decode } from 'blurhash';
 
+  // Blurhash-ı kiçik BMP data URL-ə çevirir (instant placeholder üçün)
+  function blurhashToDataURL(hash: string | null | undefined, w: number = 4, h: number = 3): string {
+    if (!hash) return '';
+    try {
+      const pixels = decode(hash, w, h);
+      const rowSize = Math.ceil(w * 3 / 4) * 4;
+      const pixelDataSize = rowSize * h;
+      const fileSize = 54 + pixelDataSize;
+      const buffer = new Uint8Array(fileSize);
+      const view = new DataView(buffer.buffer);
+      buffer[0] = 0x42; buffer[1] = 0x4D;
+      view.setUint32(2, fileSize, true);
+      view.setUint32(10, 54, true);
+      view.setUint32(14, 40, true);
+      view.setInt32(18, w, true);
+      view.setInt32(22, -h, true);
+      view.setUint16(26, 1, true);
+      view.setUint16(28, 24, true);
+      view.setUint32(30, 0, true);
+      view.setUint32(34, pixelDataSize, true);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const si = (y * w + x) * 4;
+          const di = 54 + y * rowSize + x * 3;
+          buffer[di] = pixels[si + 2];
+          buffer[di + 1] = pixels[si + 1];
+          buffer[di + 2] = pixels[si];
+        }
+      }
+      let binary = '';
+      for (let i = 0; i < buffer.length; i++) binary += String.fromCharCode(buffer[i]);
+      return `data:image/bmp;base64,${btoa(binary)}`;
+    } catch { return ''; }
+  }
+
   export let initialPosts: any[] = [];
   export let categories: any[] = [];
   export let sponsorBanners: any[] = [];
@@ -15,16 +50,16 @@
   let observer: IntersectionObserver;
   let loadMoreTrigger: HTMLElement;
 
-  // Şəkil optimizasiyası funksiyaları
+  // Şəkil optimizasiyası funksiyaları - WASM endpoint istifadə edir
   function generateBunnyCDNUrl(src: string, width?: number, quality: number = 80, format: string = 'webp'): string {
     if (!src || !src.includes('b-cdn.net')) return src;
     try {
-      const url = new URL(src);
-      const params = new URLSearchParams(url.search);
-      if (width) params.set('width', width.toString());
-      params.set('quality', quality.toString());
-      params.set('format', format);
-      return `${url.origin}${url.pathname}?${params.toString()}`;
+      const params = new URLSearchParams();
+      params.set('url', src);
+      if (width) params.set('w', width.toString());
+      params.set('q', quality.toString());
+      params.set('f', format);
+      return `/api/image-optimize?${params.toString()}`;
     } catch {
       return src;
     }
@@ -289,7 +324,8 @@
           
           <div class="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center">
             <a href={`/posts/${post.slug}`} title={post.data.title} class="block w-full sm:w-1/2 shrink-0">
-              <div class="relative blurhash-container" data-blurhash={post.data.blurhash}>
+              <div class="relative blurhash-container overflow-hidden rounded-2xl" data-blurhash={post.data.blurhash}
+                   style={post.data.blurhash ? `background-image:url(${blurhashToDataURL(post.data.blurhash)});background-size:cover;` : ''}>
                 {#if post.data.blurhash}
                   <canvas 
                     class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-2xl" 
@@ -365,7 +401,8 @@
       <div>
         <article class="flex flex-col flex-1 h-full group">
           <a href={`/posts/${post.slug}`} title={post.data.title} class="block">
-            <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden" data-blurhash={post.data.blurhash}>
+            <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden rounded-xl" data-blurhash={post.data.blurhash}
+                 style={post.data.blurhash ? `background-image:url(${blurhashToDataURL(post.data.blurhash)});background-size:cover;` : ''}>
               {#if post.data.blurhash}
                 <canvas 
                   class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-xl" 
