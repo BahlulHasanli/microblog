@@ -1,24 +1,13 @@
 import type { APIRoute } from "astro";
 import { supabase } from "@/db/supabase";
+import { getUserFromCookies } from "@/utils/auth";
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const accessToken = cookies.get("sb-access-token")?.value;
+    const user = await getUserFromCookies(cookies, () => null);
 
-    if (!accessToken) {
+    if (!user) {
       return new Response(JSON.stringify({ error: "Giriş tələb olunur" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(accessToken);
-
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "İstifadəçi tapılmadı" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
@@ -26,13 +15,41 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const { levelId, completionTime, playDate } = await request.json();
 
-    if (!levelId || !completionTime || !playDate) {
+    if (!levelId || completionTime == null || !playDate) {
       return new Response(JSON.stringify({ error: "Məlumat əskikdir" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
+    // Server-side validasiya
+    const today = new Date().toISOString().split("T")[0];
+    if (playDate !== today) {
+      return new Response(
+        JSON.stringify({ error: "Yalnız bugünkü tarix qəbul olunur" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (
+      typeof completionTime !== "number" ||
+      completionTime < 0 ||
+      !Number.isInteger(completionTime)
+    ) {
+      return new Response(JSON.stringify({ error: "Düzgün olmayan vaxt" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (typeof levelId !== "number" || levelId < 1) {
+      return new Response(JSON.stringify({ error: "Düzgün olmayan səviyyə" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Score-u saxla (leaderboard üçün)
     const { data, error } = await supabase
       .from("krosswordle_scores")
       .upsert(
@@ -56,6 +73,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    // Session-u 'completed' olaraq yenilə
+    await supabase
+      .from("krosswordle_sessions")
+      .update({
+        status: "completed",
+        elapsed_seconds: completionTime,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", user.id)
+      .eq("play_date", today);
 
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,

@@ -8,6 +8,7 @@
   import RolesTab from './RolesTab.svelte';
   import SharesTab from './SharesTab.svelte';
   import AdvertisementTab from './AdvertisementTab.svelte';
+  import KrossWordleTab from './KrossWordleTab.svelte';
   import { hasPermission, Permissions, DefaultRolePermissions } from '@/utils/permissions';
 
   interface Props {
@@ -16,7 +17,7 @@
 
   const { user }: Props = $props();
 
-  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' = $state('posts');
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' | 'krosswordle' = $state('posts');
   let userPermissions: string[] = $state([]);
   
   // Permission əsaslı yoxlamalar
@@ -523,6 +524,22 @@
               <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
             {/if}
           </button>
+          {#if isAdmin}
+            <button
+              onclick={() => activeTab = 'krosswordle'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'krosswordle' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                KrossWordle
+              </span>
+              {#if activeTab === 'krosswordle'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+          {/if}
         </nav>
       </div>
 
@@ -540,6 +557,8 @@
           <RolesTab canEdit={canEditRoles} />
         {:else if activeTab === 'shares'}
           <SharesTab />
+        {:else if activeTab === 'krosswordle'}
+          <KrossWordleTab />
         {:else if activeTab === 'advertisement'}
           <AdvertisementTab canEdit={canEditSettings} />
         {/if}
