@@ -6,11 +6,10 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "node scripts/generate-changelog.js && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "d": "NODE_TLS_REJECT_UNAUTHORIZED=0 bun dev",
-    "changelog": "node scripts/generate-changelog.js"
+    "d": "NODE_TLS_REJECT_UNAUTHORIZED=0 bun dev"
   },
   "dependencies": {
     "@astrojs/cloudflare": "12.6.12",
