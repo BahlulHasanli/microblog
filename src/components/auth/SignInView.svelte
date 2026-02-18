@@ -2,6 +2,7 @@
 import { navigate } from "astro:transitions/client";
 import { Toaster, toast } from 'svelte-sonner'
 import { createClient } from '@supabase/supabase-js'
+import { Eye, EyeOff } from "lucide-svelte";
 
 const supabaseClient = createClient(
   import.meta.env.PUBLIC_SUPABASE_URL, 
@@ -13,6 +14,8 @@ const supabaseClient = createClient(
     password: "",
     remember: false
  });
+
+ let showPassword = $state(false);
 
  const isSubmitting = $state({
     value: false,
@@ -149,15 +152,28 @@ const supabaseClient = createClient(
         >
           Şifrə
         </label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          placeholder="Şifrənizi daxil edin"
-          required
-          bind:value={formState.password}
-          class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
-        />
+        <div class="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            id="password"
+            name="password"
+            placeholder="Şifrənizi daxil edin"
+            required
+            bind:value={formState.password}
+            class="w-full pl-3 pr-10 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+          />
+          <button
+            type="button"
+            class="absolute cursor-pointer right-3 top-1/2 -translate-y-1/2 text-base-400 hover:text-base-600 focus:outline-none"
+            onclick={() => (showPassword = !showPassword)}
+          >
+            {#if showPassword}
+              <EyeOff size={16} />
+            {:else}
+              <Eye size={16} />
+            {/if}
+          </button>
+        </div>
       </div>
 
       <div class="flex items-center justify-end">

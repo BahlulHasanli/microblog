@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({
           "Content-Type": "application/json",
           "Retry-After": "900", // 15 dəqiqə
         },
-      }
+      },
     );
   }
 
@@ -143,7 +143,7 @@ export const POST: APIRoute = async ({
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 
@@ -160,7 +160,7 @@ export const POST: APIRoute = async ({
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 
@@ -178,7 +178,7 @@ export const POST: APIRoute = async ({
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 
@@ -194,7 +194,7 @@ export const POST: APIRoute = async ({
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   }
 
@@ -217,7 +217,7 @@ export const POST: APIRoute = async ({
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -232,7 +232,7 @@ export const POST: APIRoute = async ({
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -258,7 +258,7 @@ export const POST: APIRoute = async ({
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -276,7 +276,7 @@ export const POST: APIRoute = async ({
             "Qeydiyyat uğurla tamamlandı, ancaq avtomatik login uğursuz oldu. Zəhmət olmasa daxil olun.",
           status: 200,
         }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
+        { status: 200, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -306,7 +306,7 @@ export const POST: APIRoute = async ({
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
   } catch (error) {
     return new Response(JSON.stringify({ message: error, status: 500 }), {

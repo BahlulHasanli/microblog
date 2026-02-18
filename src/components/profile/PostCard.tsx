@@ -24,7 +24,7 @@ export default function PostCard({
 }: PostCardProps) {
   const CATEGORIES = allCategories;
   return (
-    <article className="flex flex-col h-full group relative bg-white rounded-xl border border-base-100 overflow-hidden">
+    <article className="group relative bg-white rounded-xl border border-base-100 overflow-hidden hover:border-base-200 transition-colors duration-200">
       {/* Gözləmə rejimi göstəricisi */}
       {!post.approved && isOwner && (
         <div className="absolute top-3 right-3 z-10 bg-amber-50 text-rose-700 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-amber-200">
@@ -49,74 +49,69 @@ export default function PostCard({
       <a
         href={`/posts/${post.slug}`}
         title={post.title}
-        className="block overflow-hidden"
+        className="flex flex-row gap-4 p-3 sm:p-4"
       >
-        <div className="relative w-full aspect-16/10 overflow-hidden bg-base-100">
+        {/* Thumbnail */}
+        <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-base-100">
           <img
             src={post.image}
             alt={post.title}
-            className="object-cover w-full h-full duration-500"
+            className="object-cover w-full h-full"
           />
         </div>
-      </a>
 
-      <div className="p-4 sm:p-5 flex flex-col flex-1">
-        {post.categories && post.categories.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs mb-3 flex-wrap">
-            {post.categories.map((categorySlug, index) => {
-              const categoryObj = CATEGORIES.find(
-                (cat) => cat.slug === categorySlug
-              );
-              return (
-                <a
-                  key={categorySlug}
-                  href={`/category/${categorySlug}`}
-                  className="text-rose-600 hover:text-rose-700 font-medium transition-colors"
-                >
-                  {categoryObj ? categoryObj.name : categorySlug}
-                  {index < post.categories!.length - 1 && ","}
-                </a>
-              );
-            })}
+        {/* Content */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+          <div>
+            {post.categories && post.categories.length > 0 && (
+              <div className="flex items-center gap-1.5 text-[11px] mb-1.5 flex-wrap">
+                {post.categories.map((categorySlug, index) => {
+                  const categoryObj = CATEGORIES.find(
+                    (cat) => cat.slug === categorySlug,
+                  );
+                  return (
+                    <span
+                      key={categorySlug}
+                      className="text-rose-500 font-medium"
+                    >
+                      {categoryObj ? categoryObj.name : categorySlug}
+                      {index < post.categories!.length - 1 && ","}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            <h3 className="text-sm font-semibold text-base-900 leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors duration-200">
+              {post.title}
+            </h3>
+
+            <p className="text-[12px] text-base-400 line-clamp-2 leading-relaxed mt-1 hidden sm:block">
+              {post.description}
+            </p>
           </div>
-        )}
 
-        <h3 className="text-base font-semibold text-base-900 mb-2 leading-snug line-clamp-2 flex-1">
-          <a
-            href={`/posts/${post.slug}`}
-            className="hover:text-rose-600 transition-colors text-[14px]"
-          >
-            {post.title}
-          </a>
-        </h3>
-
-        <p className="text-[13px] text-base-500 line-clamp-2 leading-relaxed mb-4">
-          {post.description}
-        </p>
-
-        <div className="flex items-center gap-2 text-xs text-base-400 pt-3 border-t border-base-100/50">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-4"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
-            />
-          </svg>
-          <span
-            className="font-medium text-base-500 text-[11px]"
-            suppressHydrationWarning
-          >
-            {formatSimpleDate(post.created_at)}
-          </span>
+          <div className="flex items-center gap-1.5 text-[11px] text-base-400 mt-auto">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-3"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
+              />
+            </svg>
+            <span className="font-medium" suppressHydrationWarning>
+              {formatSimpleDate(post.created_at)}
+            </span>
+          </div>
         </div>
-      </div>
+      </a>
     </article>
   );
 }

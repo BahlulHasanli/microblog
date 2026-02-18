@@ -93,13 +93,13 @@ export default function ProfileShareCard({
 
   const handlePrev = () => {
     setCurrentImageIndex(
-      currentImageIndex === 0 ? imageUrls.length - 1 : currentImageIndex - 1
+      currentImageIndex === 0 ? imageUrls.length - 1 : currentImageIndex - 1,
     );
   };
 
   const handleNext = () => {
     setCurrentImageIndex(
-      currentImageIndex === imageUrls.length - 1 ? 0 : currentImageIndex + 1
+      currentImageIndex === imageUrls.length - 1 ? 0 : currentImageIndex + 1,
     );
   };
 
@@ -123,7 +123,7 @@ export default function ProfileShareCard({
         const data = await response.json();
         setIsLikedLocal(newLikedState);
         setLikesCount((prev) =>
-          data.action === "added" ? prev + 1 : prev - 1
+          data.action === "added" ? prev + 1 : prev - 1,
         );
 
         // Notify parent component about like change
@@ -138,12 +138,30 @@ export default function ProfileShareCard({
 
   return (
     <>
-      <div className={`p-4 sm:p-6`}>
+      <div
+        className={`p-4 sm:p-6 transition-colors duration-200 hover:bg-slate-50/50`}
+      >
         {/* Time */}
-        <span className="text-slate-500 text-[13px]">{timeAgo}</span>
+        <span className="text-base-400 text-xs font-medium inline-flex items-center gap-1.5">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="size-3.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+          {timeAgo}
+        </span>
 
         {/* Content */}
-        <p className="mt-2 text-slate-900 text-[13px] wrap-break-word whitespace-pre-wrap">
+        <p className="mt-2.5 text-base-800 text-[13px] leading-relaxed wrap-break-word whitespace-pre-wrap">
           {share.content}
         </p>
 
@@ -159,11 +177,14 @@ export default function ProfileShareCard({
                   setIsGalleryOpen(true);
                 }}
                 className={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(index)} p-0`}
+                style={{
+                  maxHeight: displayImages.length === 1 ? "400px" : "260px",
+                }}
               >
                 <img
                   src={url}
                   alt={`Gallery image ${index + 1}`}
-                  className="w-full object-cover aspect-auto hover:opacity-90 transition-opacity"
+                  className="w-full h-full object-cover hover:opacity-90 transition-opacity"
                 />
                 {index === 3 && remainingCount > 0 && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -193,10 +214,10 @@ export default function ProfileShareCard({
         )}
 
         {/* Actions */}
-        <div className="mt-3 flex justify-between text-slate-500 text-sm">
+        <div className="mt-4 flex justify-between text-base-400 text-sm">
           <a
             href={`/shares/${share.id}`}
-            className="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors"
+            className="cursor-pointer flex items-center gap-1.5 hover:text-rose-500 transition-colors duration-200 text-xs font-medium"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -217,10 +238,10 @@ export default function ProfileShareCard({
           <button
             onClick={handleLike}
             disabled={!currentUserId}
-            className={`cursor-pointer flex items-center gap-2 transition-colors ${
+            className={`cursor-pointer flex items-center gap-1.5 transition-colors duration-200 text-xs font-medium ${
               isLiked || isLikedLocal
-                ? "text-red-500 hover:text-red-600"
-                : "hover:text-red-500"
+                ? "text-rose-500 hover:text-rose-600"
+                : "hover:text-rose-500"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <svg
@@ -268,11 +289,11 @@ export default function ProfileShareCard({
             </button>
 
             {/* Main image */}
-            <div className="relative w-full max-w-2xl px-4">
+            <div className="relative w-full max-w-3xl px-4 flex items-center justify-center">
               <img
                 src={imageUrls[currentImageIndex]}
                 alt={`Full view ${currentImageIndex + 1}`}
-                className="w-full h-auto rounded-lg"
+                className="max-w-full max-h-[85vh] object-contain rounded-lg"
               />
 
               {/* Navigation buttons */}

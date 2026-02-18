@@ -53,6 +53,24 @@ export default function ProfileTabs({
     { slug: string; name: string }[]
   >([]);
 
+  // Tab indicator
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const sharesTabRef = useRef<HTMLButtonElement>(null);
+  const postsTabRef = useRef<HTMLButtonElement>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
+  useEffect(() => {
+    const activeRef = activeTab === "shares" ? sharesTabRef : postsTabRef;
+    if (activeRef.current && tabsContainerRef.current) {
+      const containerRect = tabsContainerRef.current.getBoundingClientRect();
+      const tabRect = activeRef.current.getBoundingClientRect();
+      setIndicatorStyle({
+        left: tabRect.left - containerRect.left,
+        width: tabRect.width,
+      });
+    }
+  }, [activeTab]);
+
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -112,7 +130,7 @@ export default function ProfileTabs({
         setSharesLoadingMore(false);
       }
     },
-    [userId, sharesOffset]
+    [userId, sharesOffset],
   );
 
   useEffect(() => {
@@ -126,7 +144,6 @@ export default function ProfileTabs({
         prevShares.map((share) => {
           if (share.id === shareId) {
             if (isLiked && currentUserId) {
-              // Add like
               return {
                 ...share,
                 likes_count: (share.likes_count || 0) + 1,
@@ -136,21 +153,20 @@ export default function ProfileTabs({
                 ],
               };
             } else if (!isLiked && currentUserId) {
-              // Remove like
               return {
                 ...share,
                 likes_count: Math.max((share.likes_count || 1) - 1, 0),
                 share_likes: (share.share_likes || []).filter(
-                  (like) => like.user_id !== currentUserId
+                  (like) => like.user_id !== currentUserId,
                 ),
               };
             }
           }
           return share;
-        })
+        }),
       );
     },
-    [currentUserId]
+    [currentUserId],
   );
 
   // Intersection Observer for infinite scroll
@@ -170,7 +186,7 @@ export default function ProfileTabs({
           fetchShares(true);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (lastShareRef.current) {
@@ -187,13 +203,26 @@ export default function ProfileTabs({
   return (
     <div>
       {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-1.5 mb-6 sm:mb-8 inline-flex gap-1">
+      <div
+        ref={tabsContainerRef}
+        className="relative bg-white rounded-2xl border border-slate-100 p-1.5 mb-6 sm:mb-8 inline-flex gap-1"
+      >
+        {/* Sliding indicator */}
+        <div
+          className="absolute top-1.5 h-[calc(100%-12px)] bg-rose-500 rounded-xl transition-all duration-300 ease-out z-0"
+          style={{
+            left: `${indicatorStyle.left}px`,
+            width: `${indicatorStyle.width}px`,
+          }}
+        />
+
         {/* Dedi Tab */}
         <button
+          ref={sharesTabRef}
           onClick={() => setActiveTab("shares")}
-          className={`cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-all duration-200 ${
+          className={`relative z-10 cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-colors duration-200 ${
             activeTab === "shares"
-              ? "bg-rose-500 text-white"
+              ? "text-white"
               : "text-base-500 hover:text-base-700 hover:bg-base-50"
           }`}
         >
@@ -202,19 +231,19 @@ export default function ProfileTabs({
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="1.5"
+              strokeWidth="1.5"
               stroke="currentColor"
-              className="size-6"
+              className="size-5"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 0 1-.825-.242m9.345-8.334a2.126 2.126 0 0 0-.476-.095 48.64 48.64 0 0 0-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0 0 11.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"
               />
             </svg>
-
+            Dedi
             <span
-              className={`text-xs px-1.5 py-0.5 rounded-md ${
+              className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-colors duration-200 ${
                 activeTab === "shares" ? "bg-white/20" : "bg-base-100"
               }`}
             >
@@ -225,10 +254,11 @@ export default function ProfileTabs({
 
         {/* Məqalələr Tab */}
         <button
+          ref={postsTabRef}
           onClick={() => setActiveTab("posts")}
-          className={`cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-all duration-200 ${
+          className={`relative z-10 cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-colors duration-200 ${
             activeTab === "posts"
-              ? "bg-rose-500 text-white"
+              ? "text-white"
               : "text-base-500 hover:text-base-700 hover:bg-base-50"
           }`}
         >
@@ -237,18 +267,19 @@ export default function ProfileTabs({
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="1.5"
+              strokeWidth="1.5"
               stroke="currentColor"
-              className="size-6"
+              className="size-5"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
               />
             </svg>
+            Məqalələr
             <span
-              className={`text-xs px-1.5 py-0.5 rounded-md ${
+              className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-colors duration-200 ${
                 activeTab === "posts" ? "bg-white/20" : "bg-base-100"
               }`}
             >
@@ -292,22 +323,24 @@ export default function ProfileTabs({
 
                 {/* End of list */}
                 {!hasMoreShares && shares.length > 0 && (
-                  <div className="text-center py-4 text-xs text-base-400">
+                  <div className="text-center py-5 text-xs text-base-400 flex items-center justify-center gap-2">
+                    <div className="h-px w-8 bg-base-200" />
                     Daha çox paylaşım yoxdur
+                    <div className="h-px w-8 bg-base-200" />
                   </div>
                 )}
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-50 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="size-8 text-slate-400"
+                      className="size-7 text-rose-400"
                     >
                       <path
                         strokeLinecap="round"
@@ -319,7 +352,7 @@ export default function ProfileTabs({
                   <h3 className="text-lg font-semibold text-slate-900 mb-2">
                     Heç bir paylaşım yoxdur
                   </h3>
-                  <p className="text-base-600">
+                  <p className="text-base-500 text-sm">
                     {isOwner
                       ? "Hələ heç bir paylaşım etməmisiniz"
                       : "Bu istifadəçi hələ heç bir paylaşım etməmişdir"}
@@ -334,7 +367,7 @@ export default function ProfileTabs({
         {activeTab === "posts" && (
           <div>
             {posts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col gap-3">
                 {posts.map((post) => (
                   <PostCard
                     key={post.id}
@@ -347,18 +380,18 @@ export default function ProfileTabs({
             ) : isOwner ? (
               <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-50 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
-                      stroke-width="1.5"
+                      strokeWidth="1.5"
                       stroke="currentColor"
-                      className="size-8 text-slate-400"
+                      className="size-7 text-rose-400"
                     >
                       <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                         d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
                       />
                     </svg>
@@ -372,7 +405,7 @@ export default function ProfileTabs({
                   </p>
                   <a
                     href="/studio"
-                    className="inline-flex items-center justify-center gap-2 py-3 px-6 text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 rounded-xl border border-transparent focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-all duration-200"
+                    className="inline-flex items-center justify-center gap-2 py-3 px-6 text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 rounded-xl border border-transparent focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors duration-200"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -395,14 +428,14 @@ export default function ProfileTabs({
             ) : (
               <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-base-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-base-100 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="size-8 text-base-400"
+                      className="size-7 text-base-400"
                     >
                       <path
                         strokeLinecap="round"

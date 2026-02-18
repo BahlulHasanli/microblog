@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({
           "Content-Type": "application/json",
           "Retry-After": "900", // 15 dəqiqə
         },
-      }
+      },
     );
   }
 
@@ -91,6 +91,6 @@ export const POST: APIRoute = async ({
     {
       status: 200,
       headers: { "Content-Type": "application/json" },
-    }
+    },
   );
 };
