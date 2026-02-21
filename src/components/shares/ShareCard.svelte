@@ -148,7 +148,7 @@
   };
 </script>
 
-<div class={`p-4 sm:p-6 border-b border-slate-100`}>
+<div class={`p-4 sm:p-6 border-b border-slate-100 dark:border-base-800`}>
   <div class="flex gap-3 sm:gap-4">
     <!-- Avatar -->
     <div class="shrink-0">
@@ -165,19 +165,19 @@
       <div class="flex items-baseline gap-2 flex-wrap">
         <a
           href={`/@${user?.username}`}
-          class="font-semibold text-slate-900 hover:underline text-[14px]"
+          class="font-semibold text-slate-900 dark:text-base-50 hover:underline text-[14px]"
         >
           {user?.fullname}
         </a>
-        <span class="text-slate-500 text-[13px]">
+        <span class="text-slate-500 dark:text-base-400 text-[13px]">
           @{user?.username}
         </span>
-        <span class="text-slate-500 text-[13px]">·</span>
-        <span class="text-slate-500 text-[13px]">{timeAgo}</span>
+        <span class="text-slate-500 dark:text-base-400 text-[13px]">·</span>
+        <span class="text-slate-500 dark:text-base-400 text-[13px]">{timeAgo}</span>
       </div>
 
       <!-- Share Content -->
-      <p class="mt-2 text-slate-900 text-[13px] wrap-break-word whitespace-pre-wrap">
+      <p class="mt-2 text-slate-900 dark:text-base-50 text-[13px] wrap-break-word whitespace-pre-wrap">
         {share.content}
       </p>
 
@@ -202,10 +202,10 @@
       {/if}
 
       <!-- Actions -->
-      <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
+      <div class="mt-3 flex justify-between text-slate-500 dark:text-base-400 text-sm transition-opacity">
         <a
           href={`/shares/${share.id}`}
-          class="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors"
+          class="cursor-pointer flex items-center gap-2 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
         >
           <MessageCircle size={16} />
           <span>{share.comments_count || 0}</span>
@@ -222,7 +222,7 @@
             <span>{likesCount}</span>
           </button>
         {:else}
-          <div class="flex items-center gap-2 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+          <div class="flex items-center gap-2 text-slate-400 dark:text-base-500 cursor-not-allowed" title="Like etmək üçün daxil olun">
             <Heart size={16} />
             <span>{likesCount}</span>
           </div>

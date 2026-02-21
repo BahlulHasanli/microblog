@@ -87,7 +87,7 @@ const handleSubmit = async (e: Event) => {
   <!-- Ad Soyad (Yalnız giriş etməyənlər üçün) -->
   {#if !isLoggedIn}
     <div>
-      <label for="name" class="block text-xs font-medium text-base-700 mb-1">
+      <label for="name" class="block text-xs font-medium text-base-700 dark:text-base-300 mb-1">
         Ad Soyad
       </label>
       <input
@@ -97,7 +97,7 @@ const handleSubmit = async (e: Event) => {
         placeholder="Ad və soyadınızı daxil edin"
         required
         bind:value={formState.name}
-        class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+        class="w-full px-3 py-1.5 border border-base-200 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 dark:text-base-50 placeholder-base-400 dark:placeholder-base-500 dark:bg-base-950"
       />
     </div>
   {/if}
@@ -105,7 +105,7 @@ const handleSubmit = async (e: Event) => {
   <!-- Email -->
   {#if !isLoggedIn}
     <div>
-      <label for="email" class="block text-xs font-medium text-base-700 mb-1">
+      <label for="email" class="block text-xs font-medium text-base-700 dark:text-base-300 mb-1">
         Email
       </label>
       <input
@@ -115,14 +115,14 @@ const handleSubmit = async (e: Event) => {
         placeholder="email@the99.az"
         required
         bind:value={formState.email}
-        class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+        class="w-full px-3 py-1.5 border border-base-200 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 dark:text-base-50 placeholder-base-400 dark:placeholder-base-500 dark:bg-base-950"
       />
     </div>
   {/if}
 
   <!-- Müraciət -->
   <div>
-    <label for="message" class="block text-xs font-medium text-base-700 mb-1">
+    <label for="message" class="block text-xs font-medium text-base-700 dark:text-base-300 mb-1">
       Müraciət
     </label>
     <textarea
@@ -132,7 +132,7 @@ const handleSubmit = async (e: Event) => {
       required
       rows="6"
       bind:value={formState.message}
-      class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400 resize-none"
+      class="w-full px-3 py-1.5 border border-base-200 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 dark:text-base-50 placeholder-base-400 dark:placeholder-base-500 dark:bg-base-950 resize-none"
     ></textarea>
   </div>
 

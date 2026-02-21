@@ -86,11 +86,11 @@ export default function ProfileEditModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-md w-full p-8 relative shadow-2xl animate-slideUp">
+      <div className="bg-white dark:bg-base-900 rounded-2xl max-w-md w-full p-8 relative shadow-2xl animate-slideUp">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-6 cursor-pointer right-6 text-base-400 hover:text-base-900 transition-colors p-1 hover:bg-base-100 rounded-lg"
+          className="absolute top-6 cursor-pointer right-6 text-base-400 hover:text-base-900 dark:hover:text-base-50 transition-colors p-1 hover:bg-base-100 dark:hover:bg-base-800 rounded-lg"
           aria-label="Bağla"
         >
           <svg
@@ -109,7 +109,7 @@ export default function ProfileEditModal({
           </svg>
         </button>
 
-        <h2 className="text-xl font-semibold text-base-800 mb-8">
+        <h2 className="text-xl font-semibold text-base-800 dark:text-base-50 mb-8">
           Profili redaktə et
         </h2>
 
@@ -158,7 +158,7 @@ export default function ProfileEditModal({
             <div className="mb-5">
               <label
                 htmlFor="fullname"
-                className="block text-[13px] font-semibold text-base-900 mb-2"
+                className="block text-[13px] font-semibold text-base-900 dark:text-base-50 mb-2"
               >
                 Ad Soyad
               </label>
@@ -168,7 +168,7 @@ export default function ProfileEditModal({
                 name="fullname"
                 value={formData.fullname}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-base-300 rounded-xl text-sm
+                className="w-full px-4 py-3 border border-base-300 dark:border-base-700 dark:bg-base-950 dark:text-base-50 rounded-xl text-sm
                 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all"
                 placeholder="Adınızı daxil edin"
                 required
@@ -178,12 +178,12 @@ export default function ProfileEditModal({
             <div className="mb-8">
               <label
                 htmlFor="username"
-                className="block text-[13px] font-semibold text-base-900 mb-2"
+                className="block text-[13px] font-semibold text-base-900 dark:text-base-50 mb-2"
               >
                 İstifadəçi adı
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center text-sm pl-4 text-base-500 font-medium">
+                <span className="absolute inset-y-0 left-0 flex items-center text-sm pl-4 text-base-500 dark:text-base-400 font-medium">
                   @
                 </span>
                 <input
@@ -192,7 +192,7 @@ export default function ProfileEditModal({
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="w-full pl-8 pr-4 py-3 border border-base-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all"
+                  className="w-full pl-8 pr-4 py-3 border border-base-300 dark:border-base-700 dark:bg-base-950 dark:text-base-50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all"
                   placeholder="istifadechi_adi"
                   required
                 />
@@ -203,7 +203,7 @@ export default function ProfileEditModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-2.5 py-2.5 text-sm cursor-pointer border border-base-300 rounded-xl text-base-700 font-medium hover:bg-base-50 hover:border-base-400 transition-all"
+                className="px-2.5 py-2.5 text-sm cursor-pointer border border-base-300 dark:border-base-700 rounded-xl text-base-700 dark:text-base-300 font-medium hover:bg-base-50 dark:hover:bg-base-800 hover:border-base-400 dark:hover:border-base-600 transition-all"
               >
                 Ləğv et
               </button>

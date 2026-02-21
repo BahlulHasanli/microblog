@@ -359,14 +359,14 @@
   <!-- Back Button -->
   <a
     href="/shares"
-    class="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-6 transition-colors"
+    class="inline-flex items-center gap-2 text-slate-600 dark:text-base-400 hover:text-slate-900 dark:hover:text-base-100 mb-6 transition-colors"
   >
     <ArrowLeft size={18} />
     <span class="text-sm font-medium">Geri qayıt</span>
   </a>
 
   <!-- Share Detail -->
-  <div class="p-4 sm:p-6 border-b border-slate-100">
+  <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-base-800">
     <div>
       <div class="flex gap-3 sm:gap-4">
         <!-- Avatar -->
@@ -384,19 +384,19 @@
           <div class="flex items-baseline gap-2 flex-wrap">
             <a
               href={`/@${user?.username}`}
-              class="font-semibold text-slate-900 hover:underline text-[14px]"
+              class="font-semibold text-slate-900 dark:text-base-50 hover:underline text-[14px]"
             >
               {user?.fullname}
             </a>
-            <span class="text-slate-500 text-[13px]">
+            <span class="text-slate-500 dark:text-base-400 text-[13px]">
               @{user?.username}
             </span>
-            <span class="text-slate-500 text-[13px]">·</span>
-            <span class="text-slate-500 text-[13px]">{timeAgo}</span>
+            <span class="text-slate-500 dark:text-base-400 text-[13px]">·</span>
+            <span class="text-slate-500 dark:text-base-400 text-[13px]">{timeAgo}</span>
           </div>
 
           <!-- Share Content -->
-          <p class="mt-2 text-slate-900 text-[13px] wrap-break-word whitespace-pre-wrap">
+          <p class="mt-2 text-slate-900 dark:text-base-50 text-[13px] wrap-break-word whitespace-pre-wrap">
             {share.content}
           </p>
 
@@ -420,8 +420,8 @@
           {/if}
 
           <!-- Actions -->
-          <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
-            <button class="cursor-pointer flex items-center gap-2 hover:text-blue-500 transition-colors">
+          <div class="mt-3 flex justify-between text-slate-500 dark:text-base-400 text-sm transition-opacity">
+            <button class="cursor-pointer flex items-center gap-2 hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
               <MessageCircle size={16} />
               <span>{allComments.length}</span>
             </button>
@@ -437,7 +437,7 @@
                 <span>{likesCount}</span>
               </button>
             {:else}
-              <div class="flex items-center gap-2 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+              <div class="flex items-center gap-2 text-slate-400 dark:text-base-500 cursor-not-allowed" title="Like etmək üçün daxil olun">
                 <Heart size={16} />
                 <span>{likesCount}</span>
               </div>
@@ -463,7 +463,7 @@
             <textarea
               bind:value={commentText}
               placeholder="Cavab yaz..."
-              class="w-full p-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none"
+              class="w-full p-2 text-sm border border-slate-200 dark:border-base-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-base-50 resize-none bg-white dark:bg-base-950 text-base-900 dark:text-base-50 placeholder:text-slate-400 dark:placeholder:text-base-500 transition-colors"
               rows={3}
               disabled={isCommentLoading}
             ></textarea>
@@ -471,7 +471,7 @@
               <button
                 type="submit"
                 disabled={isCommentLoading || !commentText.trim()}
-                class="px-3 py-1.5 text-sm bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                class="px-3 py-1.5 text-sm cursor-pointer bg-slate-900 dark:bg-base-50 text-white dark:text-base-900 rounded-lg font-medium hover:bg-slate-800 dark:hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isCommentLoading ? "Göndərilir..." : "Göndər"}
               </button>
@@ -480,9 +480,9 @@
         </div>
       </form>
     {:else}
-      <div class="p-3 bg-slate-50 rounded-lg text-center text-sm text-slate-600 mb-6">
+      <div class="p-3 bg-slate-50 dark:bg-base-800/50 border border-slate-100 dark:border-base-800 rounded-lg text-center text-sm text-slate-600 dark:text-base-400 mb-6">
         Şərh yazmaq üçün
-        <a href="/signin" class="text-blue-600 hover:underline">
+        <a href="/signin" class="text-blue-600 dark:text-blue-400 hover:underline">
           daxil olun
         </a>
       </div>
@@ -491,13 +491,13 @@
     <!-- Comments List -->
     <div class="space-y-6" bind:this={commentsContainer}>
       {#if parentComments.length === 0}
-        <div class="text-center py-8 text-slate-500 text-[13px]">
+        <div class="text-center py-8 text-slate-500 dark:text-base-500 text-[13px]">
           Hələ şərh yoxdur
         </div>
       {:else}
         {#each parentComments as comment (comment.id)}
           {@const { commentUser, replies, isNested } = renderCommentThread(comment, 0)}
-          <div class="p-4 sm:p-6 border-b border-slate-100 last:border-b-0!">
+          <div class="p-4 sm:p-6 border-b border-slate-100 dark:border-base-800 last:border-b-0!">
             <div class="flex gap-3 sm:gap-4">
               <img
                 src={commentUser?.avatar}
@@ -508,17 +508,17 @@
                 <div class="flex items-baseline gap-2 flex-wrap">
                   <a
                     href={`/@${commentUser?.username}`}
-                    class="font-semibold text-slate-900 hover:underline text-[14px]"
+                    class="font-semibold text-slate-900 dark:text-base-50 hover:underline text-[14px]"
                   >
                     {commentUser?.fullname}
                   </a>
-                  <span class="text-slate-500 text-[13px]">
+                  <span class="text-slate-500 dark:text-base-400 text-[13px]">
                     @{commentUser?.username}
                   </span>
-                  <span class="text-slate-500 text-[13px]">·</span>
+                  <span class="text-slate-500 dark:text-base-400 text-[13px]">·</span>
                   <a
                     href={`/shares/${share.id}/comment/${comment.id}`}
-                    class="text-slate-500 hover:text-slate-900 text-[13px]"
+                    class="text-slate-500 dark:text-base-400 hover:text-slate-900 dark:hover:text-base-100 text-[13px]"
                   >
                     {formatDistanceToNow(new Date(comment.created_at), {
                       locale: az,
@@ -526,10 +526,10 @@
                     })}
                   </a>
                 </div>
-                <p class="mt-2 text-slate-900 whitespace-pre-wrap text-[13px]">
+                <p class="mt-2 text-slate-900 dark:text-base-50 whitespace-pre-wrap text-[13px]">
                   {comment.content}
                 </p>
-                <div class="mt-3 flex justify-between text-slate-500 text-sm transition-opacity">
+                <div class="mt-3 flex justify-between text-slate-500 dark:text-base-400 text-sm transition-opacity">
                   <a
                     href={`/shares/${share.id}/comment/${comment.id}`}
                     class="hover:text-blue-500 transition-colors inline-flex items-center gap-1"
@@ -553,7 +553,7 @@
                       <span>{commentLikesCounts.get(comment.id) || 0}</span>
                     </button>
                   {:else}
-                    <div class="inline-flex items-center gap-1 text-slate-400 cursor-not-allowed" title="Like etmək üçün daxil olun">
+                    <div class="inline-flex items-center gap-1 text-slate-400 dark:text-base-500 cursor-not-allowed" title="Like etmək üçün daxil olun">
                       <Heart size={16} />
                       <span>{commentLikesCounts.get(comment.id) || 0}</span>
                     </div>

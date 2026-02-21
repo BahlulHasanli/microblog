@@ -146,19 +146,19 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       <div class="lg:text-center">
         <div class="max-w-xl mx-auto">
           <div class="flex items-center justify-center gap-2 mb-2">
-            <span class="text-sm font-medium text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-full">
+            <span class="text-sm font-medium text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">
               {readTime} dəq oxuma vaxtı
             </span>
           </div>
           <h1
-            class="text-4xl text-balance font-nouvelr-semibold text-base-900"
+            class="text-4xl text-balance font-nouvelr-semibold text-base-900 dark:text-base-50"
           >
             {frontmatter.title}
           </h1>
           
           {/* Gözləmə rejimi göstəricisi */}
           {!frontmatter.approved && frontmatter.isOwner && (
-            <div class="mt-3 inline-flex items-center gap-2 bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-lg text-sm font-semibold">
+            <div class="mt-3 inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 px-3 py-1.5 rounded-lg text-sm font-semibold">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
@@ -167,7 +167,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
             </div>
           )}
           
-          <p class="max-w-2xl mx-auto mt-4 text-zinc-500 text-sm font-nouvelr">
+          <p class="max-w-2xl mx-auto mt-4 text-zinc-500 dark:text-zinc-400 text-sm font-nouvelr">
             {frontmatter.description}
           </p>
         </div>
@@ -188,7 +188,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
                 class="squircle size-24 object-cover cursor-pointer"
               />
             </button>
-            <div class="absolute -bottom-2 -right-2 bg-white rounded-full px-2 py-1 shadow-md flex items-center gap-1 text-xs text-zinc-600" data-post-id={postId}>
+            <div class="absolute -bottom-2 -right-2 bg-white dark:bg-base-900 rounded-full px-2 py-1 flex items-center gap-1 text-xs text-zinc-600 dark:text-zinc-400" data-post-id={postId}>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3 animate-pulse">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.573-3.007-9.963-7.178Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -209,9 +209,9 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
          </div>
           <div class="mt-3">
             <a href={`/@${frontmatter.author?.username}`} class="hover:text-rose-600 transition-colors">
-              <span class="text-md font-medium text-base-700">{frontmatter.author?.fullname}</span>
+              <span class="text-md font-medium text-base-700 dark:text-base-300">{frontmatter.author?.fullname}</span>
             </a>
-            <p class="text-xs text-zinc-400">
+            <p class="text-xs text-zinc-400 dark:text-zinc-500">
               {formatSimpleDate(frontmatter.pubDate)}
             </p>
           </div>
@@ -224,7 +224,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
                 (frontmatter.categories || []).map((categorySlug: string) => {
                   const categoryObj = CATEGORIES.find((cat: { slug: string; name: string }) => cat.slug === categorySlug);
                   return (
-                    <span class="hover:text-blue-500 text-sm font-medium text-base-600">
+                    <span class="hover:text-blue-500 text-sm font-medium text-base-600 dark:text-base-400">
                       <a href={`/category/${categorySlug}`}>{categoryObj ? categoryObj.name : categorySlug}</a>
                     </span>
                   );
@@ -273,7 +273,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
         </div>
       </div>
 
-      <div class="prose prose-sm max-w-md mt-12 mx-auto" id="post-content">
+      <div class="prose prose-sm dark:prose-invert max-w-md mt-12 mx-auto" id="post-content">
         <slot />
       </div>
 

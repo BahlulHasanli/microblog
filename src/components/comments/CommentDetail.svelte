@@ -101,7 +101,7 @@
 <div class="max-w-2xl mx-auto px-4 py-8">
   <!-- Post info -->
   {#if postTitle}
-    <div class="mb-6 pb-6 border-b border-zinc-100">
+    <div class="mb-6 pb-6 border-b border-zinc-100 dark:border-base-800">
       <div class="flex gap-4">
         {#if postImage}
           <a 
@@ -117,11 +117,11 @@
         {/if}
         <div class="flex-grow">
           <a href={`/posts/${postSlug}`} class="group">
-            <h2 class="text-lg font-nouvelr-semibold text-base-800 group-hover:text-rose-600 transition-colors">
+            <h2 class="text-lg font-nouvelr-semibold text-base-800 dark:text-base-50 group-hover:text-rose-600 transition-colors">
               {postTitle}
             </h2>
             {#if postDescription}
-              <p class="text-sm text-zinc-600 font-nouvelr mt-2 line-clamp-2">
+              <p class="text-sm text-zinc-600 dark:text-zinc-400 font-nouvelr mt-2 line-clamp-2">
                 {postDescription}
               </p>
             {/if}
@@ -146,7 +146,7 @@
   <!-- Back button -->
   <a 
     href={backUrl}
-    class="inline-flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 mb-6 font-nouvelr"
+    class="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 mb-6 font-nouvelr"
   >
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
       <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -155,7 +155,7 @@
   </a>
 
   <!-- Main Comment -->
-  <div class="border-b border-zinc-100 pb-6">
+  <div class="border-b border-zinc-100 dark:border-base-800 pb-6">
     <div class="flex items-start gap-3">
       <div class="flex-shrink-0">
         {#if comment.user_id && comment.user_avatar}
@@ -174,12 +174,12 @@
           <button
             type="button"
             onclick={() => navigateToProfile(comment.user_name)}
-            class="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-100 text-zinc-700 font-nouvelr-semibold cursor-pointer hover:opacity-80 transition-opacity"
+            class="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-100 dark:bg-base-800 text-zinc-700 dark:text-base-300 font-nouvelr-semibold cursor-pointer hover:opacity-80 transition-opacity"
           >
             {(comment.user_fullname || comment.user_name).charAt(0).toUpperCase()}
           </button>
         {:else}
-          <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-100 text-zinc-700 font-nouvelr-semibold text-xl">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-100 dark:bg-base-800 text-zinc-700 dark:text-base-300 font-nouvelr-semibold text-xl">
             {(comment.user_fullname || 'Q').charAt(0).toUpperCase()}
           </div>
         {/if}
@@ -193,12 +193,12 @@
                 onclick={() => navigateToProfile(comment.user_name)}
                 class="cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
               >
-                <h4 class="font-nouvelr-semibold text-base-800 text-lg">{comment.user_fullname || comment.user_name}</h4>
+                <h4 class="font-nouvelr-semibold text-base-800 dark:text-base-50 text-lg">{comment.user_fullname || comment.user_name}</h4>
               </button>
               <button
                 type="button"
                 onclick={() => navigateToProfile(comment.user_name)}
-                class="text-sm text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
+                class="text-sm text-zinc-500 dark:text-zinc-400 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
               >
                 @{comment.user_name}
               </button>
@@ -211,14 +211,14 @@
           </div>
           <span class="text-sm text-zinc-400 font-nouvelr">{formatSimpleDate(comment.created_at)}</span>
         </div>
-        <p class="mt-3 text-base-700 font-display text-[14px]">{comment.content}</p>
+        <p class="mt-3 text-base-700 dark:text-base-300 font-display text-[14px]">{comment.content}</p>
       </div>
     </div> 
   </div>
   
   {#if user}
   <!-- Reply Form -->
-    <div class="mt-6 border-b border-zinc-100 pb-6">
+    <div class="mt-6 border-b border-zinc-100 dark:border-base-800 pb-6">
         <CommentForm 
           {postSlug} 
           {user}
@@ -261,12 +261,12 @@
                       e.stopPropagation();
                       navigateToProfile(reply.user_name);
                     }}
-                    class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                    class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 dark:bg-base-800 text-base-700 dark:text-base-300 font-nouvelr-semibold cursor-pointer hover:opacity-80 transition-opacity"
                   >
                     {(reply.user_fullname || reply.user_name).charAt(0).toUpperCase()}
                   </button>
                 {:else}
-                  <div class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold">
+                  <div class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 dark:bg-base-800 text-base-700 dark:text-base-300 font-nouvelr-semibold">
                     {(reply.user_fullname || 'Q').charAt(0).toUpperCase()}
                   </div>
                 {/if}
@@ -283,7 +283,7 @@
                         }}
                         class="cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
                       >
-                        <h4 class="font-nouvelr-semibold text-base-800">{reply.user_fullname || reply.user_name}</h4>
+                        <h4 class="font-nouvelr-semibold text-base-800 dark:text-base-50">{reply.user_fullname || reply.user_name}</h4>
                       </button>
                       <button
                         type="button"
@@ -291,14 +291,14 @@
                           e.stopPropagation();
                           navigateToProfile(reply.user_name);
                         }}
-                        class="block w-full text-xs text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
+                        class="block w-full text-xs text-zinc-500 dark:text-zinc-400 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
                       >
                         @{reply.user_name}
                       </button>
                     {:else}
                       <div class="text-left">
-                        <h4 class="font-nouvelr-semibold text-base-800">{reply.user_fullname || reply.user_name}</h4>
-                        <span class="text-xs text-zinc-500 font-nouvelr block w-full">Qonaq</span>
+                        <h4 class="font-nouvelr-semibold text-base-800 dark:text-base-50">{reply.user_fullname || reply.user_name}</h4>
+                        <span class="text-xs text-zinc-500 dark:text-zinc-400 font-nouvelr block w-full">Qonaq</span>
                       </div>
                     {/if}
                   </div>
@@ -307,16 +307,16 @@
                 <button
                   type="button"
                   onclick={() => navigate(`/posts/comment/${postSlug}/${reply.id}`)}
-                  class="w-full text-left cursor-pointer hover:bg-zinc-50 transition-colors rounded p-2 -ml-2"
+                  class="w-full text-left cursor-pointer hover:bg-zinc-50 dark:hover:bg-base-800/50 transition-colors rounded p-2 -ml-2"
                 >
-                  <p class="mt-2 text-base-700 font-display text-[14px]">{reply.content}</p>
+                  <p class="mt-2 text-base-700 dark:text-base-300 font-display text-[14px]">{reply.content}</p>
                 </button>
 
                 <div class="flex items-center gap-5">
                   <button
                     type="button"
                     onclick={() => navigate(`/posts/comment/${postSlug}/${reply.id}`)}
-                    class="mt-3 flex items-center gap-2 text-xs text-blue-600 font-display hover:text-blue-300 cursor-pointer"
+                    class="mt-3 flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-display hover:text-blue-300 cursor-pointer"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />

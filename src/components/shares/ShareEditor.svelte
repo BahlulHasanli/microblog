@@ -233,14 +233,14 @@
   };
 </script>
 
-<div class="w-full border-b border-slate-100 p-3 sm:p-4">
+<div class="w-full border-b border-slate-100 dark:border-base-800 p-3 sm:p-4 transition-colors">
   <form onsubmit={handleSubmit} class="space-y-3">
     <textarea
       bind:value={content}
       placeholder="Nə düşünürsən?"
       maxlength={500}
       disabled={isLoading}
-      class="w-full p-2 sm:p-3 text-sm border border-slate-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-slate-900 disabled:opacity-50"
+      class="w-full p-2 sm:p-3 text-sm border border-slate-200 dark:border-base-800 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-base-50 disabled:opacity-50 text-base-900 dark:text-base-50 bg-white dark:bg-base-950 placeholder:text-slate-400 dark:placeholder:text-base-500 transition-colors"
       rows={2}
     ></textarea>
     {#if images.length > 0}
@@ -250,7 +250,7 @@
             <img
               src={image.preview}
               alt={`Preview ${index + 1}`}
-              class="max-h-32 w-full object-cover rounded-lg border border-slate-200"
+              class="max-h-32 w-full object-cover rounded-lg border border-slate-200 dark:border-base-800"
             />
             <button
               type="button"
@@ -287,10 +287,10 @@
     {/if}
 
     {#if showYoutubeInput && !youtubeUrl}
-      <div class="bg-slate-50 rounded-lg p-3 border border-slate-200">
+      <div class="bg-slate-50 dark:bg-base-800/50 rounded-lg p-3 border border-slate-200 dark:border-base-800 transition-colors">
         <div class="flex items-center gap-2 mb-2">
-          <Play size={14} class="text-red-600" />
-          <span class="text-xs font-medium text-slate-600">
+          <Play size={14} class="text-rose-600 dark:text-rose-500" />
+          <span class="text-xs font-medium text-slate-600 dark:text-base-400">
             YouTube Video
           </span>
         </div>
@@ -300,7 +300,7 @@
             placeholder="youtu.be/... yaxud youtube.com/watch?v=..."
             bind:value={youtubeUrl}
             onchange={(e) => handleYoutubeUrlChange((e.target as HTMLInputElement).value)}
-            class="flex-1 p-2 text-sm border border-slate-300 rounded bg-white focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 placeholder:text-slate-400"
+            class="flex-1 p-2 text-sm border border-slate-300 dark:border-base-700 rounded bg-white dark:bg-base-900 text-base-900 dark:text-base-50 focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-rose-500 placeholder:text-slate-400 dark:placeholder:text-base-500 transition-colors"
             disabled={isLoading}
             autofocus
           />
@@ -308,7 +308,7 @@
             type="button"
             onclick={handleAddYoutubeVideo}
             disabled={isLoading || !youtubeUrl.trim()}
-            class="cursor-pointer px-3 py-2 text-xs bg-red-600 text-white rounded font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="cursor-pointer px-3 py-2 text-xs bg-rose-600 dark:bg-rose-500 text-white rounded font-medium hover:bg-rose-700 dark:hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Əlavə et
           </button>
@@ -319,7 +319,7 @@
               youtubeUrl = "";
             }}
             disabled={isLoading}
-            class="cursor-pointer px-3 py-2 text-xs bg-white text-slate-600 border border-slate-300 rounded font-medium hover:bg-slate-100 disabled:opacity-50 transition-colors"
+            class="cursor-pointer px-3 py-2 text-xs bg-white dark:bg-base-900 text-slate-600 dark:text-base-300 border border-slate-300 dark:border-base-700 rounded font-medium hover:bg-slate-100 dark:hover:bg-base-800 disabled:opacity-50 transition-colors"
           >
             Ləğv et
           </button>
@@ -329,8 +329,8 @@
 
     <div class="flex items-center justify-between gap-2">
       <div class="flex items-center gap-2">
-        <label class="cursor-pointer p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-          <Image size={16} class="text-slate-600" />
+        <label class="cursor-pointer p-1.5 hover:bg-slate-100 dark:hover:bg-base-800 rounded-lg transition-colors">
+          <Image size={16} class="text-slate-600 dark:text-base-400" />
           <input
             type="file"
             accept="image/*"
@@ -345,10 +345,10 @@
           type="button"
           onclick={() => (showYoutubeInput = !showYoutubeInput)}
           disabled={isLoading || !!youtubeUrl}
-          class="cursor-pointer p-1.5 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="cursor-pointer p-1.5 hover:bg-slate-100 dark:hover:bg-base-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="YouTube video əlavə et"
         >
-          <Play size={16} class="text-red-600" />
+          <Play size={16} class="text-rose-600 dark:text-rose-500" />
         </button>
       </div>
       <div class="flex items-center gap-4">
@@ -366,7 +366,7 @@
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
-                class="text-slate-200"
+                class="text-slate-200 dark:text-base-800"
               />
               <!-- Progress circle -->
               <circle
@@ -379,10 +379,10 @@
                 stroke-dasharray={`${(content.length / 500) * 88} 88`}
                 class={`transition-all duration-300 ${
                   content.length > 450
-                    ? "text-red-500"
+                    ? "text-rose-500 dark:text-rose-400"
                     : content.length > 400
-                      ? "text-yellow-500"
-                      : "text-slate-900"
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-slate-900 dark:text-base-400"
                 }`}
               />
             </svg>
@@ -392,7 +392,7 @@
         <button
           type="submit"
           disabled={isLoading || !content.trim()}
-          class="cursor-pointer px-3 sm:px-4 py-1.5 text-sm bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="cursor-pointer px-3 sm:px-4 py-1.5 text-sm bg-slate-900 dark:bg-base-50 text-white dark:text-base-900 rounded-lg font-medium hover:bg-slate-800 dark:hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {#if isLoading}
             Göndərilir...
@@ -416,7 +416,7 @@
       </div>
     </div>
     {#if error}
-      <div class="p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">
+      <div class="p-2 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 rounded-lg text-rose-700 dark:text-rose-400 text-xs mt-3">
         {error}
       </div>
     {/if}

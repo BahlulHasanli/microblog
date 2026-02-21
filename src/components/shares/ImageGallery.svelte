@@ -119,7 +119,8 @@
     {#each displayImages() as image, index} 
       <button
         type="button"
-        class={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(
+        style="max-height: {displayImages().length === 1 ? '400px' : '260px'}"
+        class={`relative cursor-pointer bg-slate-100 dark:bg-base-900 overflow-hidden ${getBorderRadiusClass(
           index
         )} border-0 p-0`}
         onclick={() => {
@@ -138,7 +139,7 @@
         <img
           src={image.url}
           alt={`Gallery image ${index + 1}`}
-          class={`w-full object-cover aspect-auto transition-opacity ${loadedImages.has(index) ? 'opacity-100' : 'opacity-0'}`}
+          class={`w-full h-full object-cover hover:opacity-90 transition-opacity ${loadedImages.has(index) ? 'opacity-100' : 'opacity-0'}`}
           onload={() => handleImageLoad(index)}
         />
 
@@ -159,33 +160,33 @@
         <!-- Close button -->
         <button
           onclick={() => (isOpen = false)}
-          class="cursor-pointer absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors z-10"
+          class="cursor-pointer absolute top-4 right-4 p-2 bg-white dark:bg-base-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-base-800 transition-colors z-10"
         >
-          <X size={24} class="text-black" />
+          <X size={24} class="text-black dark:text-white" />
         </button>
 
         <!-- Main image -->
-        <div class="relative w-full max-w-2xl px-4">
+        <div class="relative w-full max-w-3xl px-4 flex items-center justify-center">
           <img
             src={normalizedImages()[currentIndex]?.url}
             alt={`Full view ${currentIndex + 1}`}
-            class="w-full h-auto rounded-lg"
+            class="max-w-full max-h-[85vh] object-contain rounded-lg"
           />
 
           <!-- Navigation buttons -->
           {#if normalizedImages().length > 1}
             <button
               onclick={handlePrev}
-              class="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors"
+              class="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 p-2 bg-white dark:bg-base-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
             >
-              <ChevronLeft size={24} class="text-black" />
+              <ChevronLeft size={24} class="text-black dark:text-white" />
             </button>
 
             <button
               onclick={handleNext}
-              class="cursor-pointer absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors"
+              class="cursor-pointer absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 p-2 bg-white dark:bg-base-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
             >
-              <ChevronRight size={24} class="text-black" />
+              <ChevronRight size={24} class="text-black dark:text-white" />
             </button>
           {/if}
 
@@ -196,8 +197,8 @@
                 <button
                   type="button"
                   onclick={() => (currentIndex = index)}
-                  class={`w-2 h-2 rounded-full cursor-pointer transition-all ${
-                    index === currentIndex ? 'bg-white w-6' : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                  class={`h-2 rounded-full cursor-pointer transition-all ${
+                    index === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/75 w-2'
                   }`}
                   aria-label={`Go to image ${index + 1}`}
                 ></button>

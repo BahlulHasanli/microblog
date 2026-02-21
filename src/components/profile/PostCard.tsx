@@ -24,10 +24,10 @@ export default function PostCard({
 }: PostCardProps) {
   const CATEGORIES = allCategories;
   return (
-    <article className="group relative bg-white rounded-xl border border-base-100 overflow-hidden hover:border-base-200 transition-colors duration-200">
+    <article className="group relative bg-white dark:bg-base-900 rounded-xl border border-base-100 dark:border-base-800 overflow-hidden hover:border-base-200 dark:hover:border-base-700 transition-colors duration-200">
       {/* Gözləmə rejimi göstəricisi */}
       {!post.approved && isOwner && (
-        <div className="absolute top-3 right-3 z-10 bg-amber-50 text-rose-700 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-amber-200">
+        <div className="absolute top-3 right-3 z-10 bg-amber-50 dark:bg-amber-900/20 text-rose-700 dark:text-rose-400 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-amber-200 dark:border-amber-900/50">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -52,7 +52,7 @@ export default function PostCard({
         className="flex flex-row gap-4 p-3 sm:p-4"
       >
         {/* Thumbnail */}
-        <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-base-100">
+        <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-base-100 dark:bg-base-800">
           <img
             src={post.image}
             alt={post.title}
@@ -82,16 +82,16 @@ export default function PostCard({
               </div>
             )}
 
-            <h3 className="text-sm font-semibold text-base-900 leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors duration-200">
+            <h3 className="text-sm font-semibold text-base-900 dark:text-base-50 leading-snug line-clamp-2 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors duration-200">
               {post.title}
             </h3>
 
-            <p className="text-[12px] text-base-400 line-clamp-2 leading-relaxed mt-1 hidden sm:block">
+            <p className="text-[12px] text-base-400 dark:text-base-500 line-clamp-2 leading-relaxed mt-1 hidden sm:block">
               {post.description}
             </p>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[11px] text-base-400 mt-auto">
+          <div className="flex items-center gap-1.5 text-[11px] text-base-400 dark:text-base-500 mt-auto">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"

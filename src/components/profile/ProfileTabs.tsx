@@ -205,7 +205,7 @@ export default function ProfileTabs({
       {/* Tabs */}
       <div
         ref={tabsContainerRef}
-        className="relative bg-white rounded-2xl border border-slate-100 p-1.5 mb-6 sm:mb-8 inline-flex gap-1"
+        className="relative bg-white dark:bg-base-900 rounded-2xl border border-slate-100 dark:border-base-800 p-1.5 mb-6 sm:mb-8 inline-flex gap-1"
       >
         {/* Sliding indicator */}
         <div
@@ -223,7 +223,7 @@ export default function ProfileTabs({
           className={`relative z-10 cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-colors duration-200 ${
             activeTab === "shares"
               ? "text-white"
-              : "text-base-500 hover:text-base-700 hover:bg-base-50"
+              : "text-base-500 dark:text-base-400 hover:text-base-700 dark:hover:text-base-200 hover:bg-base-50 dark:hover:bg-base-800"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -244,7 +244,7 @@ export default function ProfileTabs({
             Dedi
             <span
               className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-colors duration-200 ${
-                activeTab === "shares" ? "bg-white/20" : "bg-base-100"
+                activeTab === "shares" ? "bg-white/20" : "bg-base-100 dark:bg-base-800 dark:text-base-300"
               }`}
             >
               {shares.length}
@@ -259,7 +259,7 @@ export default function ProfileTabs({
           className={`relative z-10 cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-colors duration-200 ${
             activeTab === "posts"
               ? "text-white"
-              : "text-base-500 hover:text-base-700 hover:bg-base-50"
+              : "text-base-500 dark:text-base-400 hover:text-base-700 dark:hover:text-base-200 hover:bg-base-50 dark:hover:bg-base-800"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -280,7 +280,7 @@ export default function ProfileTabs({
             Məqalələr
             <span
               className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-colors duration-200 ${
-                activeTab === "posts" ? "bg-white/20" : "bg-base-100"
+                activeTab === "posts" ? "bg-white/20" : "bg-base-100 dark:bg-base-800 dark:text-base-300"
               }`}
             >
               {posts.length}
@@ -296,10 +296,10 @@ export default function ProfileTabs({
           <div>
             {sharesLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-2 border-base-200 border-t-rose-500 rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-2 border-base-200 dark:border-base-800 border-t-rose-500 rounded-full animate-spin"></div>
               </div>
             ) : shares.length > 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-100 divide-y divide-slate-100">
+              <div className="bg-white dark:bg-base-900 rounded-2xl border border-slate-100 dark:border-base-800 divide-y divide-slate-100 dark:divide-base-800">
                 {shares.map((share, index) => (
                   <div
                     key={share.id}
@@ -317,23 +317,23 @@ export default function ProfileTabs({
                 {/* Loading more indicator */}
                 {sharesLoadingMore && (
                   <div className="flex items-center justify-center py-6">
-                    <div className="w-6 h-6 border-2 border-base-200 border-t-rose-500 rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-2 border-base-200 dark:border-base-800 border-t-rose-500 rounded-full animate-spin"></div>
                   </div>
                 )}
 
                 {/* End of list */}
                 {!hasMoreShares && shares.length > 0 && (
-                  <div className="text-center py-5 text-xs text-base-400 flex items-center justify-center gap-2">
-                    <div className="h-px w-8 bg-base-200" />
+                  <div className="text-center py-5 text-xs text-base-400 dark:text-base-500 flex items-center justify-center gap-2">
+                    <div className="h-px w-8 bg-base-200 dark:bg-base-800" />
                     Daha çox paylaşım yoxdur
-                    <div className="h-px w-8 bg-base-200" />
+                    <div className="h-px w-8 bg-base-200 dark:bg-base-800" />
                   </div>
                 )}
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
+              <div className="bg-white dark:bg-base-900 rounded-2xl border border-base-200 dark:border-base-800 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-50 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/30 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -349,10 +349,10 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-base-50 mb-2">
                     Heç bir paylaşım yoxdur
                   </h3>
-                  <p className="text-base-500 text-sm">
+                  <p className="text-base-500 dark:text-base-400 text-sm">
                     {isOwner
                       ? "Hələ heç bir paylaşım etməmisiniz"
                       : "Bu istifadəçi hələ heç bir paylaşım etməmişdir"}
@@ -378,9 +378,9 @@ export default function ProfileTabs({
                 ))}
               </div>
             ) : isOwner ? (
-              <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
+              <div className="bg-white dark:bg-base-900 rounded-2xl border border-slate-100 dark:border-base-800 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-50 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/30 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -396,10 +396,10 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-base-50 mb-2">
                     Hələ heç bir məqalə yazmamısınız
                   </h3>
-                  <p className="text-slate-600 text-[14px] mb-6">
+                  <p className="text-slate-600 dark:text-base-400 text-[14px] mb-6">
                     İlk məqalənizi yazmaq üçün "Yeni məqalə yaz" düyməsinə
                     klikləyin
                   </p>
@@ -426,9 +426,9 @@ export default function ProfileTabs({
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-base-200 p-12 text-center">
+              <div className="bg-white dark:bg-base-900 rounded-2xl border border-base-200 dark:border-base-800 p-12 text-center">
                 <div className="max-w-sm mx-auto">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-base-100 mb-4">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-base-100 dark:bg-base-800 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -444,10 +444,10 @@ export default function ProfileTabs({
                       />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-base-900 mb-2">
+                  <h3 className="text-xl font-semibold text-base-900 dark:text-base-50 mb-2">
                     Heç bir məqalə yoxdur
                   </h3>
-                  <p className="text-base-600">
+                  <p className="text-base-600 dark:text-base-400">
                     Bu istifadəçi hələ heç bir məqalə yazmamışdır
                   </p>
                 </div>

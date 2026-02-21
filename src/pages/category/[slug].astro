@@ -84,7 +84,8 @@ const sortedPosts = (filteredPosts || []).map(post => ({
     },
     blurhash: post.image_blurhash || null,
     categories: post.categories || [],
-    author: post.users
+    author: post.users,
+    hasAudio: post.content ? post.content.includes('<audio') : false
   }
 }));
 
@@ -174,6 +175,7 @@ const olderImage = older.find(cat => cat.category === category.slug)?.older
               author={post.data.author}
               blurhash={post.data.blurhash}
               allCategories={categories}
+              hasAudio={post.data.hasAudio}
             />
           ))}
         </div>

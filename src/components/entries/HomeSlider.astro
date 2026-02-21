@@ -78,12 +78,12 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
           decoding="async"
           class="w-full h-full object-cover opacity-30"
         />
-        <div class="absolute inset-0 bg-linear-to-t from-white to-transparent backdrop-blur-sm"></div>
+        <div class="absolute inset-0 bg-linear-to-t from-white dark:from-base-950 to-transparent backdrop-blur-sm"></div>
       </div>
 
     {featuredPost.data.hasAudio ? (
       <!-- Audio Post Design (The New Yorker Style) -->
-      <div class="max-w-6xl mx-auto w-full relative sm:h-[400px] md:h-[500px] mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row bg-white rounded-lg sm:rounded-xl overflow-hidden">
+      <div class="max-w-6xl mx-auto w-full relative sm:h-[400px] md:h-[500px] mt-4 sm:mt-6 md:mt-8 flex flex-col sm:flex-row bg-white dark:bg-base-900 rounded-lg sm:rounded-xl overflow-hidden">
         <!-- Left Side: Blurred background with white overlay, centered content -->
         <div class="relative w-full sm:w-1/2 p-6 sm:p-12 flex flex-col justify-center items-center text-center overflow-hidden">
             <!-- Background Image with Blur -->
@@ -94,29 +94,29 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
                 loading="eager"
             />
             <!-- White Transparent Overlay -->
-            <div class="absolute inset-0 bg-white/70"></div>
+            <div class="absolute inset-0 bg-white/70 dark:bg-base-900/80"></div>
 
             <!-- Content -->
             <div class="relative z-10 w-full flex flex-col items-center">
               {featuredPost.data.author && (
-                <div class="text-[10px] sm:text-[11px] font-bold text-red-600 tracking-widest uppercase mb-4 font-sans">
+                <div class="text-[10px] sm:text-[11px] font-bold text-red-600 dark:text-red-400 tracking-widest uppercase mb-4 font-sans">
                   {featuredPost.data.author.fullname}
                 </div>
               )}
 
-              <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal leading-tight mx-auto font-nouvelr-semibold  text-slate-900 line-clamp-3 mb-4 max-w-sm">
-                  <a href={`/posts/${featuredPost.slug}`} class="hover:underline decoration-3 underline-offset-4">
+              <h2 class="text-3xl sm:text-4xl md:text-5xl font-normal leading-tight mx-auto font-nouvelr-semibold text-slate-900 dark:text-base-50 line-clamp-3 mb-4 max-w-sm">
+                  <a href={`/posts/${featuredPost.slug}`} class="hover:underline decoration-wavy">
                     {featuredPost.data.title}
                   </a>
               </h2>
 
               <!-- Excerpt -->
-              <p class="text-[15px] sm:text-[17px] font-display text-slate-500 leading-relaxed max-w-md mx-auto line-clamp-3 mb-8">
+              <p class="text-[15px] sm:text-[17px] font-display text-slate-500 dark:text-base-300 leading-relaxed max-w-md mx-auto line-clamp-3 mb-8">
                   {featuredPost.data.description}
               </p>
 
               <!-- Listen Button -->
-              <a href={`/posts/${featuredPost.slug}`} class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-900 text-white font-sans font-semibold text-[13px] hover:bg-slate-800 transition-colors shadow-sm">
+              <a href={`/posts/${featuredPost.slug}`} class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-900 dark:bg-base-100 text-white dark:text-slate-900 font-sans font-semibold text-[13px] hover:bg-slate-800 dark:hover:bg-white transition-colors">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="size-4">
                       <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
                   </svg>
@@ -144,7 +144,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       </div>
     ) : (
       <!-- Standard Overlay Post Design -->
-      <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl"
+      <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 dark:bg-base-800 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl"
            style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
       <!-- Right Side - Hidden on mobile -->
       <div class="hidden sm:block absolute right-0 top-0 w-1/2 h-full">

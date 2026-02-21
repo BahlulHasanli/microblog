@@ -169,7 +169,7 @@ export default function ProfileDropdown({
       {!isStudioRoutePath && canWrite && (
         <a
           href="/studio"
-          className="flex gap-1 items-center text-[15px] text-base-700 hover:text-base-900 transition-all cursor-pointer"
+          className="group flex gap-1 items-center text-[15px] text-base-700 dark:text-base-400 hover:text-base-900 dark:hover:text-base-50 transition-all cursor-pointer"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +177,7 @@ export default function ProfileDropdown({
             viewBox="0 0 24 24"
             strokeWidth="1.5"
             stroke="currentColor"
-            className="size-[23px] group-hover:stroke-base-900 transition-all"
+            className="size-[23px] group-hover:stroke-base-900 dark:group-hover:stroke-base-50 transition-all"
           >
             <path
               strokeLinecap="round"
@@ -209,7 +209,7 @@ export default function ProfileDropdown({
         {isOpen && (
           <div
             onClick={handleMenuClick}
-            className="absolute bg-white/40 overflow-hidden backdrop-blur-xl right-0 mt-2 w-48 rounded-lg shadow-lg py-1  animate-fadeIn"
+            className="absolute bg-white/90 dark:bg-base-900/90 border border-slate-200 dark:border-base-800 overflow-hidden backdrop-blur-xl right-0 mt-2 w-48 rounded-lg py-1 animate-fadeIn"
           >
             <button
               type="button"
@@ -226,12 +226,12 @@ export default function ProfileDropdown({
                   );
                 }
               }}
-              className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
+              className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 dark:text-base-300 hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
             >
               <div className="flex items-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="size-4 mr-2 stroke-zinc-500"
+                  className="size-4 mr-2 stroke-zinc-500 dark:stroke-base-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -258,7 +258,7 @@ export default function ProfileDropdown({
                 e.stopPropagation();
                 handleLogout();
               }}
-              className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 hover:bg-white/40"
+              className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 dark:text-base-300 hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
             >
               <div className="flex items-center">
                 <svg

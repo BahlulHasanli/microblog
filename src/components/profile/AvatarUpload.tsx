@@ -277,11 +277,11 @@ export default function AvatarUpload({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 relative animate-fadeIn">
+      <div className="bg-white dark:bg-base-900 rounded-xl max-w-md w-full p-6 relative animate-fadeIn">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 cursor-pointer right-4 text-base-400 hover:text-base-900 transition-colors p-1 hover:bg-base-100 rounded-lg"
+          className="absolute top-4 cursor-pointer right-4 text-base-400 hover:text-base-900 dark:hover:text-base-50 transition-colors p-1 hover:bg-base-100 dark:hover:bg-base-800 rounded-lg"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -299,18 +299,18 @@ export default function AvatarUpload({
           </svg>
         </button>
 
-        <h2 className="text-xl font-bold text-base-800 mb-6">
+        <h2 className="text-xl font-bold text-base-800 dark:text-base-50 mb-6">
           Profil şəkli yüklə
         </h2>
 
         {/* Tabs */}
-        <div className="flex border-b border-base-200 mb-6">
+        <div className="flex border-b border-base-200 dark:border-base-800 mb-6">
           <button
             onClick={() => setActiveTab("default")}
             className={`px-4 py-2 font-medium cursor-pointer ${
               activeTab === "default"
                 ? "text-rose-500 border-b-2 border-rose-500"
-                : "text-base-600"
+                : "text-base-600 dark:text-base-400 hover:bg-base-50 dark:hover:bg-base-800"
             }`}
           >
             Hazır avatarlar
@@ -320,7 +320,7 @@ export default function AvatarUpload({
             className={`px-4 py-2 font-medium cursor-pointer ${
               activeTab === "upload"
                 ? "text-rose-500 border-b-2 border-rose-500"
-                : "text-base-600"
+                : "text-base-600 dark:text-base-400 hover:bg-base-50 dark:hover:bg-base-800"
             }`}
           >
             Şəkil yüklə
@@ -329,7 +329,7 @@ export default function AvatarUpload({
 
         {success ? (
           <div className="text-center">
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg mb-4">
               Profil şəkliniz uğurla yeniləndi!
             </div>
             <div className="mx-auto size-32 squircle overflow-hidden mb-4">
@@ -343,7 +343,7 @@ export default function AvatarUpload({
         ) : (
           <form onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-4">
                 {error}
               </div>
             )}
@@ -358,7 +358,7 @@ export default function AvatarUpload({
             ) : (
               <div className="mb-6">
                 <div className="flex flex-col items-center">
-                  <div className="mx-auto size-32 squircle overflow-hidden mb-4 bg-base-100">
+                  <div className="mx-auto size-32 squircle overflow-hidden mb-4 bg-base-100 dark:bg-base-800">
                     {preview ? (
                       <img
                         src={preview}
@@ -374,7 +374,7 @@ export default function AvatarUpload({
                     )}
                   </div>
 
-                  <label className="cursor-pointer text py-2 px-4 bg-base-100 hover:bg-base-200 text-base-700 rounded-lg transition-colors">
+                  <label className="cursor-pointer text py-2 px-4 bg-base-100 dark:bg-base-800 hover:bg-base-200 dark:hover:bg-base-700 text-base-700 dark:text-base-300 rounded-lg transition-colors">
                     Şəkil seç
                     <input
                       type="file"
@@ -384,7 +384,7 @@ export default function AvatarUpload({
                       className="hidden"
                     />
                   </label>
-                  <p className="text-xs text-base-500 mt-2">
+                  <p className="text-xs text-base-500 dark:text-base-400 mt-2">
                     PNG, JPG və ya GIF. Maksimum 15MB.
                   </p>
                 </div>
@@ -395,7 +395,7 @@ export default function AvatarUpload({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border text-sm cursor-pointer border-base-200 rounded-lg text-base-700 hover:bg-base-50"
+                className="px-4 py-2 border text-sm cursor-pointer border-base-200 dark:border-base-700 rounded-lg text-base-700 dark:text-base-300 hover:bg-base-50 dark:hover:bg-base-800"
               >
                 Ləğv et
               </button>
@@ -405,7 +405,7 @@ export default function AvatarUpload({
                   loading ||
                   (activeTab === "upload" ? !preview : !selectedDefaultAvatar)
                 }
-                className="px-4 py-2 text-sm cursor-pointer bg-base-900 text-white rounded-lg hover:bg-base-800 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm cursor-pointer bg-base-900 dark:bg-base-50 text-white dark:text-black rounded-lg hover:bg-base-800 dark:hover:bg-base-200 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Yüklənir..." : "Yadda saxla"}
               </button>

@@ -118,19 +118,19 @@ const supabaseClient = createClient(
 
 <Toaster position="top-center"/>
 <section class="max-w-md mx-auto py-8 px-4 sm:px-0">
-  <div class="bg-white rounded-lg p-4">
+  <div class="bg-white dark:bg-base-900 rounded-lg p-4">
     <div class="text-center mb-6">
-      <h1 class="text-xl md:text-3xl font-big-shoulders font-bold text-base-900 mb-1">
+      <h1 class="text-xl md:text-3xl font-big-shoulders font-bold text-base-900 dark:text-base-50 mb-1">
         Daxil Ol
       </h1>
-      <p class="text-base-600 text-sm">Hesabınıza daxil olun</p>
+      <p class="text-base-600 dark:text-base-400 text-sm">Hesabınıza daxil olun</p>
     </div>
 
     <form id="signinForm" class="space-y-5" onsubmit={handleSubmit}>
       <div> 
         <label  
           for="email"
-          class="block text-xs font-medium text-base-700 mb-1"
+          class="block text-xs font-medium text-base-700 dark:text-base-300 mb-1"
         >
           Email
         </label>
@@ -141,14 +141,14 @@ const supabaseClient = createClient(
           placeholder="email@the99.az"
           required
           bind:value={formState.email}
-          class="w-full px-3 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+          class="w-full px-3 py-1.5 border border-base-200 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 dark:text-base-50 placeholder-base-400 dark:placeholder-base-500 dark:bg-base-950"
         />
       </div>
 
       <div> 
         <label
           for="password"
-          class="block text-xs font-medium text-base-700 mb-1"
+          class="block text-xs font-medium text-base-700 dark:text-base-300 mb-1"
         >
           Şifrə
         </label>
@@ -160,7 +160,7 @@ const supabaseClient = createClient(
             placeholder="Şifrənizi daxil edin"
             required
             bind:value={formState.password}
-            class="w-full pl-3 pr-10 py-1.5 border border-base-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 placeholder-base-400"
+            class="w-full pl-3 pr-10 py-1.5 border border-base-200 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-transparent text-sm text-base-900 dark:text-base-50 placeholder-base-400 dark:placeholder-base-500 dark:bg-base-950"
           />
           <button
             type="button"
@@ -200,10 +200,10 @@ const supabaseClient = createClient(
 
     <div class="relative my-5">
       <div class="absolute inset-0 flex items-center">
-        <div class="w-full border-t border-base-200"></div>
+        <div class="w-full border-t border-base-200 dark:border-base-800"></div>
       </div>
       <div class="relative flex justify-center text-xs">
-        <span class="bg-white px-2 text-base-500">və ya</span>
+        <span class="bg-white dark:bg-base-900 px-2 text-base-500 dark:text-base-400">və ya</span>
       </div>
     </div>
 
@@ -212,7 +212,7 @@ const supabaseClient = createClient(
       type="button"
       onclick={handleGoogleSignIn}
       disabled={isGoogleLoading.value}
-      class="cursor-pointer w-full flex items-center justify-center gap-2 bg-white border border-base-200 hover:bg-base-50 text-base-700 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-base-300 disabled:opacity-70 disabled:cursor-not-allowed"
+      class="cursor-pointer w-full flex items-center justify-center gap-2 bg-white dark:bg-base-950 border border-base-200 dark:border-base-800 hover:bg-base-50 dark:hover:bg-base-800 text-base-700 dark:text-base-300 font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-base-300 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -229,7 +229,7 @@ const supabaseClient = createClient(
       type="button"
       onclick={handleAppleSignIn}
       disabled={isAppleLoading.value}
-      class="cursor-pointer w-full flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-gray-500 disabled:opacity-70 disabled:cursor-not-allowed"
+      class="cursor-pointer w-full flex items-center justify-center gap-2 bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-black font-medium py-1.5 px-4 rounded-lg text-sm transition-colors focus:outline-none focus:ring-1 focus:ring-gray-500 disabled:opacity-70 disabled:cursor-not-allowed"
     >
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -240,8 +240,8 @@ const supabaseClient = createClient(
     </button>
    </div>
 
-    <div class="text-center mt-4 pt-3 border-t border-base-100">
-      <p class="text-base-600 text-xs">
+    <div class="text-center mt-4 pt-3 border-t border-base-100 dark:border-base-800">
+      <p class="text-base-600 dark:text-base-400 text-xs">
         Hesabınız yoxdur?
         <a
           href="/signup"

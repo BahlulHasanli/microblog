@@ -76,7 +76,7 @@
 </script>
 
 <div class="mt-6 mb-8">
-  <h3 class="text-base font-nouvelr-semibold text-base-900 mb-3">
+  <h3 class="text-base font-nouvelr-semibold text-base-900 dark:text-base-50 mb-3">
     {parentId ? 'Cavab ver' : 'Şərh yaz'}
   </h3>
   
@@ -88,7 +88,7 @@
             type="text"
             bind:value={guestName}
             placeholder="Ad və Soyad"
-            class="w-full px-3 py-3 border border-zinc-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800 bg-white"
+            class="w-full px-3 py-3 border border-zinc-100 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800 dark:text-base-50 bg-white dark:bg-base-900"
             disabled={isSubmitting}
           />
         </div>
@@ -97,7 +97,7 @@
             type="email"
             bind:value={guestEmail}
             placeholder="Email ünvanınız"
-            class="w-full px-3 py-3 border border-zinc-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800 bg-white"
+            class="w-full px-3 py-3 border border-zinc-100 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800 dark:text-base-50 bg-white dark:bg-base-900"
             disabled={isSubmitting}
           />
         </div>
@@ -109,7 +109,7 @@
         bind:this={textareaRef}
         bind:value={content}
         placeholder="Nə düşünürsən?"
-        class="w-full px-3 py-3 border border-zinc-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800 bg-white"
+        class="w-full px-3 py-3 border border-zinc-100 dark:border-base-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 font-nouvelr text-base-800 dark:text-base-50 bg-white dark:bg-base-900"
         rows="3"
         disabled={isSubmitting}
       ></textarea>
@@ -120,7 +120,7 @@
     
     <div class="flex justify-between items-center gap-3">
       {#if !user}
-        <div class="text-xs text-zinc-500 font-nouvelr">
+        <div class="text-xs text-zinc-500 dark:text-zinc-400 font-nouvelr">
           Daxil olaraq daha çox imkandan yararlana bilərsiniz. <a href="/signin" class="font-medium text-blue-500 hover:underline">Daxil ol</a>
         </div>
       {:else}

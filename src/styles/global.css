@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
+@custom-variant dark (&:is(.dark *));
 
 /* Inter Variable Font - Local */
 @font-face {

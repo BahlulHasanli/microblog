@@ -139,10 +139,10 @@ export default function ProfileShareCard({
   return (
     <>
       <div
-        className={`p-4 sm:p-6 transition-colors duration-200 hover:bg-slate-50/50`}
+        className={`p-4 sm:p-6 transition-colors duration-200 hover:bg-slate-50/50 dark:hover:bg-base-800/50`}
       >
         {/* Time */}
-        <span className="text-base-400 text-xs font-medium inline-flex items-center gap-1.5">
+        <span className="text-base-400 dark:text-base-500 text-xs font-medium inline-flex items-center gap-1.5">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -161,7 +161,7 @@ export default function ProfileShareCard({
         </span>
 
         {/* Content */}
-        <p className="mt-2.5 text-base-800 text-[13px] leading-relaxed wrap-break-word whitespace-pre-wrap">
+        <p className="mt-2.5 text-base-800 dark:text-base-50 text-[13px] leading-relaxed wrap-break-word whitespace-pre-wrap">
           {share.content}
         </p>
 
@@ -176,7 +176,7 @@ export default function ProfileShareCard({
                   setCurrentImageIndex(index);
                   setIsGalleryOpen(true);
                 }}
-                className={`relative cursor-pointer bg-slate-100 overflow-hidden ${getBorderRadiusClass(index)} p-0`}
+                className={`relative cursor-pointer bg-slate-100 dark:bg-base-900 overflow-hidden ${getBorderRadiusClass(index)} p-0`}
                 style={{
                   maxHeight: displayImages.length === 1 ? "400px" : "260px",
                 }}
@@ -214,10 +214,10 @@ export default function ProfileShareCard({
         )}
 
         {/* Actions */}
-        <div className="mt-4 flex justify-between text-base-400 text-sm">
+        <div className="mt-4 flex justify-between text-base-400 dark:text-base-500 text-sm">
           <a
             href={`/shares/${share.id}`}
-            className="cursor-pointer flex items-center gap-1.5 hover:text-rose-500 transition-colors duration-200 text-xs font-medium"
+            className="cursor-pointer flex items-center gap-1.5 hover:text-rose-500 dark:hover:text-rose-400 transition-colors duration-200 text-xs font-medium"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -241,7 +241,7 @@ export default function ProfileShareCard({
             className={`cursor-pointer flex items-center gap-1.5 transition-colors duration-200 text-xs font-medium ${
               isLiked || isLikedLocal
                 ? "text-rose-500 hover:text-rose-600"
-                : "hover:text-rose-500"
+                : "hover:text-rose-500 dark:hover:text-rose-400"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <svg
@@ -270,7 +270,7 @@ export default function ProfileShareCard({
             {/* Close button */}
             <button
               onClick={() => setIsGalleryOpen(false)}
-              className="cursor-pointer absolute top-4 right-4 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors z-10"
+              className="cursor-pointer absolute top-4 right-4 p-2 bg-white dark:bg-base-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-base-800 transition-colors z-10"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -301,7 +301,7 @@ export default function ProfileShareCard({
                 <>
                   <button
                     onClick={handlePrev}
-                    className="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors"
+                    className="cursor-pointer absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 p-2 bg-white dark:bg-base-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -321,7 +321,7 @@ export default function ProfileShareCard({
 
                   <button
                     onClick={handleNext}
-                    className="cursor-pointer absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 p-2 bg-white rounded-full hover:bg-slate-100 transition-colors"
+                    className="cursor-pointer absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 p-2 bg-white dark:bg-base-900 dark:text-white rounded-full hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

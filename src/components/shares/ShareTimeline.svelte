@@ -228,15 +228,15 @@
   </div>
 {:else if error}
   <div class="w-full py-8 px-4">
-    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm">
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-base-900 border border-slate-200 dark:border-base-800 text-slate-600 dark:text-base-400 text-sm">
       <p class="font-medium mb-1">Xəta baş verdi</p>
-      <p class="text-slate-500">{error}</p>
+      <p class="text-slate-500 dark:text-base-500">{error}</p>
     </div>
   </div>
 {:else if shares.length === 0}
   <div class="w-full py-16 flex items-center justify-center">
     <div class="text-center">
-      <div class="mb-4 inline-flex p-3 rounded-xl bg-slate-50">
+      <div class="mb-4 inline-flex p-3 rounded-xl bg-slate-50 dark:bg-base-900 border border-slate-100 dark:border-base-800">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
@@ -252,10 +252,10 @@
           />
         </svg>
       </div>
-      <p class="text-slate-900 font-nouvelr-semibold text-base mb-1">
+      <p class="text-slate-900 dark:text-base-50 font-nouvelr-semibold text-base mb-1">
         Paylaşım yoxdur
       </p>
-      <p class="text-slate-500 text-sm">
+      <p class="text-slate-500 dark:text-base-400 text-sm">
         Hələki paylaşım edilməyib
       </p>
     </div>
@@ -281,7 +281,7 @@
     <!-- End of list -->
     {#if !hasMore && shares.length > 0}
       <div class="w-full py-4 flex items-center justify-center">
-        <p class="text-xs text-slate-400">Daha çox paylaşım yoxdur</p>
+        <p class="text-xs text-slate-400 dark:text-base-500">Daha çox paylaşım yoxdur</p>
       </div>
     {/if}
   </div>

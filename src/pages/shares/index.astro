@@ -17,7 +17,7 @@ const isUserAuthenticated = isAuthenticated(Astro.cookies);
       <div class="mb-8 sm:mb-12">
         <MainTabs activeTab="gossip" />
 
-        <div class="max-w-3xl h-full mx-auto border border-slate-100 rounded-lg overflow-hidden flex flex-col">
+        <div class="max-w-3xl h-full mx-auto border border-slate-100 dark:border-base-800 bg-white dark:bg-base-900 rounded-lg overflow-hidden flex flex-col">
           {isUserAuthenticated && (
             <ShareEditor client:load />
           )}

@@ -202,13 +202,13 @@ const posts = (postsData || []).map(post => {
               <div class="grid grid-cols-1 sm:grid-cols-2">
                 <div class="col-span-1 sm:col-span-2 py-16 sm:py-24">
                   <div class="flex flex-col items-center justify-center text-center">
-                    <div class="mb-6 p-4 rounded-2xl bg-slate-50">
+                    <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-base-800">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-400">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
                       </svg>
                     </div>
-                    <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 mb-2">Hələ ki, post yoxdur</h3>
-                    <p class="text-sm sm:text-sm text-slate-500 max-w-sm">Yeni məzmun tezliklə əlavə olunacaq. Bizi izləyin!</p>
+                    <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 dark:text-base-50 mb-2">Hələ ki, post yoxdur</h3>
+                    <p class="text-sm sm:text-sm text-slate-500 dark:text-base-400 max-w-sm">Yeni məzmun tezliklə əlavə olunacaq. Bizi izləyin!</p>
                   </div>
                 </div>
               </div>
@@ -331,6 +331,34 @@ const posts = (postsData || []).map(post => {
   .cat-sub-link:hover {
     color: oklch(23.48% 0.004 264.49);
     background-color: oklch(96.74% 0.001 286.38);
+  }
+
+  /* Dark mode variants */
+  :global(.dark) .cat-link {
+    color: #a1a1aa;
+  }
+  
+  :global(.dark) .cat-link:hover {
+    color: #f8fafc;
+    background-color: #27272a;
+  }
+  
+  :global(.dark) .cat-link.active {
+    color: #f8fafc;
+    background-color: #3f3f46;
+  }
+
+  :global(.dark) .cat-link-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  :global(.dark) .cat-sub-link {
+    color: #a1a1aa;
+  }
+
+  :global(.dark) .cat-sub-link:hover {
+    color: #f8fafc;
+    background-color: #27272a;
   }
 
   /* ──── Responsive ──── */

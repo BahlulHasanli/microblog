@@ -64,7 +64,7 @@ export default function ProfileHeader({
   return (
     <div className="mb-8 sm:mb-12">
       {/* Profile Card */}
-      <div className="relative rounded-2xl overflow-hidden bg-linear-to-br from-rose-50/80 via-white to-rose-50/40 border border-rose-100/50 p-6 sm:p-8">
+      <div className="relative rounded-2xl overflow-hidden bg-linear-to-br from-rose-50/80 dark:from-rose-950/20 via-white dark:via-base-900 to-rose-50/40 dark:to-rose-950/10 border border-rose-100/50 dark:border-rose-900/20 p-6 sm:p-8">
         {/* Subtle dot pattern */}
         <div
           className="absolute inset-0 opacity-[0.03]"
@@ -78,7 +78,7 @@ export default function ProfileHeader({
           {/* Avatar */}
           <div className="relative group shrink-0">
             <div
-              className="overflow-hidden size-28! sm:size-36! squircle cursor-pointer ring-[3px] ring-white"
+              className="overflow-hidden size-28! sm:size-36! squircle cursor-pointer ring-[3px] ring-white dark:ring-base-900"
               suppressHydrationWarning
             >
               <img
@@ -122,10 +122,10 @@ export default function ProfileHeader({
           <div className="flex-1 text-center sm:text-left w-full min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div suppressHydrationWarning className="min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-display font-bold text-base-900 mb-1 tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-display font-bold text-base-900 dark:text-base-50 mb-1 tracking-tight">
                   {currentUser.fullname}
                 </h1>
-                <p className="text-rose-500/70 text-sm sm:text-base font-medium">
+                <p className="text-rose-500/70 dark:text-rose-400/80 text-sm sm:text-base font-medium">
                   @{currentUser.username}
                 </p>
               </div>
@@ -133,10 +133,10 @@ export default function ProfileHeader({
               {isOwner && (
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-white hover:bg-base-50 cursor-pointer text-sm font-medium
-                        transition-colors duration-200 text-base-600 hover:text-base-900
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-base-900 hover:bg-base-50 dark:hover:bg-base-800 cursor-pointer text-sm font-medium
+                        transition-colors duration-200 text-base-600 hover:text-base-900 dark:text-base-400 dark:hover:text-base-200
                         inline-flex items-center justify-center gap-2 self-center sm:self-start
-                        border border-base-200/80 hover:border-base-300"
+                        border border-base-200/80 hover:border-base-300 dark:border-base-800 dark:hover:border-base-700"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
