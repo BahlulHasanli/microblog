@@ -62,11 +62,15 @@
             .eq('parent_id', reply.id);
 
           // Get user info
-          const { data: userData } = await supabase
-            .from('users')
-            .select('avatar, fullname')
-            .eq('id', reply.user_id)
-            .single();
+          let userData = null;
+          if (reply.user_id) {
+            const { data } = await supabase
+              .from('users')
+              .select('avatar, fullname')
+              .eq('id', reply.user_id)
+              .single();
+            userData = data;
+          }
 
           return {
             ...reply,
@@ -154,7 +158,7 @@
   <div class="border-b border-zinc-100 pb-6">
     <div class="flex items-start gap-3">
       <div class="flex-shrink-0">
-        {#if comment.user_avatar}
+        {#if comment.user_id && comment.user_avatar}
           <button
             type="button"
             onclick={() => navigateToProfile(comment.user_name)}
@@ -166,26 +170,44 @@
               class="w-full h-full object-cover"
             />
           </button>
-    
+        {:else if comment.user_id}
+          <button
+            type="button"
+            onclick={() => navigateToProfile(comment.user_name)}
+            class="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-100 text-zinc-700 font-nouvelr-semibold cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            {(comment.user_fullname || comment.user_name).charAt(0).toUpperCase()}
+          </button>
+        {:else}
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-zinc-100 text-zinc-700 font-nouvelr-semibold text-xl">
+            {(comment.user_fullname || 'Q').charAt(0).toUpperCase()}
+          </div>
         {/if}
       </div>
       <div class="flex-grow">
         <div class="flex justify-between items-start">
           <div>
-            <button
-              type="button"
-              onclick={() => navigateToProfile(comment.user_name)}
-              class="cursor-pointer hover:text-blue-600 transition-colors text-left"
-            >
-              <h4 class="font-nouvelr-semibold text-base-800 text-lg">{comment.user_fullname || comment.user_name}</h4>
-            </button>
-            <button
-              type="button"
-              onclick={() => navigateToProfile(comment.user_name)}
-              class="text-sm text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
-            >
-              @{comment.user_name}
-            </button>
+            {#if comment.user_id}
+              <button
+                type="button"
+                onclick={() => navigateToProfile(comment.user_name)}
+                class="cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
+              >
+                <h4 class="font-nouvelr-semibold text-base-800 text-lg">{comment.user_fullname || comment.user_name}</h4>
+              </button>
+              <button
+                type="button"
+                onclick={() => navigateToProfile(comment.user_name)}
+                class="text-sm text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
+              >
+                @{comment.user_name}
+              </button>
+            {:else}
+              <div class="text-left">
+                <h4 class="font-nouvelr-semibold text-base-800 text-lg">{comment.user_fullname || comment.user_name}</h4>
+                <span class="text-sm text-zinc-500 font-nouvelr block w-full">Qonaq</span>
+              </div>
+            {/if}
           </div>
           <span class="text-sm text-zinc-400 font-nouvelr">{formatSimpleDate(comment.created_at)}</span>
         </div>
@@ -217,7 +239,7 @@
           <div class="mt-6">
             <div class="flex items-start gap-3">
               <div class="flex-shrink-0">
-                {#if reply.user_avatar}
+                {#if reply.user_id && reply.user_avatar}
                   <button
                     type="button"
                     onclick={(e) => {
@@ -232,35 +254,53 @@
                       class="w-[36px] h-[36px] rounded-xl object-cover"
                     />
                   </button>
+                {:else if reply.user_id}
+                  <button
+                    type="button"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      navigateToProfile(reply.user_name);
+                    }}
+                    class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold cursor-pointer hover:opacity-80 transition-opacity"
+                  >
+                    {(reply.user_fullname || reply.user_name).charAt(0).toUpperCase()}
+                  </button>
                 {:else}
                   <div class="w-[36px] h-[36px] rounded-xl flex items-center justify-center bg-base-100 text-base-700 font-nouvelr-semibold">
-                    {reply.user_name.charAt(0).toUpperCase()}
+                    {(reply.user_fullname || 'Q').charAt(0).toUpperCase()}
                   </div>
                 {/if}
               </div>
               <div class="flex-grow">
                 <div class="flex justify-between items-start">
                   <div>
-                    <button
-                      type="button"
-                      onclick={(e) => {
-                        e.stopPropagation();
-                        navigateToProfile(reply.user_name);
-                      }}
-                      class="cursor-pointer hover:text-blue-600 transition-colors text-left"
-                    >
-                      <h4 class="font-nouvelr-semibold text-base-800">{reply.user_fullname || reply.user_name}</h4>
-                    </button>
-                    <button
-                      type="button"
-                      onclick={(e) => {
-                        e.stopPropagation();
-                        navigateToProfile(reply.user_name);
-                      }}
-                      class="text-xs text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
-                    >
-                      @{reply.user_name}
-                    </button>
+                    {#if reply.user_id}
+                      <button
+                        type="button"
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          navigateToProfile(reply.user_name);
+                        }}
+                        class="cursor-pointer hover:text-blue-600 transition-colors text-left block w-full"
+                      >
+                        <h4 class="font-nouvelr-semibold text-base-800">{reply.user_fullname || reply.user_name}</h4>
+                      </button>
+                      <button
+                        type="button"
+                        onclick={(e) => {
+                          e.stopPropagation();
+                          navigateToProfile(reply.user_name);
+                        }}
+                        class="block w-full text-xs text-zinc-500 font-nouvelr cursor-pointer hover:text-blue-600 transition-colors text-left"
+                      >
+                        @{reply.user_name}
+                      </button>
+                    {:else}
+                      <div class="text-left">
+                        <h4 class="font-nouvelr-semibold text-base-800">{reply.user_fullname || reply.user_name}</h4>
+                        <span class="text-xs text-zinc-500 font-nouvelr block w-full">Qonaq</span>
+                      </div>
+                    {/if}
                   </div>
                   <span class="text-xs text-zinc-400 font-nouvelr">{formatSimpleDate(reply.created_at)}</span>
                 </div>

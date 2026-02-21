@@ -51,11 +51,16 @@ const processedReplies = await Promise.all(
       .eq('parent_id', reply.id);
 
     // Get user info
-    const { data: userData } = await supabase
-      .from('users')
-      .select('avatar, fullname')
-      .eq('id', reply.user_id)
-      .single();
+    let userData = null;
+    if (reply.user_id) {
+      const { data } = await supabase
+        .from('users')
+        .select('avatar, fullname')
+        .eq('id', reply.user_id)
+        .single();
+        
+      userData = data;
+    }
 
     return {
       ...reply,
@@ -72,6 +77,7 @@ const user = userData ? {
   id: userData.id,
   email: userData.email,
   name: userData.name || userData.email.split('@')[0],
+  username: userData.username,
   fullname: userData.fullname || userData.name || userData.email.split('@')[0]
 } : null;
 

@@ -8,6 +8,7 @@
     id: string;
     email: string;
     name: string;
+    username?: string;
     fullname?: string;
   } | null = $state(null);
 
@@ -22,7 +23,8 @@
             id: userData.user.id,
             email: userData.user.email,
             name: userData.user.name,
-            fullname: userData.user.fullname
+            username: userData.user.username,
+            fullname: userData.user.name
           };
         }
       }
