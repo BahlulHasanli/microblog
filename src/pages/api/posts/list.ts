@@ -75,6 +75,7 @@ export const GET: APIRoute = async ({ request }) => {
         approved: post.approved,
         featured: post.featured,
         author: post.users,
+        hasAudio: post.content ? post.content.includes('<audio') : false,
       },
     }));
 

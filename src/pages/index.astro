@@ -106,7 +106,8 @@ const posts = (postsData || []).map(post => {
       categories: post.categories,
       approved: post.approved,
       featured: post.featured,
-      author: post.users
+      author: post.users,
+      hasAudio: post.content ? post.content.includes('<audio') : false
     }
   };
 });
