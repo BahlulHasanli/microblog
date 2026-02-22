@@ -315,91 +315,54 @@
     {#if isIcmal}
       <!-- İcmal Post - Full Width -->
       <div class="sm:col-span-2">
-        <article class="relative w-full rounded-xl overflow-hidden group">
-          <div class="absolute inset-0">
-            <img src={generateBunnyCDNUrl(post.data.image.url, 200, 60)} alt="" class="w-full h-full object-cover scale-110" />
-          </div>
-          <div class="absolute inset-0 backdrop-blur-3xl"></div>
-          <div class="absolute inset-0 bg-black/10"></div>
-          
-          <div class="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row gap-6 items-center">
-            <a href={`/posts/${post.slug}`} title={post.data.title} class="block w-full sm:w-1/2 shrink-0 relative">
-              {#if post.data.hasAudio}
-                <div class="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-md text-white border border-white/10 px-3 py-1.5 rounded-full pointer-events-none flex items-center gap-1.5">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
-                    <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
-                  </svg>
-                  <span class="text-[11px] font-bold tracking-wider uppercase pt-[1px]">Dinlə</span>
-                </div>
+        <article class="relative w-full rounded-2xl overflow-hidden group min-h-[450px] sm:min-h-[500px] lg:min-h-[600px] flex items-center">
+          <a href={`/posts/${post.slug}`} title={post.data.title} class="block absolute inset-0 z-0">
+            <div class="absolute inset-0 blurhash-container bg-black" data-blurhash={post.data.blurhash} style={post.data.blurhash ? `background-image:url(${blurhashToDataURL(post.data.blurhash)});background-size:cover;` : ''}>
+              {#if post.data.blurhash}
+                <canvas 
+                  class="blurhash-canvas absolute inset-0 w-full h-full object-cover" 
+                  aria-hidden="true"
+                ></canvas>
               {/if}
-              <div class="relative blurhash-container overflow-hidden rounded-2xl" data-blurhash={post.data.blurhash}
-                   style={post.data.blurhash ? `background-image:url(${blurhashToDataURL(post.data.blurhash)});background-size:cover;` : ''}>
-                {#if post.data.blurhash}
-                  <canvas 
-                    class="blurhash-canvas absolute inset-0 w-full h-full object-cover rounded-2xl" 
-                    aria-hidden="true"
-                  ></canvas>
-                {/if}
-                <img
-                  width="800"
-                  height="450"
-                  src={generateBunnyCDNUrl(post.data.image.url, 800)}
-                  srcset={generateSrcset(post.data.image.url, 800)}
-                  sizes={heroSizes}
-                  alt={post.data.title}
-                  loading="lazy"
-                  class="blurhash-img shadow-xl object-cover w-full aspect-video rounded-2xl opacity-0 transition-opacity duration-300"
-                />
-              </div>
-            </a>
-            
-            <div class="flex-1 text-white flex flex-col justify-center">
-              <div class="flex items-center gap-2 text-sm text-white/80 mb-4">
-                <button type="button" class="user-avatar overflow-hidden size-8 squircle cursor-pointer shrink-0" data-username={post.data.author?.username} aria-label="{post.data.author?.fullname} profilinə keç">
-                  <img src={post.data.author?.avatar}
-                      alt=""
-                      class="w-full h-full object-cover"
-                  />
-                </button>
-                <a href={`/@${post.data.author?.username}`} class="font-medium hover:text-white transition-colors truncate">
-                  {post.data.author?.fullname}
-                </a>
-                {#if post.data.pubDate}
-                  <div class="flex items-center ml-auto gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                    </svg>
-                    <span class="text-xs text-white/60">{formatSimpleDate(post.data.pubDate)}</span>
-                    {#if post.id}
-                      <span aria-hidden="true" class="text-white/40">&middot;</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.573-3.007-9.963-7.178Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      </svg>
-                      <span class="view-count text-xs text-white/60" data-post-id={post.id}>0</span>
-                    {/if}
-                  </div>
-                {/if}
-              </div>
-              
-              <h3 class="text-2xl sm:text-2xl font-bold mb-2 leading-tight text-pretty">
-                <a href={`/posts/${post.slug}`} class="group-hover:underline decoration-wavy line-clamp-2">{post.data.title}</a>
-              </h3>
-              
-              <p class="text-white/80 line-clamp-3 text-base sm:text-md my-5">{post.data.description}</p>
-              
-              {#if post.data.categories && post.data.categories.length > 0}
-                <div class="flex flex-wrap gap-2 mb-5">
-                  {#each post.data.categories as categorySlug}
-                    <a 
-                      href={`/category/${categorySlug}`}
-                      class="bg-white/20 hover:bg-white/30 text-white text-xs font-medium px-3 py-1 rounded-full transition-colors"
-                    >
-                      {getCategoryName(categorySlug)}
-                    </a>
-                  {/each}
-                </div>
-              {/if}
+              <img
+                src={generateBunnyCDNUrl(post.data.image.url, 1200)}
+                srcset={generateSrcset(post.data.image.url, 1200)}
+                sizes={heroSizes}
+                alt={post.data.title}
+                loading="lazy"
+                class="blurhash-img w-full h-full object-cover object-[25%_center] opacity-0 transition-opacity duration-300"
+              />
+            </div>
+            <!-- Overlay -> No gradient, purely dark solid with opacity -->
+            <div class="absolute inset-0 bg-black/50 group-hover:bg-black/60 transition-colors duration-500"></div>
+          </a>
+
+          {#if post.data.hasAudio}
+            <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 bg-black/60 text-white border border-white/10 px-3 py-1.5 rounded-full pointer-events-none flex items-center gap-1.5">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
+                <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
+              </svg>
+              <span class="text-[11px] font-bold tracking-wider uppercase pt-[1px]">Dinlə</span>
+            </div>
+          {/if}
+
+          <!-- Content align left with centered text -->
+          <div class="relative z-10 w-full h-full flex items-center justify-center sm:justify-start p-6 sm:p-12 md:p-16 lg:p-20 pointer-events-none">
+            <div class="w-full sm:w-11/12 md:w-10/12 lg:w-9/12 xl:w-8/12 text-center pointer-events-auto flex flex-col items-center">
+              <span class="text-white/90 tracking-[0.2em] text-[10px] sm:text-xs font-semibold uppercase mb-3 sm:mb-4">
+                İcmal
+              </span>
+              <a href={`/posts/${post.slug}`} class="block w-full">
+                <h3 class="text-white font-big-shoulders text-2xl sm:text-2xl md:text-3xl lg:text-4xl font-bold uppercase leading-tight text-balance mb-4 sm:mb-5 hover:opacity-80 transition-opacity">
+                  {post.data.title}
+                </h3>
+              </a>
+              <p class="text-white/90 text-[14px] sm:text-[15px] md:text-[14px] font-display leading-relaxed text-balance mb-6 sm:mb-8 line-clamp-4 max-w-3xl mx-auto">
+                {post.data.description}
+              </p>
+              <a href={`/@${post.data.author?.username}`} class="text-white font-display text-xs sm:text-sm hover:text-white/80 transition-colors">
+                Müəllif: <span class="font-bold">{post.data.author?.fullname}</span>
+              </a>
             </div>
           </div>
         </article>
