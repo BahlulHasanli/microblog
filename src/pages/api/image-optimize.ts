@@ -58,8 +58,9 @@ export const GET: APIRoute = async ({ request }) => {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": "public, max-age=31536000, immutable",
-        "CDN-Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control":
+          "public, max-age=2592000, stale-while-revalidate=86400",
+        "CDN-Cache-Control": "public, max-age=31536000",
         Vary: "Accept",
       },
     });
