@@ -293,7 +293,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       )}
 
       {/* Media Player - yalnız audio varsa göstər */}
-      {finalAudioData && (
+      <!-- {finalAudioData && (
         <MediaPlayer
           client:idle
           audioUrl={finalAudioData.url}
@@ -301,7 +301,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
           artist={finalAudioData.artist}
           coverImage={finalAudioData.cover ? generateBunnyCDNUrl(finalAudioData.cover, 300) : ''}
         />
-      )}
+      )} -->
 
       <script is:inline>
         function loadYoutubeVideos() {
