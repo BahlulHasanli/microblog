@@ -295,7 +295,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       {/* Media Player - yalnız audio varsa göstər */}
       {finalAudioData && (
         <MediaPlayer
-          client:only="svelte"
+          client:idle
           audioUrl={finalAudioData.url}
           title={finalAudioData.title}
           artist={finalAudioData.artist}

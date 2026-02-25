@@ -12,7 +12,8 @@
   let duration = 0;
   let volume = 0.8;
   let isMinimized = true;
-  let isLoaded = true;
+  let isLoaded = false;
+  let audioSrcLoaded = false;
   let waveformContainer: HTMLElement;
   let isMobile = false;
 
@@ -24,6 +25,16 @@
   async function togglePlay() {
     if (!audio) return;
     try {
+      // Əgər audio src hələ təyin edilməyibsə, ilk dəfə təyin et
+      if (!audioSrcLoaded) {
+        audioSrcLoaded = true;
+        audio.src = audioUrl;
+        audio.load();
+        // loadedmetadata gözlə, sonra play et
+        await new Promise<void>((resolve) => {
+          audio.addEventListener('loadedmetadata', () => resolve(), { once: true });
+        });
+      }
       if (isPlaying) {
         audio.pause();
       } else {
@@ -86,7 +97,6 @@
 >
   <audio
     bind:this={audio}
-    src={audioUrl}
     on:play={handlePlay}
     on:pause={handlePause}
     on:timeupdate={handleTimeUpdate}
@@ -94,7 +104,7 @@
     on:canplay={handleCanPlay}
     on:ended={handleEnded}
     on:volumechange={handleVolumeUpdate}
-    preload="metadata"
+    preload="none"
   ></audio>
 
   <!-- Blur Background -->
@@ -179,7 +189,7 @@
             class="w-10 h-10 rounded-full bg-rose-600 flex items-center justify-center transition-all duration-300 shrink-0 hover:scale-110 active:scale-95 disabled:opacity-50 cursor-pointer"
             aria-label="Play/Pause" 
             on:click={togglePlay} 
-            disabled={!isLoaded}
+            disabled={audioSrcLoaded && !isLoaded}
           >
             {#if isPlaying}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
@@ -270,7 +280,7 @@
             class="w-8 h-8 rounded-full bg-rose-600 flex items-center justify-center shrink-0 shadow-lg hover:scale-110 active:scale-95 transition-transform disabled:opacity-50 cursor-pointer"
             aria-label="Play/Pause" 
             on:click={togglePlay} 
-            disabled={!isLoaded}
+            disabled={audioSrcLoaded && !isLoaded}
           >
             {#if isPlaying}
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-white">
