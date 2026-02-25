@@ -90,6 +90,7 @@
 
 <div 
   class="fixed bottom-0 left-0 right-0 z-100"
+  style="contain: layout style paint; will-change: transform;"
   on:mouseenter={() => { if (!isMobile) isMinimized = false; }}
   on:mouseleave={() => { if (!isMobile) isMinimized = true; }}
   role="region"
@@ -107,19 +108,18 @@
     preload="none"
   ></audio>
 
-  <!-- Blur Background -->
+  <!-- Blur Background - mobil-də söndürülür -->
   <div class="absolute inset-0 overflow-hidden">
-    {#if coverImage}
+    {#if coverImage && !isMobile}
       <img 
         src={coverImage} 
         alt="" 
-        class="w-full h-[250%] object-cover blur-3xl saturate-150 opacity-50 scale-150 transition-transform duration-1000"
-        class:scale-125={isPlaying}
+        class="w-full h-[250%] object-cover blur-2xl saturate-150 opacity-50 scale-150"
         loading="lazy"
         decoding="async"
       />
     {/if}
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-2xl"></div>
+    <div class="absolute inset-0 bg-black/80" class:backdrop-blur-xl={!isMobile}></div>
   </div>
 
   <div class="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 py-2.5">
@@ -151,7 +151,7 @@
               class:opacity-100={isPlaying}
               class:opacity-0={!isPlaying}
             >
-              <div class="w-full h-full" class:animate-[spin_3s_linear_infinite]={isPlaying}>
+              <div class="w-full h-full" class:animate-[spin_3s_linear_infinite]={isPlaying && !isMobile}>
                 <div class="w-full h-full rounded-full bg-linear-to-br from-zinc-900 via-zinc-800 to-zinc-900 shadow-xl relative">
                   <div class="absolute inset-1 rounded-full opacity-60" style="background-image: repeating-radial-gradient(circle at center, transparent 0px, transparent 2px, rgba(255,255,255,0.08) 2px, rgba(255,255,255,0.08) 3px);"></div>
                   <div class="absolute inset-0 rounded-full bg-linear-to-br from-white/15 via-transparent to-transparent"></div>
@@ -268,7 +268,7 @@
           </button>
           
           <!-- Mini vinyl -->
-          <div class="relative w-9 h-9 rounded-full bg-linear-to-br from-zinc-900 to-zinc-800 overflow-hidden shrink-0 shadow-lg" class:animate-[spin_3s_linear_infinite]={isPlaying}>
+          <div class="relative w-9 h-9 rounded-full bg-linear-to-br from-zinc-900 to-zinc-800 overflow-hidden shrink-0" class:animate-[spin_3s_linear_infinite]={isPlaying && !isMobile}>
             {#if coverImage}
               <img src={coverImage} alt={title} class="w-4 h-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover" loading="lazy" decoding="async" />
             {/if}
