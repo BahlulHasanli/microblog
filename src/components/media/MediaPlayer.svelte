@@ -105,6 +105,8 @@
         alt="" 
         class="w-full h-[250%] object-cover blur-3xl saturate-150 opacity-50 scale-150 transition-transform duration-1000"
         class:scale-125={isPlaying}
+        loading="lazy"
+        decoding="async"
       />
     {/if}
     <div class="absolute inset-0 bg-black/60 backdrop-blur-2xl"></div>
@@ -145,7 +147,7 @@
                   <div class="absolute inset-0 rounded-full bg-linear-to-br from-white/15 via-transparent to-transparent"></div>
                   <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 rounded-full overflow-hidden bg-linear-to-br from-rose-500 to-pink-600 shadow">
                     {#if coverImage}
-                      <img src={coverImage} alt="" class="w-full h-full object-cover" />
+                      <img src={coverImage} alt="" class="w-full h-full object-cover" loading="lazy" decoding="async" />
                     {/if}
                   </div>
                   <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-zinc-900"></div>
@@ -155,7 +157,7 @@
             <!-- Album Cover -->
             <div class="absolute top-0 left-0 z-20 w-14 h-14 overflow-hidden shadow-xl">
               {#if coverImage}
-                <img src={coverImage} alt={title} class="w-full h-full object-cover" />
+                <img src={coverImage} alt={title} class="w-full h-full object-cover" loading="lazy" decoding="async" />
               {:else}
                 <div class="w-full h-full bg-linear-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-white/40">
@@ -258,7 +260,7 @@
           <!-- Mini vinyl -->
           <div class="relative w-9 h-9 rounded-full bg-linear-to-br from-zinc-900 to-zinc-800 overflow-hidden shrink-0 shadow-lg" class:animate-[spin_3s_linear_infinite]={isPlaying}>
             {#if coverImage}
-              <img src={coverImage} alt={title} class="w-4 h-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover" />
+              <img src={coverImage} alt={title} class="w-4 h-4 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full object-cover" loading="lazy" decoding="async" />
             {/if}
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-zinc-900"></div>
           </div>

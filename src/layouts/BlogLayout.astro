@@ -295,11 +295,11 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       {/* Media Player - yalnız audio varsa göstər */}
       {finalAudioData && (
         <MediaPlayer
-          client:idle
+          client:only="svelte"
           audioUrl={finalAudioData.url}
           title={finalAudioData.title}
           artist={finalAudioData.artist}
-          coverImage={finalAudioData.cover}
+          coverImage={finalAudioData.cover ? generateBunnyCDNUrl(finalAudioData.cover, 300) : ''}
         />
       )}
 
