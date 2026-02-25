@@ -119,7 +119,7 @@
           class={`
             group relative inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-full text-xs sm:text-sm
             transition-all duration-200 font-nouvelr select-none overflow-hidden
-            ${isActive ? "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" : "bg-zinc-50 dark:bg-base-800"}
+            ${isActive ? "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" : "bg-zinc-50 dark:bg-base-900"}
             ${
               loading
                 ? "opacity-40 cursor-not-allowed"

@@ -1,6 +1,11 @@
 ---
 export const prerender = false;
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { isAuthenticated } from "@/utils/auth";
+
+if (isAuthenticated(Astro.cookies)) {
+  return Astro.redirect("/");
+}
 ---
 
 <BaseLayout title="Giriş edilir...">
@@ -51,6 +56,26 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
       }
 
       try {
+        const isOAuthFlow = sessionStorage.getItem('oauthFlow') === 'true';
+        
+        // Disable repeated use of same flow
+        sessionStorage.removeItem('oauthFlow');
+
+        if (!isOAuthFlow) {
+          console.log('No active OAuth flow detected, redirecting to sign in');
+          
+          // Clear any ghost session from local storage autocomplete
+          await supabase.auth.signOut();
+          
+          // Strip any hash or parameters before redirecting
+          if (window.location.hash || window.location.search) {
+             window.history.replaceState(null, '', window.location.pathname);
+          }
+          
+          window.location.href = '/signin';
+          return;
+        }
+
         // Debug: URL-i konsola yaz
         console.log('Callback URL:', window.location.href);
         console.log('Hash:', window.location.hash);
@@ -104,7 +129,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
           }
         }
 
-        // Hash fragment-dən session almağa çalış (implicit flow)
+        // Hash fragment-dən session almağa çalış (implicit flow - older mechanism)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
@@ -122,7 +147,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
             return;
           }
 
-          // Cookie-ləri API vasitəsilə qur
           const response = await fetch('/api/auth/set-session', {
             method: 'POST',
             headers: {
@@ -142,7 +166,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
           return;
         }
 
-        // Mövcud session yoxla
+        // Mövcud session yoxla (Supabase-js already parsed hash automatically)
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {

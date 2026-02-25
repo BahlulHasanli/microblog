@@ -72,7 +72,7 @@ htmlContent = htmlContent.replace(ratingRegex, (match, score) => {
   const numericScore = parseFloat(score);
 
   const ratingHtml = `
-    <div class="rounded-2xl mx-auto text-center flex flex-col items-center bg-white dark:bg-zinc-900 w-full transition-colors">
+    <div class="rounded-2xl mx-auto text-center flex flex-col items-center bg-white dark:bg-transparent w-full transition-colors">
       <div class="text-7xl font-black leading-none text-black dark:text-white mt-5 transition-colors">${numericScore.toFixed(1)}</div>
       <p class="text-sm text-blue-600 dark:text-yellow-600 mb-5 transition-colors">Müəllifin balı</p>
     </div>
@@ -158,10 +158,12 @@ const frontmatter = {
 
 <script>
   // Custom Audio Player Client-side Logic
-  document.addEventListener("DOMContentLoaded", () => {
-    const players = document.querySelectorAll(".custom-audio-player");
+  function initAudioPlayers() {
+    const players = document.querySelectorAll(".custom-audio-player:not(.initialized)");
     
     players.forEach(player => {
+      player.classList.add("initialized");
+      
       const audio = player.querySelector("audio") as HTMLAudioElement;
       const playBtn = player.querySelector(".play-button") as HTMLButtonElement;
       const iconPlay = playBtn?.querySelector(".icon-play") as HTMLElement;
@@ -276,7 +278,9 @@ const frontmatter = {
         timeDuration.textContent = formatTime(audio.duration);
       }
     });
-  });
+  }
+
+  document.addEventListener("astro:page-load", initAudioPlayers);
 </script>
 
 <style is:global>

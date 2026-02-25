@@ -107,6 +107,9 @@ export default function ProfileDropdown({
   // Çıkış işlemi
   const handleLogout = async () => {
     try {
+      // Clean up Supabase client-side session to prevent ghost logins
+      await supabase.auth.signOut();
+
       const response = await fetch("/api/auth/signout", {
         method: "POST",
         headers: {
@@ -222,7 +225,7 @@ export default function ProfileDropdown({
                 } else {
                   console.log(
                     "Username is empty, userUsername prop:",
-                    userUsername
+                    userUsername,
                   );
                 }
               }}

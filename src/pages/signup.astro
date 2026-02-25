@@ -171,6 +171,7 @@ if (!enableRegistration) {
             if (!btn) return;
             
             btn.disabled = true;
+            sessionStorage.setItem("oauthFlow", "true");
             
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -197,6 +198,7 @@ if (!enableRegistration) {
             if (!btn) return;
             
             btn.disabled = true;
+            sessionStorage.setItem("oauthFlow", "true");
             
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({

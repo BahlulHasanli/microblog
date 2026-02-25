@@ -31,6 +31,7 @@ const supabaseClient = createClient(
 
  const handleGoogleSignIn = async () => {
     isGoogleLoading.value = true;
+    sessionStorage.setItem("oauthFlow", "true");
     
     try {
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
@@ -53,6 +54,7 @@ const supabaseClient = createClient(
 
  const handleAppleSignIn = async () => {
     isAppleLoading.value = true;
+    sessionStorage.setItem("oauthFlow", "true");
     
     try {
       const { data, error } = await supabaseClient.auth.signInWithOAuth({

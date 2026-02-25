@@ -19,8 +19,6 @@ let user = null;
 
 if (isLoggedIn) {
   user = await getUserFromCookies(Astro.cookies, Astro.redirect);
-
-  console.log('User ::::::::>', user)
   
   // Əgər cookie var amma user null-dursa (token vaxtı bitib), cookie-ləri sil
   if (!user) {
@@ -82,52 +80,51 @@ const finalDescription = pageDescription || siteDescription;
       <slot />
     </main>
     {!hideFooter && <Footer />}
-  </body>
 
-  <script is:inline>
-    if ("paintWorklet" in CSS) {
-      CSS.paintWorklet.addModule(
-        "https://www.unpkg.com/css-houdini-squircle/squircle.min.js"
-      );
-    }
+    <script is:inline>
+      if ("paintWorklet" in CSS) {
+        CSS.paintWorklet.addModule(
+          "https://www.unpkg.com/css-houdini-squircle/squircle.min.js"
+        );
+      }
 
-    // Google OAuth hash fragment callback handler
-    (async function() {
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        const refreshToken = hashParams.get('refresh_token');
+      // Google OAuth hash fragment callback handler
+      (async function() {
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
 
-        if (accessToken && refreshToken) {
-          try {
-            const response = await fetch('/api/auth/set-session', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              }),
-            });
+          if (accessToken && refreshToken) {
+            try {
+              const response = await fetch('/api/auth/set-session', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                }),
+              });
 
-            if (response.ok) {
-              // Hash-i təmizlə və səhifəni yenilə
-              window.history.replaceState(null, '', window.location.pathname);
-              window.location.reload();
+              if (response.ok) {
+                // Hash-i təmizlə və səhifəni yenilə
+                window.history.replaceState(null, '', window.location.pathname);
+                window.location.reload();
+              }
+            } catch (error) {
+              console.error('OAuth callback error:', error);
             }
-          } catch (error) {
-            console.error('OAuth callback error:', error);
           }
         }
-      }
-    })();
-  </script>
-  
-  {isLoggedIn && (
-    <script>
-      import '@/scripts/auth-check';
+      })();
     </script>
-  )}
+    
+    {isLoggedIn && (
+      <script>
+        import '@/scripts/auth-check';
+      </script>
+    )}
+  </body>
 </html>
-  

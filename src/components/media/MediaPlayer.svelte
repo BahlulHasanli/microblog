@@ -17,9 +17,6 @@
   let isMobile = false;
 
   onMount(() => {
-    if (audio) {
-      audio.load();
-    }
     // Mobil cihaz yoxlaması
     isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   });
@@ -97,7 +94,7 @@
     on:canplay={handleCanPlay}
     on:ended={handleEnded}
     on:volumechange={handleVolumeUpdate}
-    preload="auto"
+    preload="metadata"
   ></audio>
 
   <!-- Blur Background -->
