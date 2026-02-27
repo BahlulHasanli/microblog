@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
+import { optimizeImage } from "wasm-image-optimization";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -33,8 +34,8 @@ export const POST: APIRoute = async (context) => {
         categoriesRaw.flatMap((category) =>
           category.includes(",")
             ? category.split(",").map((c) => c.trim())
-            : [category.trim()]
-        )
+            : [category.trim()],
+        ),
       ),
     ].filter(Boolean);
     const existingImageUrl = formData.get("existingImageUrl") as string;
@@ -84,7 +85,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -97,7 +98,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -117,7 +118,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 404,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -147,7 +148,7 @@ export const POST: APIRoute = async (context) => {
               AccessKey: bunnyApiKey,
               Accept: "application/json",
             },
-          }
+          },
         );
 
         if (checkOldFolderResponse.ok) {
@@ -181,14 +182,14 @@ export const POST: APIRoute = async (context) => {
             headers: {
               AccessKey: bunnyApiKey,
             },
-          }
+          },
         );
 
         if (createFolderResponse.ok || createFolderResponse.status === 201) {
           console.log(`✅ Yeni folder yaradıldı`);
         } else {
           console.error(
-            `❌ Folder yaradıla bilmədi: ${createFolderResponse.status}`
+            `❌ Folder yaradıla bilmədi: ${createFolderResponse.status}`,
           );
         }
       } catch (error) {
@@ -198,7 +199,7 @@ export const POST: APIRoute = async (context) => {
       // 2. Köhnə şəkilləri köçür (əgər varsa)
       if (oldFolderImages.length > 0) {
         console.log(
-          `\n2️⃣ Köhnə şəkillər köçürülür: ${oldFolderImages.length} fayl`
+          `\n2️⃣ Köhnə şəkillər köçürülür: ${oldFolderImages.length} fayl`,
         );
 
         for (const file of oldFolderImages) {
@@ -214,19 +215,19 @@ export const POST: APIRoute = async (context) => {
                   headers: {
                     AccessKey: bunnyApiKey,
                   },
-                }
+                },
               );
 
               if (!downloadResponse.ok) {
                 console.error(
-                  `❌ Endirilə bilmədi: ${file.ObjectName} (status: ${downloadResponse.status})`
+                  `❌ Endirilə bilmədi: ${file.ObjectName} (status: ${downloadResponse.status})`,
                 );
                 continue;
               }
 
               const fileBuffer = await downloadResponse.arrayBuffer();
               console.log(
-                `Endirildi: ${file.ObjectName} (${fileBuffer.byteLength} bytes)`
+                `Endirildi: ${file.ObjectName} (${fileBuffer.byteLength} bytes)`,
               );
 
               // Fayl adını yenilə - köhnə slug-u yeni slug ilə əvəz et
@@ -236,11 +237,11 @@ export const POST: APIRoute = async (context) => {
               if (file.ObjectName.startsWith(oldSlug)) {
                 newFileName = file.ObjectName.replace(oldSlug, newSlug);
                 console.log(
-                  `Ad dəyişdirilir: ${file.ObjectName} -> ${newFileName}`
+                  `Ad dəyişdirilir: ${file.ObjectName} -> ${newFileName}`,
                 );
               } else {
                 console.log(
-                  `⚠️ Fayl adı köhnə slug ilə başlamır: ${file.ObjectName}`
+                  `⚠️ Fayl adı köhnə slug ilə başlamır: ${file.ObjectName}`,
                 );
               }
 
@@ -256,16 +257,16 @@ export const POST: APIRoute = async (context) => {
                     "Content-Type": "application/octet-stream",
                   },
                   body: fileBuffer,
-                }
+                },
               );
 
               if (uploadResponse.ok || uploadResponse.status === 201) {
                 console.log(
-                  `✅ Köçürüldü: ${file.ObjectName} -> ${newFileName}`
+                  `✅ Köçürüldü: ${file.ObjectName} -> ${newFileName}`,
                 );
               } else {
                 console.error(
-                  `❌ Yüklənə bilmədi: ${newFileName} (status: ${uploadResponse.status})`
+                  `❌ Yüklənə bilmədi: ${newFileName} (status: ${uploadResponse.status})`,
                 );
               }
             } catch (error) {
@@ -291,36 +292,87 @@ export const POST: APIRoute = async (context) => {
       // Folder path-i yenilə
       coverImageUrl = coverImageUrl.replace(
         `posts/${oldSlug}/`,
-        `posts/${newSlug}/`
+        `posts/${newSlug}/`,
       );
 
       // Cover image adını yenilə (məsələn: gta6-cover.jpeg -> gta7-cover.jpeg)
       const coverPattern = new RegExp(
         `/${oldSlug}-cover\\.(jpg|jpeg|png|gif|webp)`,
-        "i"
+        "i",
       );
       coverImageUrl = coverImageUrl.replace(
         coverPattern,
-        `/${newSlug}-cover.$1`
+        `/${newSlug}-cover.$1`,
       );
 
       console.log(`Cover image URL və adı yeniləndi: ${coverImageUrl}`);
     }
     if (uploadedImage) {
       try {
-        // Resim dosyasının adını oluştur - içerik resimleriyle aynı format
-        const fileExtension = uploadedImage.name.split(".").pop() || "jpg";
-        const imageFileName = `${newSlug}-cover.${fileExtension}`;
+        let originalExtension = (
+          uploadedImage.name.split(".").pop() || ""
+        ).toLowerCase();
+
+        let mimeType = uploadedImage.type || "";
+
+        // Uzantı və ya mime-type əsasında convert edilə biləcəyini yoxlayaq
+        const isConvertible =
+          ["png", "jpg", "jpeg"].includes(originalExtension) ||
+          ["image/png", "image/jpeg", "image/jpg"].includes(mimeType);
+
+        // Əgər extension yoxdursa, amma MimeType uyğundursa, standart extension təyin edək
+        if (
+          !originalExtension ||
+          originalExtension === uploadedImage.name.toLowerCase()
+        ) {
+          if (mimeType === "image/png") originalExtension = "png";
+          else if (mimeType === "image/jpeg" || mimeType === "image/jpg")
+            originalExtension = "jpg";
+          else originalExtension = "jpg"; // fallback
+        }
+
+        let finalExtension = originalExtension;
 
         // Bunny CDN klasör yapısı - içerik resimleriyle aynı klasörü kullan
         const folder = `posts/${newSlug}/images`;
 
-        console.log("Bunny CDN klasör yapısı:", folder);
-        console.log("Resim dosya adı:", imageFileName);
-
         try {
           // Resim dosyasının içeriğini al
           const arrayBuffer = await uploadedImage.arrayBuffer();
+
+          let uploadBuffer: ArrayBuffer | Uint8Array = arrayBuffer;
+
+          // Əgər format PNG, JPG və ya JPEG-dirsə, WebP-yə çevir
+          if (isConvertible) {
+            try {
+              console.log(
+                `Cover şəkil WebP-yə çevrilir (orijinal: ${originalExtension}, type: ${mimeType}, ölçü: ${arrayBuffer.byteLength} bytes)`,
+              );
+              const webpImage = await optimizeImage({
+                image: arrayBuffer,
+                quality: 95,
+                format: "webp",
+              });
+              uploadBuffer = webpImage;
+              finalExtension = "webp"; // Yalnız uğurlu olduqda webp edirik
+              console.log(
+                `WebP-yə çevrildi (yeni ölçü: ${webpImage.byteLength} bytes, qənaət: ${Math.round((1 - webpImage.byteLength / arrayBuffer.byteLength) * 100)}%)`,
+              );
+            } catch (convertError: any) {
+              console.error(
+                `WebP çevirmə xətası, orijinal format ilə yüklənir:`,
+                convertError,
+              );
+              // WebP çevirmə uğursuz olarsa, orijinal faylı yüklə
+              uploadBuffer = arrayBuffer;
+              finalExtension = originalExtension;
+            }
+          }
+
+          const imageFileName = `${newSlug}-cover.${finalExtension}`;
+
+          console.log("Bunny CDN klasör yapısı:", folder);
+          console.log("Resim dosya adı:", imageFileName);
 
           // Tam dosya yolu
           const filePath = `${folder}/${imageFileName}`;
@@ -339,7 +391,7 @@ export const POST: APIRoute = async (context) => {
                     AccessKey: bunnyApiKey,
                     Accept: "application/json",
                   },
-                }
+                },
               );
 
               // Əgər folder yoxdursa yarat
@@ -353,22 +405,22 @@ export const POST: APIRoute = async (context) => {
                     headers: {
                       AccessKey: bunnyApiKey,
                     },
-                  }
+                  },
                 );
 
                 if (createFolderResponse.ok) {
                   console.log(`✅ Folder yaradıldı: ${folder}`);
                 } else {
                   console.error(
-                    `❌ Folder yaradıla bilmədi: ${createFolderResponse.status}`
+                    `❌ Folder yaradıla bilmədi: ${createFolderResponse.status}`,
                   );
                 }
               } else if (checkFolderResponse.ok) {
                 console.log(`✅ Folder mövcuddur: ${folder}`);
               }
-            } catch (folderError) {
+            } catch (folderError: any) {
               console.error(
-                `Folder əməliyyatında xəta: ${folderError.message}`
+                `Folder əməliyyatında xəta: ${folderError.message}`,
               );
             }
           } else {
@@ -378,9 +430,9 @@ export const POST: APIRoute = async (context) => {
           // Fetch API ile yükleme yap
           console.log(`\n📤 Yeni şəkil yüklənir...`);
           console.log(`Fayl yolu: ${filePath}`);
-          console.log(`Fayl ölçüsü: ${arrayBuffer.byteLength} bytes`);
+          console.log(`Fayl ölçüsü: ${uploadBuffer.byteLength} bytes`);
           console.log(
-            `URL: https://storage.bunnycdn.com/${storageZoneName}/${filePath}`
+            `URL: https://storage.bunnycdn.com/${storageZoneName}/${filePath}`,
           );
 
           const response = await fetch(
@@ -391,8 +443,8 @@ export const POST: APIRoute = async (context) => {
                 AccessKey: bunnyApiKey,
                 "Content-Type": "application/octet-stream",
               },
-              body: arrayBuffer,
-            }
+              body: uploadBuffer as BodyInit,
+            },
           );
 
           console.log(`Response status: ${response.status}`);
@@ -402,7 +454,7 @@ export const POST: APIRoute = async (context) => {
             console.error(`❌ Bunny CDN yükləmə xətası: ${response.status}`);
             console.error(`Xəta: ${errorText}`);
             throw new Error(
-              `Bunny CDN yükləmə xətası: ${response.status} - ${response.statusText}`
+              `Bunny CDN yükləmə xətası: ${response.status} - ${response.statusText}`,
             );
           }
 
@@ -424,7 +476,7 @@ export const POST: APIRoute = async (context) => {
                 headers: {
                   AccessKey: bunnyApiKey,
                 },
-              }
+              },
             );
 
             if (purgeResponse.ok) {
@@ -444,7 +496,7 @@ export const POST: APIRoute = async (context) => {
             success: false,
             message: `Resim yükleme sırasında bir hata oluştu: ${error.message}`,
           }),
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -461,7 +513,7 @@ export const POST: APIRoute = async (context) => {
         // BunnyCDN-dən audio faylını sil
         const audioUrlPath = existingPost.audio_url.replace(
           "https://the99.b-cdn.net/",
-          ""
+          "",
         );
         const deleteAudioResponse = await fetch(
           `https://storage.bunnycdn.com/${storageZoneName}/${audioUrlPath}`,
@@ -470,7 +522,7 @@ export const POST: APIRoute = async (context) => {
             headers: {
               AccessKey: bunnyApiKey,
             },
-          }
+          },
         );
 
         if (deleteAudioResponse.ok) {
@@ -478,7 +530,7 @@ export const POST: APIRoute = async (context) => {
         } else {
           console.error(
             "Audio silmə xətası:",
-            await deleteAudioResponse.text()
+            await deleteAudioResponse.text(),
           );
         }
       } catch (deleteError) {
@@ -507,13 +559,13 @@ export const POST: APIRoute = async (context) => {
               "Content-Type": "application/octet-stream",
             },
             body: audioArrayBuffer,
-          }
+          },
         );
 
         if (!audioResponse.ok) {
           const errorText = await audioResponse.text();
           console.error(
-            `Bunny CDN audio yükləmə xətası: ${audioResponse.status} ${audioResponse.statusText} - ${errorText}`
+            `Bunny CDN audio yükləmə xətası: ${audioResponse.status} ${audioResponse.statusText} - ${errorText}`,
           );
         } else {
           audioUrl = `https://the99.b-cdn.net/${audioFolder}/${audioFileName}`;
@@ -526,28 +578,33 @@ export const POST: APIRoute = async (context) => {
 
     // Content-dəki audio tag-ı silinibsə, BunnyCDN-dən də sil
     // Köhnə post content-ində audio varmı yoxla
-    const existingContentHasAudio = existingPost.content.includes('<audio');
-    const newContentHasAudio = content.includes('<audio');
-    
+    const existingContentHasAudio = existingPost.content.includes("<audio");
+    const newContentHasAudio = content.includes("<audio");
+
     // Əgər köhnə content-də audio var idi amma yeni content-də yoxdur
     // Bu, database audio_url-dən fərqlidir - content-dəki embedded audio-dur
     if (existingContentHasAudio && !newContentHasAudio) {
       console.log("Content-dəki audio tag silindi");
-      
+
       // Content-dəki audio src-ni tap: <audio controls src="URL"...>
-      const audioSrcMatch = existingPost.content.match(/<audio[^>]+src=["']([^"']+)["']/);
+      const audioSrcMatch = existingPost.content.match(
+        /<audio[^>]+src=["']([^"']+)["']/,
+      );
       if (audioSrcMatch && audioSrcMatch[1]) {
         const contentAudioUrl = audioSrcMatch[1];
         console.log("Content-dən audio URL extract edildi:", contentAudioUrl);
-        
+
         // Bu URL database audio_url-dən fərqlidirsə sil
         // Əgər eyni URL-dirsə, removeAudio flag-i ilə artıq silinib
-        if (contentAudioUrl.includes("the99.b-cdn.net") && contentAudioUrl !== existingPost.audio_url) {
+        if (
+          contentAudioUrl.includes("the99.b-cdn.net") &&
+          contentAudioUrl !== existingPost.audio_url
+        ) {
           console.log("Content audio BunnyCDN-dən silinir:", contentAudioUrl);
           try {
             const audioUrlPath = contentAudioUrl.replace(
               "https://the99.b-cdn.net/",
-              ""
+              "",
             );
             const deleteAudioResponse = await fetch(
               `https://storage.bunnycdn.com/${storageZoneName}/${audioUrlPath}`,
@@ -556,7 +613,7 @@ export const POST: APIRoute = async (context) => {
                 headers: {
                   AccessKey: bunnyApiKey,
                 },
-              }
+              },
             );
 
             if (deleteAudioResponse.ok) {
@@ -564,14 +621,16 @@ export const POST: APIRoute = async (context) => {
             } else {
               console.error(
                 "Content audio silmə xətası:",
-                await deleteAudioResponse.text()
+                await deleteAudioResponse.text(),
               );
             }
           } catch (deleteError) {
             console.error("Content audio silmə xətası:", deleteError);
           }
         } else if (contentAudioUrl === existingPost.audio_url) {
-          console.log("Content audio URL database audio_url ilə eynidir, removeAudio ilə idarə olunur");
+          console.log(
+            "Content audio URL database audio_url ilə eynidir, removeAudio ilə idarə olunur",
+          );
         }
       }
     }
@@ -611,7 +670,7 @@ export const POST: APIRoute = async (context) => {
 
       // Editorda silinən şəkilləri tap
       const deletedImages = existingImages.filter(
-        (img) => !newImages.includes(img)
+        (img) => !newImages.includes(img),
       );
 
       // Silinən şəkilləri BunnyCDN-dən sil
@@ -627,18 +686,18 @@ export const POST: APIRoute = async (context) => {
               headers: {
                 AccessKey: bunnyApiKey,
               },
-            }
+            },
           );
 
           if (response.ok) {
             console.log(
-              `Editorda silinən şəkil BunnyCDN-dən silindi: ${imageUrl}`
+              `Editorda silinən şəkil BunnyCDN-dən silindi: ${imageUrl}`,
             );
             deletedImageUrls.push(imageUrl);
           } else {
             console.error(
               `Şəkil silinərkən xəta: ${imageUrl}`,
-              await response.text()
+              await response.text(),
             );
           }
         } catch (error) {
@@ -668,7 +727,7 @@ export const POST: APIRoute = async (context) => {
       // Bütün köhnə URL-ləri yeni URL ilə əvəz et
       const urlCount = (
         processedContent.match(
-          new RegExp(oldUrlBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")
+          new RegExp(oldUrlBase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
         ) || []
       ).length;
       console.log(`Məzmunda ${urlCount} köhnə URL tapıldı`);
@@ -689,7 +748,7 @@ export const POST: APIRoute = async (context) => {
         // Pattern: oldSlug-[hər hansı simvollar].[uzantı]
         const imagePattern = new RegExp(
           `${escapedOldSlug}-([a-zA-Z0-9]+)\\.(jpg|jpeg|png|gif|webp|svg)`,
-          "gi"
+          "gi",
         );
 
         const imageMatches = processedContent.match(imagePattern);
@@ -697,7 +756,7 @@ export const POST: APIRoute = async (context) => {
 
         processedContent = processedContent.replace(
           imagePattern,
-          `${newSlug}-$1.$2`
+          `${newSlug}-$1.$2`,
         );
 
         console.log(`✅ Məzmunda URL-lər və şəkil adları yeniləndi`);
@@ -761,7 +820,7 @@ export const POST: APIRoute = async (context) => {
 
       // Zaten işlenen temp ID'leri kontrol et
       const alreadyProcessed = tempImages.some((img) =>
-        img.src.includes(tempId)
+        img.src.includes(tempId),
       );
 
       if (!alreadyProcessed) {
@@ -792,7 +851,7 @@ export const POST: APIRoute = async (context) => {
             AccessKey: bunnyApiKey,
             Accept: "application/json",
           },
-        }
+        },
       );
 
       if (response.ok) {
@@ -801,7 +860,7 @@ export const POST: APIRoute = async (context) => {
         const imageFiles = files.filter(
           (file: any) =>
             file.ObjectName.startsWith(newSlug) &&
-            /\.(jpg|jpeg|png|gif|webp)$/i.test(file.ObjectName)
+            /\.(jpg|jpeg|png|gif|webp)$/i.test(file.ObjectName),
         );
         imageCounter = imageFiles.length;
       } else {
@@ -825,7 +884,7 @@ export const POST: APIRoute = async (context) => {
         // Temp ID'den formatı tespit etmeye çalış
         if (tempImage.src.includes("#temp-")) {
           const tempId = tempImage.src.substring(
-            tempImage.src.indexOf("#temp-")
+            tempImage.src.indexOf("#temp-"),
           );
           const formatMatch = tempId.match(/temp-[0-9]+-([a-z]+)/);
           if (formatMatch && formatMatch[1]) {
@@ -839,7 +898,7 @@ export const POST: APIRoute = async (context) => {
             fileExtension = extMatch;
           }
         }
- 
+
         // Resim için benzersiz bir ID oluştur veya var olanı kullan
         let imageFileName: any;
 
@@ -861,17 +920,16 @@ export const POST: APIRoute = async (context) => {
         if (tempImage.fullMatch.startsWith("![")) {
           processedContent = processedContent.replace(
             tempImage.fullMatch,
-            `![${tempImage.alt}](${cdnUrl})`
+            `![${tempImage.alt}](${cdnUrl})`,
           );
         }
         // Doğrudan URL'ler için
         else {
           processedContent = processedContent.replace(
             tempImage.fullMatch,
-            cdnUrl
+            cdnUrl,
           );
         }
-
       } catch (error) {
         console.error(`Resim URL'si düzeltilmedi: ${tempImage.src}`, error);
       }
@@ -932,7 +990,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -963,10 +1021,10 @@ export const POST: APIRoute = async (context) => {
                     headers: {
                       AccessKey: bunnyApiKey,
                     },
-                  }
+                  },
                 );
                 console.log(
-                  `Fayl silindi: ${file.ObjectName} (status: ${deleteFileResponse.status})`
+                  `Fayl silindi: ${file.ObjectName} (status: ${deleteFileResponse.status})`,
                 );
               }
             }
@@ -982,10 +1040,10 @@ export const POST: APIRoute = async (context) => {
               headers: {
                 AccessKey: bunnyApiKey,
               },
-            }
+            },
           );
           console.log(
-            `images folder silmə statusu: ${deleteImagesResponse.status}`
+            `images folder silmə statusu: ${deleteImagesResponse.status}`,
           );
 
           // 3. Ana folder-i sil (posts/oldSlug/)
@@ -996,17 +1054,17 @@ export const POST: APIRoute = async (context) => {
               headers: {
                 AccessKey: bunnyApiKey,
               },
-            }
+            },
           );
           console.log(
-            `Parent folder silmə statusu: ${deleteParentResponse.status}`
+            `Parent folder silmə statusu: ${deleteParentResponse.status}`,
           );
 
           if (deleteParentResponse.ok || deleteParentResponse.status === 404) {
             console.log(`✅ Köhnə folder tamamilə silindi: posts/${oldSlug}`);
           } else {
             console.error(
-              `❌ Parent folder silinə bilmədi: ${deleteParentResponse.status}`
+              `❌ Parent folder silinə bilmədi: ${deleteParentResponse.status}`,
             );
           }
         } catch (deleteError) {
@@ -1030,7 +1088,7 @@ export const POST: APIRoute = async (context) => {
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Post güncelleme hatası:", error);
@@ -1044,7 +1102,7 @@ export const POST: APIRoute = async (context) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 };

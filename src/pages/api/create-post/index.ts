@@ -3,6 +3,7 @@ import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
 import { slugifyCategory } from "@/utils/slugify-category";
+import { optimizeImage } from "wasm-image-optimization";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -28,8 +29,8 @@ export const POST: APIRoute = async (context) => {
         categoriesRaw.flatMap((category) =>
           category.includes(",")
             ? category.split(",").map((c) => slugifyCategory(c.trim()))
-            : [slugifyCategory(category.trim())]
-        )
+            : [slugifyCategory(category.trim())],
+        ),
       ),
     ].filter(Boolean);
 
@@ -57,7 +58,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -70,7 +71,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 400,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -82,13 +83,63 @@ export const POST: APIRoute = async (context) => {
 
     if (uploadedImage) {
       try {
-        const fileExtension = uploadedImage.name.split(".").pop() || "jpg";
-        const imageFileName = `${slug}-cover.${fileExtension}`;
+        let originalExtension = (
+          uploadedImage.name.split(".").pop() || ""
+        ).toLowerCase();
 
-        const folder = `posts/${slug}/images`;
+        let mimeType = uploadedImage.type || "";
+
+        // Uzantı və ya mime-type əsasında convert edilə biləcəyini yoxlayaq
+        const isConvertible =
+          ["png", "jpg", "jpeg"].includes(originalExtension) ||
+          ["image/png", "image/jpeg", "image/jpg"].includes(mimeType);
+
+        // Əgər extension yoxdursa, amma MimeType uyğundursa, standart extension təyin edək
+        if (
+          !originalExtension ||
+          originalExtension === uploadedImage.name.toLowerCase()
+        ) {
+          if (mimeType === "image/png") originalExtension = "png";
+          else if (mimeType === "image/jpeg" || mimeType === "image/jpg")
+            originalExtension = "jpg";
+          else originalExtension = "jpg"; // fallback
+        }
+
+        let finalExtension = originalExtension;
 
         try {
           const arrayBuffer = await uploadedImage.arrayBuffer();
+          let uploadBuffer: ArrayBuffer | Uint8Array = arrayBuffer;
+
+          // Əgər format PNG, JPG və ya JPEG-dirsə, WebP-yə çevir
+          if (isConvertible) {
+            try {
+              console.log(
+                `Cover şəkil WebP-yə çevrilir (orijinal: ${originalExtension}, type: ${mimeType}, ölçü: ${arrayBuffer.byteLength} bytes)`,
+              );
+              const webpImage = await optimizeImage({
+                image: arrayBuffer,
+                quality: 95,
+                format: "webp",
+              });
+              uploadBuffer = webpImage;
+              finalExtension = "webp"; // Yalnız uğurlu olduqda webp edirik
+              console.log(
+                `WebP-yə çevrildi (yeni ölçü: ${webpImage.byteLength} bytes, qənaət: ${Math.round((1 - webpImage.byteLength / arrayBuffer.byteLength) * 100)}%)`,
+              );
+            } catch (convertError: any) {
+              console.error(
+                `WebP çevirmə xətası, orijinal format ilə yüklənir:`,
+                convertError,
+              );
+              // WebP çevirmə uğursuz olarsa, orijinal faylı və uzantını saxla
+              uploadBuffer = arrayBuffer;
+              finalExtension = originalExtension;
+            }
+          }
+
+          const imageFileName = `${slug}-cover.${finalExtension}`;
+          const folder = `posts/${slug}/images`;
 
           const runtime = (context.locals as any).runtime;
           const bunnyApiKey =
@@ -111,28 +162,29 @@ export const POST: APIRoute = async (context) => {
                 AccessKey: bunnyApiKey,
                 "Content-Type": "application/octet-stream",
               },
-              body: arrayBuffer,
-            }
+              body: uploadBuffer as BodyInit,
+            },
           );
 
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(
-              `Bunny CDN yükleme hatası: ${response.status} ${response.statusText} - ${errorText}`
+              `Bunny CDN yükleme hatası: ${response.status} ${response.statusText} - ${errorText}`,
             );
           }
 
           coverImageUrl = `https://the99.b-cdn.net/${folder}/${imageFileName}`;
-        } catch (uploadError) {
+          console.log(`Cover şəkil yükləndi: ${coverImageUrl}`);
+        } catch (uploadError: any) {
           throw new Error(`Bunny CDN yükleme hatası: ${uploadError.message}`);
         }
-      } catch (error) {
+      } catch (error: any) {
         return new Response(
           JSON.stringify({
             success: false,
             message: `Resim yükleme sırasında bir hata oluştu: ${error.message}`,
           }),
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -168,13 +220,13 @@ export const POST: APIRoute = async (context) => {
               "Content-Type": "application/octet-stream",
             },
             body: audioArrayBuffer,
-          }
+          },
         );
 
         if (!audioResponse.ok) {
           const errorText = await audioResponse.text();
           throw new Error(
-            `Bunny CDN audio yükleme xətası: ${audioResponse.status} ${audioResponse.statusText} - ${errorText}`
+            `Bunny CDN audio yükleme xətası: ${audioResponse.status} ${audioResponse.statusText} - ${errorText}`,
           );
         }
 
@@ -220,7 +272,7 @@ export const POST: APIRoute = async (context) => {
         processedContent = processedContent.replace(blobUrl, cdnUrl);
 
         console.log(
-          `Geçici resim URL'si değiştirildi: ${blobUrl} -> ${cdnUrl}`
+          `Geçici resim URL'si değiştirildi: ${blobUrl} -> ${cdnUrl}`,
         );
       } catch (error) {
         console.error(`Resim URL'si düzeltilemedi: ${blobUrl}`, error);
@@ -262,7 +314,7 @@ export const POST: APIRoute = async (context) => {
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -276,7 +328,7 @@ export const POST: APIRoute = async (context) => {
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Post oluşturma hatası:", error);
@@ -289,7 +341,7 @@ export const POST: APIRoute = async (context) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 };

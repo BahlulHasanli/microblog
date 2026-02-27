@@ -13,8 +13,8 @@ export function isAuthenticated(
   cookies: AstroCookies,
   redirect?: (
     path: string,
-    status?: 301 | 302 | 303 | 307 | 308 | 300 | 304
-  ) => Response
+    status?: 301 | 302 | 303 | 307 | 308 | 300 | 304,
+  ) => Response,
 ): boolean {
   const accessToken = cookies.get("sb-access-token");
   const refreshToken = cookies.get("sb-refresh-token");
@@ -32,7 +32,7 @@ export function isAuthenticated(
  */
 export async function getUserFromCookies(
   cookies: AstroCookies,
-  redirect: any
+  redirect: any,
 ): Promise<any> {
   try {
     const accessToken = cookies.get("sb-access-token");
@@ -40,11 +40,11 @@ export async function getUserFromCookies(
 
     console.log(
       "getUserFromCookies - accessToken exists:",
-      !!accessToken?.value
+      !!accessToken?.value,
     );
     console.log(
       "getUserFromCookies - refreshToken exists:",
-      !!refreshToken?.value
+      !!refreshToken?.value,
     );
 
     if (
@@ -69,11 +69,11 @@ export async function getUserFromCookies(
 
     console.log(
       "getUserFromCookies - setSession error:",
-      sessionError?.message
+      sessionError?.message,
     );
     console.log(
       "getUserFromCookies - sessionData.user:",
-      sessionData?.user?.email
+      sessionData?.user?.email,
     );
 
     if (sessionError || !sessionData?.user) {
@@ -123,7 +123,7 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
       if (cookieHeader) {
         const cookies = cookieHeader.split(";").map((c) => c.trim());
         const accessCookie = cookies.find((c) =>
-          c.startsWith("sb-access-token=")
+          c.startsWith("sb-access-token="),
         );
         if (accessCookie) {
           token = accessCookie.split("=")[1];
@@ -141,7 +141,7 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
     // Check token
     const { payload } = await jwtVerify(
       token,
-      new TextEncoder().encode(JWT_SECRET)
+      new TextEncoder().encode(JWT_SECRET),
     );
 
     if (payload.type !== "access") {
@@ -194,7 +194,7 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
         {
           status: 401,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -209,7 +209,7 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
       {
         status: 401,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }
@@ -281,7 +281,7 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
         {
           status: 401,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -296,7 +296,7 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
         {
           status: 403,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -311,7 +311,7 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }
@@ -320,7 +320,7 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
  * Moderator endpoint'ləri üçün middleware
  */
 export async function requireModerator(
-  ctx: APIContext
+  ctx: APIContext,
 ): Promise<Response | any> {
   try {
     // Cookie-dən istifadəçi məlumatlarını al
@@ -335,7 +335,7 @@ export async function requireModerator(
         {
           status: 401,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -350,7 +350,7 @@ export async function requireModerator(
         {
           status: 403,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -365,7 +365,7 @@ export async function requireModerator(
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 }

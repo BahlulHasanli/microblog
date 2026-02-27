@@ -81,7 +81,7 @@ export function generateResponsiveImages(
   }
 
   // Daha kiçik ölçülər - real ekran ölçülərinə uyğun
-  const widths = [320, 480, 640, 800, 1024];
+  const widths = [320, 480, 640, 800, 1024, 1280, 1536];
   const applicableWidths = widths.filter((w) => w <= width);
 
   if (
@@ -107,9 +107,9 @@ export function generateResponsiveImages(
     options.sizes ||
     `
     (max-width: 640px) 100vw,
-    (max-width: 768px) 50vw,
-    (max-width: 1024px) 33vw,
-    400px
+    (max-width: 768px) 80vw,
+    (max-width: 1024px) 1024px,
+    1280px
   `
       .trim()
       .replace(/\s+/g, " ");
@@ -138,13 +138,13 @@ export function getBlogEntrySizes(): string {
 
 /**
  * Hero/Featured image üçün optimal sizes
- * Hero ölçüləri: mobil 100vw, tablet 80vw, desktop max 800px
+ * Hero ölçüləri: mobil 100vw, tablet 100vw, desktop max 1280px
  */
 export function getHeroImageSizes(): string {
   return `
     (max-width: 640px) 100vw,
-    (max-width: 1024px) 80vw,
-    800px
+    (max-width: 1024px) 100vw,
+    1280px
   `
     .trim()
     .replace(/\s+/g, " ");
