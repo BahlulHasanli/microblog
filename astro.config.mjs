@@ -14,21 +14,7 @@ export default defineConfig({
     plugins: [tailwindcss()],
     build: {
       rollupOptions: {
-        output: {
-          manualChunks: {
-            // Svelte runtime-ı bir chunk-da birləşdir
-            "svelte-runtime": [
-              "svelte",
-              "svelte/internal",
-              "svelte/store",
-              "svelte/transition",
-              "svelte/animate",
-              "svelte/easing",
-            ],
-            // Blurhash ayrı chunk
-            blurhash: ["blurhash"],
-          },
-        },
+        // Removed manualChunks
       },
       // Chunk ölçüsü xəbərdarlığını artır
       chunkSizeWarningLimit: 500,
