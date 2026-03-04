@@ -1,36 +1,21 @@
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 import sitemap from "@astrojs/sitemap";
-import mdx from "@astrojs/mdx";
 import react from "@astrojs/react";
 import svelte from "@astrojs/svelte";
 import cloudflare from "@astrojs/cloudflare";
 
-// https://astro.build/config
 export default defineConfig({
   site: "https://the99.az",
   output: "server",
   vite: {
     plugins: [tailwindcss()],
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            // Svelte runtime-ı bir chunk-da birləşdir
-            "svelte-runtime": [
-              "svelte",
-              "svelte/internal",
-              "svelte/store",
-              "svelte/transition",
-              "svelte/animate",
-              "svelte/easing",
-            ],
-            // Blurhash ayrı chunk
-            blurhash: ["blurhash"],
-          },
-        },
+    resolve: {
+      alias: {
+        "wasm-image-optimization": "wasm-image-optimization/esm",
       },
-      // Chunk ölçüsü xəbərdarlığını artır
+    },
+    build: {
       chunkSizeWarningLimit: 500,
     },
   },
@@ -61,5 +46,9 @@ export default defineConfig({
     react(),
     svelte(),
   ],
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    platformProxy: {
+      enabled: true,
+    },
+  }),
 });
