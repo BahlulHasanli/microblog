@@ -357,9 +357,11 @@
                   {post.data.title}
                 </h3>
               </a>
-              <p class="text-white/90 text-[14px] sm:text-[15px] md:text-[14px] font-display leading-relaxed text-balance mb-6 sm:mb-8 line-clamp-4 max-w-3xl mx-auto">
-                {post.data.description}
-              </p>
+              <a href={`/posts/${post.slug}`} class="block w-full hover:opacity-80 transition-opacity">
+                <p class="text-white/90 text-[14px] sm:text-[15px] md:text-[14px] font-display leading-relaxed text-balance mb-6 sm:mb-8 line-clamp-4 max-w-3xl mx-auto">
+                  {post.data.description}
+                </p>
+              </a>
               <a href={`/@${post.data.author?.username}`} class="text-white font-display text-xs sm:text-sm hover:text-white/80 transition-colors">
                 Müəllif: <span class="font-bold">{post.data.author?.fullname}</span>
               </a>
