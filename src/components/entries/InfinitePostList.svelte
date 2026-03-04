@@ -47,8 +47,7 @@
   let page = initialPage;
   let loading = false;
   let hasMore = true;
-  let observer: IntersectionObserver;
-  let loadMoreTrigger: HTMLElement;
+
 
   // Şəkil optimizasiyası funksiyaları - WASM endpoint istifadə edir
   function generateBunnyCDNUrl(src: string, width?: number, quality: number = 80, format: string = 'webp'): string {
@@ -246,25 +245,6 @@
     initBlurhash();
     loadViewCounts();
     setupUserAvatarClick();
-
-    observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
-          loadMore();
-        }
-      },
-      { rootMargin: '200px' }
-    );
-
-    if (loadMoreTrigger) {
-      observer.observe(loadMoreTrigger);
-    }
-
-    return () => {
-      if (observer) {
-        observer.disconnect();
-      }
-    };
   });
   // Postları yenidən sırala: icmal postları boşluq yaratmasın
   // İcmal postları 2 sütun tutur, ona görə onları cüt pozisiyalarda yerləşdirmək lazımdır
@@ -512,8 +492,8 @@
   {/each}
 </div>
 
-<!-- Loading trigger -->
-<div bind:this={loadMoreTrigger} class="w-full py-8 flex justify-center sm:col-span-2">
+<!-- Load more button -->
+<div class="w-full pt-10 pb-4 flex justify-center">
   {#if loading}
     <div class="flex items-center gap-3 text-base-600 dark:text-base-400">
       <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -522,8 +502,19 @@
       </svg>
       <span class="text-sm">Yüklənir...</span>
     </div>
-  {:else if !hasMore}
-    <div class="text-sm text-base-600 dark:text-base-400">
+  {:else if hasMore}
+    <button
+      type="button"
+      on:click={loadMore}
+      class="load-more-btn text-base-400 dark:text-base-500 hover:text-base-700 dark:hover:text-base-300 transition-colors"
+      aria-label="Daha çox yüklə"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="load-more-icon size-12">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+    </button>
+  {:else}
+    <div class="text-sm text-base-500 dark:text-base-500">
       Bütün postlar yükləndi
     </div>
   {/if}
@@ -532,5 +523,29 @@
 <style>
   .blurhash-canvas {
     transition: opacity 0.3s ease-out;
+  }
+
+  .load-more-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .load-more-icon {
+    transition: transform 0.3s ease;
+  }
+
+  .load-more-btn:hover .load-more-icon {
+    animation: spin-loop 1.2s linear infinite;
+  }
+
+  @keyframes spin-loop {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
 </style>
