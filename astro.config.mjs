@@ -47,6 +47,7 @@ export default defineConfig({
     svelte(),
   ],
   adapter: cloudflare({
+    imageService: "compile",
     platformProxy: {
       enabled: true,
     },

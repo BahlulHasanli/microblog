@@ -1,5 +1,6 @@
 <script lang="ts">
 import { Toaster, toast } from 'svelte-sonner'
+import { untrack } from 'svelte'
 
 interface Props {
   isLoggedIn: boolean;
@@ -9,7 +10,7 @@ interface Props {
 let { isLoggedIn = false, userFullName = "" }: Props = $props();
 
 let formState = $state({
-  fullName: userFullName,
+  fullName: untrack(() => userFullName),
   email: "",
   subject: "",
   message: ""

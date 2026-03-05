@@ -322,7 +322,7 @@
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
                 <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
               </svg>
-              <span class="text-[11px] font-bold tracking-wider uppercase pt-[1px]">Dinlə</span>
+              <span class="text-[11px] font-bold tracking-wider uppercase pt-px">Dinlə</span>
             </div>
           {/if}
 
@@ -332,17 +332,17 @@
               <span class="text-white/90 tracking-[0.2em] text-[10px] sm:text-xs font-semibold uppercase mb-3 sm:mb-4">
                 İcmal
               </span>
-              <a href={`/posts/${post.slug}`} class="block w-full">
-                <h3 class="text-white font-big-shoulders text-2xl sm:text-2xl md:text-3xl lg:text-4xl font-bold uppercase leading-tight text-balance mb-4 sm:mb-5 hover:opacity-80 transition-opacity">
+              <a href={`/posts/${post.slug}`} class="block w-full py-2">
+                <h3 class="text-white font-big-shoulders text-2xl sm:text-2xl md:text-3xl lg:text-4xl font-bold uppercase leading-tight text-balance hover:opacity-80 transition-opacity">
                   {post.data.title}
                 </h3>
               </a>
-              <a href={`/posts/${post.slug}`} class="block w-full hover:opacity-80 transition-opacity">
-                <p class="text-white/90 text-[14px] sm:text-[15px] md:text-[14px] font-display leading-relaxed text-balance mb-6 sm:mb-8 line-clamp-4 max-w-3xl mx-auto">
+              <a href={`/posts/${post.slug}`} class="block w-full hover:opacity-80 transition-opacity pb-6 pt-2">
+                <p class="text-white/90 text-[14px] sm:text-[15px] md:text-[14px] font-display leading-relaxed text-balance line-clamp-4 max-w-3xl mx-auto">
                   {post.data.description}
                 </p>
               </a>
-              <a href={`/@${post.data.author?.username}`} class="text-white font-display text-xs sm:text-sm hover:text-white/80 transition-colors">
+              <a href={`/@${post.data.author?.username}`} class="text-white font-display text-xs sm:text-sm hover:text-white/80 transition-colors py-3 px-4 inline-block">
                 Müəllif: <span class="font-bold">{post.data.author?.fullname}</span>
               </a>
             </div>
@@ -359,7 +359,7 @@
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
                   <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
                 </svg>
-                <span class="text-[11px] font-bold tracking-wider uppercase pt-[1px]">Dinlə</span>
+                <span class="text-[11px] font-bold tracking-wider uppercase pt-px">Dinlə</span>
               </div>
             {/if}
             <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden rounded-xl" data-blurhash={post.data.blurhash}
@@ -394,26 +394,23 @@
                     class="w-full h-full object-cover"
                 />
               </button>
-              <a href={`/@${post.data.author?.username}`} class="font-medium hover:text-rose-600 dark:text-base-300 dark:hover:text-rose-400 transition-colors truncate">
+              <a href={`/@${post.data.author?.username}`} class="font-medium hover:text-rose-600 dark:text-base-300 dark:hover:text-rose-400 transition-colors truncate py-2 pr-2 inline-block">
                 {post.data.author?.fullname}
               </a>
               {#if post.data.categories && post.data.categories.length > 0}
-                <span aria-hidden="true">&middot;</span>
-                <span>
+                <span aria-hidden="true" class="py-2">&middot;</span>
+                <span class="flex items-center flex-wrap">
                   {#each post.data.categories as categorySlug, i}
-                    <a href={`/category/${categorySlug}`} class="text-yellow-700 dark:text-yellow-500">
+                    <a href={`/category/${categorySlug}`} class="text-yellow-700 dark:text-yellow-500 py-2 px-1 inline-block">
                       {getCategoryName(categorySlug)}{i < post.data.categories.length - 1 ? ',' : ''}
                     </a>
-                    {#if i < post.data.categories.length - 1}
-                      {' '}
-                    {/if}
                   {/each}
                 </span>
               {/if}
             </div>
 
-            <h3 class="mt-4 text-base text-base-900 dark:text-base-50 text-balance">
-              <a href={`/posts/${post.slug}`} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy">
+            <h3 class="mt-2 text-base text-base-900 dark:text-base-50 text-balance">
+              <a href={`/posts/${post.slug}`} class="group-hover:underline group-hover:decoration-1 group-hover:decoration-wavy py-2 inline-block w-full">
                 {post.data.title}
               </a>
             </h3>
