@@ -10,7 +10,6 @@ import {
   GRID_SIZE,
   INITIAL_POWERS,
   ALPHABET,
-  getDailyLevelIndex,
   getTodayDateKey,
   isMonthEndPause,
 } from "../utils/constants";
@@ -151,7 +150,7 @@ export default function KrossWordle({ initialUser }: Props) {
         setActiveDirection(firstWord.direction);
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, gameOver, alreadyPlayed, selectedCell, currentLevel.words]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -184,7 +183,7 @@ export default function KrossWordle({ initialUser }: Props) {
       setGameOver(true);
       saveScore();
     }
-  }, [validatedWords, gameOver, alreadyPlayed]);
+  }, [validatedWords, gameOver, alreadyPlayed, levelsLoaded]);
 
   // Komponent mount — level-lər yüklə, session yüklə
   useEffect(() => {
@@ -200,7 +199,9 @@ export default function KrossWordle({ initialUser }: Props) {
         loadLeaderboard();
         setShowLeaderboard(true);
       } else {
-        loadSession();
+        // loadSession loadLevels-dən SONRA çağırılmalıdır ki,
+        // bərpa edilən grid köhnə boş grid ilə üst-üstə yazılmasın
+        await loadSession();
         loadLeaderboard();
       }
     };
@@ -297,8 +298,12 @@ export default function KrossWordle({ initialUser }: Props) {
     // Əvvəlcə son progress-i saxla
     await saveProgress();
 
+    // elapsedRef istifadə edirik, çünki saveScore useEffect-dən çağırılır
+    // və elapsed stale ola bilər
+    const currentElapsed = elapsedRef.current;
+
     setUserScore({
-      completionTime: elapsed,
+      completionTime: currentElapsed,
       levelId: currentLevel.id,
       playDate: getTodayDateKey(),
     });
@@ -309,7 +314,7 @@ export default function KrossWordle({ initialUser }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           levelId: currentLevel.id,
-          completionTime: elapsed,
+          completionTime: currentElapsed,
           playDate: getTodayDateKey(),
         }),
       });
@@ -414,12 +419,17 @@ export default function KrossWordle({ initialUser }: Props) {
 
       if (cell && !cell.isRevealed) {
         if (cell.letter === "" && activeWordId) {
+          // Cari xana boşdursa — əvvəlki xanaya keç VƏ oradakı hərfi sil
           const wp = currentLevel.words.find((w) => w.id === activeWordId);
           if (wp) {
             const currentIdx = wp.direction === "H" ? x - wp.x : y - wp.y;
             if (currentIdx > 0) {
               const prevX = wp.direction === "H" ? wp.x + currentIdx - 1 : wp.x;
               const prevY = wp.direction === "V" ? wp.y + currentIdx - 1 : wp.y;
+              const prevCell = newGrid[prevY]?.[prevX];
+              if (prevCell && !prevCell.isRevealed) {
+                prevCell.letter = "";
+              }
               setTimeout(() => setSelectedCell({ x: prevX, y: prevY }), 0);
             }
           }
@@ -448,24 +458,35 @@ export default function KrossWordle({ initialUser }: Props) {
             const midIdx = Math.floor(wp.word.length / 2);
             const mx = wp.direction === "H" ? wp.x + midIdx : wp.x;
             const my = wp.direction === "V" ? wp.y + midIdx : wp.y;
-            if (newGrid[my]?.[mx]) {
+            if (newGrid[my]?.[mx] && !newGrid[my][mx]!.isRevealed) {
               newGrid[my][mx]!.isRevealed = true;
               newGrid[my][mx]!.letter = wp.word[midIdx];
               success = true;
             }
           }
         } else if (type === PowerType.Bomb) {
-          const wp =
-            currentLevel.words[
-              Math.floor(Math.random() * currentLevel.words.length)
-            ];
-          const idx = Math.floor(Math.random() * wp.word.length);
-          const bx = wp.direction === "H" ? wp.x + idx : wp.x;
-          const by = wp.direction === "V" ? wp.y + idx : wp.y;
-          if (newGrid[by]?.[bx]) {
-            newGrid[by][bx]!.isRevealed = true;
-            newGrid[by][bx]!.letter = wp.word[idx];
-            newGrid[by][bx]!.isBombEffect = true;
+          // Açılmamış bütün xanaları topla
+          const unrevealedCells: { x: number; y: number; char: string }[] = [];
+          currentLevel.words.forEach((wp) => {
+            for (let i = 0; i < wp.word.length; i++) {
+              const cx = wp.direction === "H" ? wp.x + i : wp.x;
+              const cy = wp.direction === "V" ? wp.y + i : wp.y;
+              if (newGrid[cy]?.[cx] && !newGrid[cy][cx]!.isRevealed) {
+                // Dublikat olmasın (kəsişən xanalar üçün)
+                if (!unrevealedCells.some((c) => c.x === cx && c.y === cy)) {
+                  unrevealedCells.push({ x: cx, y: cy, char: wp.word[i] });
+                }
+              }
+            }
+          });
+          if (unrevealedCells.length > 0) {
+            const target =
+              unrevealedCells[
+                Math.floor(Math.random() * unrevealedCells.length)
+              ];
+            newGrid[target.y][target.x]!.isRevealed = true;
+            newGrid[target.y][target.x]!.letter = target.char;
+            newGrid[target.y][target.x]!.isBombEffect = true;
             success = true;
             setTimeout(() => {
               setGrid((prev) =>
@@ -611,29 +632,9 @@ export default function KrossWordle({ initialUser }: Props) {
       </div>
     );
   }
-  if (
-    levelsLoaded &&
-    dynamicLevels.length === 0 &&
-    !alreadyPlayed &&
-    !isMonthEnd
-  ) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center px-6">
-          <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🧩</span>
-          </div>
-          <h2 className="text-xl font-semibold text-zinc-900 mb-2">
-            Level Mövcud Deyil
-          </h2>
-          <p className="text-sm text-zinc-500">
-            Hazırda oyun üçün level əlavə edilməyib. Admin paneldən level əlavə
-            edin.
-          </p>
-        </div>
-      </div>
-    );
-  }
+
+  const noLevelToday =
+    levelsLoaded && dynamicLevels.length === 0 && !alreadyPlayed && !isMonthEnd;
 
   return (
     <div className="min-h-screen bg-white text-zinc-900 select-none">
@@ -645,7 +646,7 @@ export default function KrossWordle({ initialUser }: Props) {
               Kross<span className="text-rose-500">Wordle</span>
             </h1>
             <p className="text-xs text-zinc-500 font-medium">
-              Günlük #{currentLevel.id}
+              {noLevelToday ? "Günlük tapmaca" : `Günlük #${currentLevel.id}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -656,7 +657,7 @@ export default function KrossWordle({ initialUser }: Props) {
               <Trophy size={16} className="text-rose-500" />
               <span className="text-sm font-medium">Reytinq</span>
             </button>
-            {!alreadyPlayed && (
+            {!alreadyPlayed && !noLevelToday && (
               <div className="flex items-center gap-1.5 bg-zinc-100 px-3 py-2 rounded-lg">
                 <Timer size={16} className="text-rose-500" />
                 <span className="font-mono text-sm font-semibold">
@@ -669,6 +670,20 @@ export default function KrossWordle({ initialUser }: Props) {
       </header>
 
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+        {noLevelToday && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
+            <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-2xl">🧩</span>
+            </div>
+            <h2 className="text-lg font-semibold text-zinc-900 mb-1">
+              Bu gün üçün tapmaca yoxdur
+            </h2>
+            <p className="text-sm text-zinc-500">
+              Sabah yeni tapmaca gözləyin! Hələlik reytinq cədvəlinə baxın.
+            </p>
+          </div>
+        )}
+
         {alreadyPlayed && (
           <div className="mb-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -851,14 +866,14 @@ export default function KrossWordle({ initialUser }: Props) {
           </div>
         )}
 
-        {(showLeaderboard || isMonthEnd) && (
+        {(showLeaderboard || isMonthEnd || noLevelToday) && (
           <div className="mb-4 bg-white border border-zinc-200 rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-nouvelr-semibold flex items-center gap-2">
                 <Trophy className="text-rose-500" size={18} />
                 Aylıq Reytinq
               </h2>
-              {!isMonthEnd && (
+              {!isMonthEnd && !noLevelToday && (
                 <button
                   onClick={() => setShowLeaderboard(false)}
                   className="text-zinc-500 hover:text-zinc-700 text-sm"
@@ -925,7 +940,7 @@ export default function KrossWordle({ initialUser }: Props) {
         )}
 
         {/* Kompakt layout - Grid, Powers, Keyboard sol tərəfdə, İpuçları sağda */}
-        {!isMonthEnd && !alreadyPlayed && (
+        {!isMonthEnd && !alreadyPlayed && !noLevelToday && (
           <div className="flex flex-col lg:flex-row gap-4 relative">
             {/* Start Screen Overlay */}
             {!isPlaying && !gameOver && (
@@ -1191,7 +1206,7 @@ export default function KrossWordle({ initialUser }: Props) {
         <a href="/" className="hover:text-rose-500 transition-colors">
           The99.az
         </a>{" "}
-        © 2025
+        © {new Date().getFullYear()}
       </footer>
     </div>
   );

@@ -46,7 +46,7 @@
   let posts = [...initialPosts];
   let page = initialPage;
   let loading = false;
-  let hasMore = true;
+  let hasMore = initialPosts.length >= postsPerPage;
 
 
   // Şəkil optimizasiyası funksiyaları - WASM endpoint istifadə edir
@@ -263,7 +263,7 @@
       
       if (isIcmal) {
         // İcmal postu əlavə etməzdən əvvəl, əgər tək pozisiyadadırsa, normal post əlavə et
-        if (gridPosition % 2 === 1 && normalIndex < normalPosts.length) {
+        if (gridPosition % 2 === 1) {
           // Tək pozisiyada - əvvəlcə normal post əlavə et
           // Bu artıq result-da olmayan növbəti normal postu tap
           const remainingNormals = normalPosts.filter(np => !result.includes(np));
@@ -279,6 +279,18 @@
         if (!result.includes(post)) {
           result.push(post);
           gridPosition += 1;
+        }
+      }
+    }
+    
+    // Əgər axırıncı sətirdə 1 boş yer qalırsa və hələ də yeni postlar yüklənə bilərsə, 
+    // sonuncu normal postu siyahıdan çıxarırıq ki, grid tam simmetrik görünsün və boş yer qalmasın.
+    if (hasMore && gridPosition % 2 === 1) {
+      for (let i = result.length - 1; i >= 0; i--) {
+        if (!result[i].data.categories?.includes('icmal')) {
+          result.splice(i, 1);
+          gridPosition -= 1;
+          break;
         }
       }
     }
@@ -318,11 +330,11 @@
           </a>
 
           {#if post.data.hasAudio}
-            <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 bg-black/60 text-white border border-white/10 px-3 py-1.5 rounded-full pointer-events-none flex items-center gap-1.5">
+            <div class="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 bg-black/50 text-white border border-white/5 px-3 py-1.5 rounded-lg pointer-events-none flex items-center gap-1.5">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
                 <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
               </svg>
-              <span class="text-[11px] font-bold tracking-wider uppercase pt-px">Dinlə</span>
+              <!-- <span class="text-[11px] font-bold tracking-wider uppercase pt-px">Dinlə</span> -->
             </div>
           {/if}
 
@@ -355,11 +367,11 @@
         <article class="flex flex-col flex-1 h-full group">
           <a href={`/posts/${post.slug}`} title={post.data.title} class="block relative group-hover:opacity-90 transition-opacity">
             {#if post.data.hasAudio}
-              <div class="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/60 backdrop-blur-md text-white border border-white/10 px-3 py-1.5 rounded-full pointer-events-none flex items-center gap-1.5">
+              <div class="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 bg-black/50 backdrop-blur-md text-white border border-white/5 px-3 py-1.5 rounded-lg pointer-events-none flex items-center gap-1.5">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4">
                   <path d="M12 1.5C6.2 1.5 1.5 6.2 1.5 12V17C1.5 20 4 22.5 7 22.5H7.5V20.9C8.4 20.7 9 19.9 9 19V15C9 14.1 8.4 13.3 7.5 13.1V11.5H7C5.1 11.5 3.5 12.4 2.5 13.8V12C2.5 6.8 6.8 2.5 12 2.5C17.2 2.5 21.5 6.8 21.5 12V13.8C20.5 12.4 18.9 11.5 17 11.5H16.5V13.1C15.6 13.3 15 14.1 15 15V19C15 19.9 15.6 20.7 16.5 20.9V22.5H17C20 22.5 22.5 20 22.5 17V12C22.5 6.2 17.8 1.5 12 1.5ZM6.5 12.5V21.5C4.3 21.3 2.5 19.3 2.5 17C2.5 14.7 4.3 12.8 6.5 12.5ZM17.5 21.5V12.5C19.7 12.7 21.5 14.7 21.5 17C21.5 19.3 19.7 21.2 17.5 21.5Z" fill="currentColor"></path>
                 </svg>
-                <span class="text-[11px] font-bold tracking-wider uppercase pt-px">Dinlə</span>
+                <!-- <span class="text-[11px] font-bold tracking-wider uppercase pt-px">Dinlə</span> -->
               </div>
             {/if}
             <div class="block w-full lg:col-span-2 blurhash-container relative overflow-hidden rounded-xl" data-blurhash={post.data.blurhash}
