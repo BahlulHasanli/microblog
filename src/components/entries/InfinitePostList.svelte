@@ -275,7 +275,7 @@
         result.push(post);
         gridPosition += 2; // İcmal 2 sütun tutur
       } else {
-        // Normal post - əgər artıq əlavə edilməyibsə
+        // Normal post - əgər artıq əlavə edilməyibsə.
         if (!result.includes(post)) {
           result.push(post);
           gridPosition += 1;
