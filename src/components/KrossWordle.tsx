@@ -67,6 +67,7 @@ export default function KrossWordle({ initialUser }: Props) {
   const [userScore, setUserScore] = useState<UserScore | null>(null);
   const [isMonthEnd, setIsMonthEnd] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [powersUsedPerWord, setPowersUsedPerWord] = useState<Record<string, number>>({});
 
   const [elapsed, setElapsed] = useState(0);
   const hasSubmittedScore = useRef(false);
@@ -384,7 +385,7 @@ export default function KrossWordle({ initialUser }: Props) {
         );
         const cell = newGrid[y]?.[x];
 
-        if (cell && !cell.isRevealed) {
+        if (cell) {
           cell.letter = char;
 
           if (char !== "" && activeWordId) {
@@ -417,7 +418,7 @@ export default function KrossWordle({ initialUser }: Props) {
       );
       const cell = newGrid[y]?.[x];
 
-      if (cell && !cell.isRevealed) {
+      if (cell) {
         if (cell.letter === "" && activeWordId) {
           // Cari xana boşdursa — əvvəlki xanaya keç VƏ oradakı hərfi sil
           const wp = currentLevel.words.find((w) => w.id === activeWordId);
@@ -427,14 +428,16 @@ export default function KrossWordle({ initialUser }: Props) {
               const prevX = wp.direction === "H" ? wp.x + currentIdx - 1 : wp.x;
               const prevY = wp.direction === "V" ? wp.y + currentIdx - 1 : wp.y;
               const prevCell = newGrid[prevY]?.[prevX];
-              if (prevCell && !prevCell.isRevealed) {
+              if (prevCell) {
                 prevCell.letter = "";
+                prevCell.isRevealed = false;
               }
               setTimeout(() => setSelectedCell({ x: prevX, y: prevY }), 0);
             }
           }
         } else {
           cell.letter = "";
+          cell.isRevealed = false;
         }
       }
       return newGrid;
@@ -446,87 +449,127 @@ export default function KrossWordle({ initialUser }: Props) {
       const power = powers.find((p) => p.type === type);
       if (!power || power.uses <= 0 || gameOver) return;
 
-      setGrid((prevGrid) => {
-        const newGrid = prevGrid.map((row) =>
-          row.map((cell) => (cell ? { ...cell } : null)),
-        );
-        let success = false;
+      // Aktiv sözün uzunluğu ≤5 olduqda yalnız 1 köməkçi icazə (Bomba istisnadır, çünki qlobalsdır)
+      if (type !== PowerType.Bomb && activeWordId) {
+        const activeWp = currentLevel.words.find((w) => w.id === activeWordId);
+        if (activeWp && activeWp.word.length <= 5) {
+          const usedCount = powersUsedPerWord[activeWordId] || 0;
+          if (usedCount >= 1) return;
+        }
+      }
 
-        if (type === PowerType.MiddleLetter && activeWordId) {
-          const wp = currentLevel.words.find((w) => w.id === activeWordId);
-          if (wp) {
-            const midIdx = Math.floor(wp.word.length / 2);
-            const mx = wp.direction === "H" ? wp.x + midIdx : wp.x;
-            const my = wp.direction === "V" ? wp.y + midIdx : wp.y;
-            if (newGrid[my]?.[mx] && !newGrid[my][mx]!.isRevealed) {
-              newGrid[my][mx]!.isRevealed = true;
-              newGrid[my][mx]!.letter = wp.word[midIdx];
-              success = true;
-            }
-          }
-        } else if (type === PowerType.Bomb) {
-          // Açılmamış bütün xanaları topla
-          const unrevealedCells: { x: number; y: number; char: string }[] = [];
-          currentLevel.words.forEach((wp) => {
+      const prevGrid = gridRef.current;
+      const newGrid = prevGrid.map((row) =>
+        row.map((cell) => (cell ? { ...cell } : null)),
+      );
+      let success = false;
+      let affectedWordIds: string[] = [];
+
+      // Cell kordinatına görə o xanaya aid olan bütün sözlərin ID-lərini tapan util
+      const getWordsForCell = (x: number, y: number) => {
+        return currentLevel.words
+          .filter((wp) => {
             for (let i = 0; i < wp.word.length; i++) {
               const cx = wp.direction === "H" ? wp.x + i : wp.x;
               const cy = wp.direction === "V" ? wp.y + i : wp.y;
-              if (newGrid[cy]?.[cx] && !newGrid[cy][cx]!.isRevealed) {
-                // Dublikat olmasın (kəsişən xanalar üçün)
-                if (!unrevealedCells.some((c) => c.x === cx && c.y === cy)) {
-                  unrevealedCells.push({ x: cx, y: cy, char: wp.word[i] });
-                }
-              }
+              if (cx === x && cy === y) return true;
             }
-          });
-          if (unrevealedCells.length > 0) {
-            const target =
-              unrevealedCells[
-                Math.floor(Math.random() * unrevealedCells.length)
-              ];
-            newGrid[target.y][target.x]!.isRevealed = true;
-            newGrid[target.y][target.x]!.letter = target.char;
-            newGrid[target.y][target.x]!.isBombEffect = true;
+            return false;
+          })
+          .map((wp) => wp.id);
+      };
+
+      if (type === PowerType.MiddleLetter && activeWordId) {
+        const wp = currentLevel.words.find((w) => w.id === activeWordId);
+        if (wp) {
+          const midIdx = Math.floor(wp.word.length / 2);
+          const mx = wp.direction === "H" ? wp.x + midIdx : wp.x;
+          const my = wp.direction === "V" ? wp.y + midIdx : wp.y;
+          if (newGrid[my]?.[mx] && !newGrid[my][mx]!.isRevealed) {
+            newGrid[my][mx]!.isRevealed = true;
+            newGrid[my][mx]!.letter = wp.word[midIdx];
             success = true;
-            setTimeout(() => {
-              setGrid((prev) =>
-                prev.map((row) =>
-                  row.map((c) => (c ? { ...c, isBombEffect: false } : null)),
-                ),
-              );
-            }, 600);
+            affectedWordIds = getWordsForCell(mx, my);
           }
-        } else if (type === PowerType.SwapReveal && activeWordId) {
-          const wp = currentLevel.words.find((w) => w.id === activeWordId);
-          if (wp) {
-            const unrevealed: { x: number; y: number; char: string }[] = [];
-            for (let i = 0; i < wp.word.length; i++) {
-              const nx = wp.direction === "H" ? wp.x + i : wp.x;
-              const ny = wp.direction === "V" ? wp.y + i : wp.y;
-              if (newGrid[ny]?.[nx] && !newGrid[ny][nx]!.isRevealed) {
-                unrevealed.push({ x: nx, y: ny, char: wp.word[i] });
+        }
+      } else if (type === PowerType.Bomb) {
+        // Doğru tapılmamış bütün xanaları topla
+        const uncorrectCells: { x: number; y: number; char: string }[] = [];
+        currentLevel.words.forEach((wp) => {
+          for (let i = 0; i < wp.word.length; i++) {
+            const cx = wp.direction === "H" ? wp.x + i : wp.x;
+            const cy = wp.direction === "V" ? wp.y + i : wp.y;
+            if (newGrid[cy]?.[cx]) {
+              const isAlreadyCorrect = newGrid[cy][cx]!.letter.toUpperCase() === wp.word[i].toUpperCase();
+              if (!isAlreadyCorrect && !uncorrectCells.some((c) => c.x === cx && c.y === cy)) {
+                uncorrectCells.push({ x: cx, y: cy, char: wp.word[i] });
               }
             }
-            if (unrevealed.length > 0) {
-              const target =
-                unrevealed[Math.floor(Math.random() * unrevealed.length)];
-              newGrid[target.y][target.x]!.letter = target.char;
-              newGrid[target.y][target.x]!.isRevealed = true;
-              success = true;
+          }
+        });
+        if (uncorrectCells.length > 0) {
+          const target =
+            uncorrectCells[
+              Math.floor(Math.random() * uncorrectCells.length)
+            ];
+          newGrid[target.y][target.x]!.isRevealed = true;
+          newGrid[target.y][target.x]!.letter = target.char;
+          newGrid[target.y][target.x]!.isBombEffect = true;
+          success = true;
+          // Bombanın açdığı xananın aid olduğu sözləri tap
+          affectedWordIds = getWordsForCell(target.x, target.y);
+          
+          setTimeout(() => {
+            setGrid((prev) =>
+              prev.map((row) =>
+                row.map((c) => (c ? { ...c, isBombEffect: false } : null)),
+              ),
+            );
+          }, 600);
+        }
+      } else if (type === PowerType.SwapReveal && activeWordId) {
+        const wp = currentLevel.words.find((w) => w.id === activeWordId);
+        if (wp) {
+          const uncorrect: { x: number; y: number; char: string }[] = [];
+          for (let i = 0; i < wp.word.length; i++) {
+            const nx = wp.direction === "H" ? wp.x + i : wp.x;
+            const ny = wp.direction === "V" ? wp.y + i : wp.y;
+            if (newGrid[ny]?.[nx]) {
+              const isAlreadyCorrect = newGrid[ny][nx]!.letter.toUpperCase() === wp.word[i].toUpperCase();
+              if (!isAlreadyCorrect) {
+                uncorrect.push({ x: nx, y: ny, char: wp.word[i] });
+              }
             }
           }
+          if (uncorrect.length > 0) {
+            const target =
+              uncorrect[Math.floor(Math.random() * uncorrect.length)];
+            newGrid[target.y][target.x]!.letter = target.char;
+            newGrid[target.y][target.x]!.isRevealed = true;
+            success = true;
+            affectedWordIds = getWordsForCell(target.x, target.y);
+          }
         }
+      }
 
-        if (success) {
-          setPowers((prev) =>
-            prev.map((p) => (p.type === type ? { ...p, uses: p.uses - 1 } : p)),
-          );
+      if (success) {
+        setGrid(newGrid);
+        setPowers((prev) =>
+          prev.map((p) => (p.type === type ? { ...p, uses: p.uses - 1 } : p)),
+        );
+        // Köməkçi istifadə sayını söz bazasında artır
+        if (affectedWordIds.length > 0) {
+          setPowersUsedPerWord((prev) => {
+            const updated = { ...prev };
+            affectedWordIds.forEach((wid) => {
+              updated[wid] = (updated[wid] || 0) + 1;
+            });
+            return updated;
+          });
         }
-
-        return success ? newGrid : prevGrid;
-      });
+      }
     },
-    [powers, gameOver, activeWordId, currentLevel.words],
+    [powers, gameOver, activeWordId, currentLevel.words, powersUsedPerWord],
   );
 
   const isCellInActiveWord = useCallback(
@@ -560,12 +603,38 @@ export default function KrossWordle({ initialUser }: Props) {
       });
       return (
         wordsWithThisCell.length > 0 &&
-        wordsWithThisCell.every(
+        wordsWithThisCell.some(
           (wp) => validatedWords.find((v) => v.id === wp.id)?.isCorrect,
         )
       );
     },
     [currentLevel.words, validatedWords],
+  );
+
+  const isLetterCorrect = useCallback(
+    (x: number, y: number, currentLetter: string | undefined) => {
+      if (!currentLetter) return false;
+      
+      const wordsWithThisCell = currentLevel.words.filter((wp) => {
+        for (let i = 0; i < wp.word.length; i++) {
+          if (
+            (wp.direction === "H" ? wp.x + i : wp.x) === x &&
+            (wp.direction === "V" ? wp.y + i : wp.y) === y
+          )
+            return true;
+        }
+        return false;
+      });
+
+      if (wordsWithThisCell.length === 0) return false;
+
+      // Xananın daxil olduğu HƏR HANSI bir sözdəki həmin mövqedəki doğru hərfi yoxlayır
+      return wordsWithThisCell.some((wp) => {
+        const offset = wp.direction === "H" ? x - wp.x : y - wp.y;
+        return wp.word[offset].toUpperCase() === currentLetter.toUpperCase();
+      });
+    },
+    [currentLevel.words],
   );
 
   const getWordStartCell = useCallback(
@@ -579,10 +648,7 @@ export default function KrossWordle({ initialUser }: Props) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameOver || !selectedCell) return;
 
-      const key = e.key.toUpperCase();
-      if (ALPHABET.includes(key)) {
-        updateCell(selectedCell.x, selectedCell.y, key);
-      } else if (e.key === "Backspace") {
+      if (e.key === "Backspace") {
         handleBackspace();
       }
     };
@@ -591,30 +657,30 @@ export default function KrossWordle({ initialUser }: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [gameOver, selectedCell, updateCell, handleBackspace]);
 
+  // ─── LOGIN EKRANI ───
   if (!initialUser) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl border border-zinc-200 text-center max-w-sm w-full">
-          <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-rose-100">
-            <Trophy className="text-rose-500" size={36} />
+      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center p-4">
+        <div className="max-w-xs w-full text-center">
+          <div className="w-14 h-14 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Trophy className="text-rose-500" size={28} />
           </div>
-          <h2 className="text-2xl font-nouvelr-semibold text-zinc-900 mb-3">
+          <h2 className="text-xl font-nouvelr-semibold text-zinc-900 dark:text-zinc-50 mb-2">
             Giriş Tələb Olunur
           </h2>
-          <p className="text-zinc-500 mb-8 leading-relaxed">
-            KrossWordle oyununu oynamaq və reytinqdə yer tutmaq üçün hesabınıza
-            giriş etməlisiniz.
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 leading-relaxed">
+            KrossWordle oyununu oynamaq üçün hesabınıza giriş etməlisiniz.
           </p>
           <a
             href="/signin"
-            className="block w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-center"
+            className="block w-full bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-semibold py-3 rounded-xl transition-colors text-center text-sm"
           >
             Daxil ol
           </a>
-          <p className="mt-4 text-xs text-zinc-400">
+          <p className="mt-4 text-xs text-zinc-400 dark:text-zinc-500">
             Hesabınız yoxdur?{" "}
             <a href="/signup" className="text-rose-500 hover:underline">
-              Qeydiyyatdan keçin
+              Qeydiyyat
             </a>
           </p>
         </div>
@@ -622,12 +688,13 @@ export default function KrossWordle({ initialUser }: Props) {
     );
   }
 
+  // ─── LOADING ───
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-transparent flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto"></div>
-          <p className="mt-4 text-zinc-600">Yüklənir...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-zinc-200 border-t-rose-500 dark:border-zinc-800 dark:border-t-rose-500 mx-auto"></div>
+          <p className="mt-4 text-sm font-medium text-zinc-500 dark:text-zinc-400">Yüklənir...</p>
         </div>
       </div>
     );
@@ -637,30 +704,34 @@ export default function KrossWordle({ initialUser }: Props) {
     levelsLoaded && dynamicLevels.length === 0 && !alreadyPlayed && !isMonthEnd;
 
   return (
-    <div className="min-h-screen bg-white text-zinc-900 select-none">
+    <div className="h-full bg-white dark:bg-transparent text-zinc-900 dark:text-zinc-50 select-none">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-zinc-200">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-30 bg-white/90 dark:bg-transparent backdrop-blur-lg border-b border-zinc-100 dark:border-zinc-900">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-nouvelr-semibold text-zinc-900">
+            <h1 className="text-lg font-nouvelr-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
               Kross<span className="text-rose-500">Wordle</span>
             </h1>
-            <p className="text-xs text-zinc-500 font-medium">
-              {noLevelToday ? "Günlük tapmaca" : `Günlük #${currentLevel.id}`}
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+              {noLevelToday ? "Günlük tapmaca" : `Gün #${currentLevel.id}`}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setShowLeaderboard(!showLeaderboard)}
-              className="flex items-center gap-1.5 bg-zinc-100 hover:bg-zinc-200 px-3 py-2 rounded-lg transition-colors"
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors text-xs font-medium ${
+                showLeaderboard
+                  ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                  : "text-zinc-500 dark:text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+              }`}
             >
-              <Trophy size={16} className="text-rose-500" />
-              <span className="text-sm font-medium">Reytinq</span>
+              <Trophy size={14} />
+              <span>Reytinq</span>
             </button>
             {!alreadyPlayed && !noLevelToday && (
-              <div className="flex items-center gap-1.5 bg-zinc-100 px-3 py-2 rounded-lg">
-                <Timer size={16} className="text-rose-500" />
-                <span className="font-mono text-sm font-semibold">
+              <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-800/50 px-2.5 py-1.5 rounded-lg border border-zinc-100 dark:border-zinc-800">
+                <Timer size={13} className="text-rose-500" />
+                <span className="font-mono text-xs font-semibold tabular-nums">
                   {formatTime(elapsed)}
                 </span>
               </div>
@@ -669,105 +740,102 @@ export default function KrossWordle({ initialUser }: Props) {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+        {/* Bu gün oyun yoxdur */}
         {noLevelToday && (
-          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-5 text-center">
-            <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">🧩</span>
-            </div>
-            <h2 className="text-lg font-semibold text-zinc-900 mb-1">
-              Bu gün üçün tapmaca yoxdur
+          <div className="mb-4 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 text-center">
+            <span className="text-3xl mb-3 block">🧩</span>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+              Bu gün üçün oyun yoxdur
             </h2>
-            <p className="text-sm text-zinc-500">
-              Sabah yeni tapmaca gözləyin! Hələlik reytinq cədvəlinə baxın.
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              Sabah yeni oyunu gözləyin!
             </p>
           </div>
         )}
 
+        {/* Artıq oynayıb */}
         {alreadyPlayed && (
-          <div className="mb-3 bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+          <div className="mb-4 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl p-5 text-center bg-emerald-50/50 dark:bg-emerald-950/20">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <Trophy className="text-emerald-500" size={24} />
-              <span className="text-emerald-800 font-semibold text-lg">
+              <Trophy className="text-emerald-500" size={20} />
+              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
                 Təbrik edirik!
               </span>
             </div>
-            <p className="text-emerald-700 text-sm mb-2">
-              Bu günün tapmacanı artıq həll etmisiniz!
+            <p className="text-emerald-600 dark:text-emerald-400/80 text-xs mb-3">
+              Bu günün tapmacanı artıq həll etmisiniz
             </p>
             {userScore && (
-              <div className="flex items-center justify-center gap-4 mt-3">
-                <div className="bg-white px-4 py-2 rounded-lg border border-emerald-200">
-                  <div className="text-xs text-zinc-500">Vaxt</div>
-                  <div className="font-mono font-bold text-emerald-600">
+              <div className="flex items-center justify-center gap-3">
+                <div className="px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-zinc-900">
+                  <div className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Vaxt</div>
+                  <div className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                     {formatTime(userScore.completionTime)}
                   </div>
                 </div>
-                <div className="bg-white px-4 py-2 rounded-lg border border-emerald-200">
-                  <div className="text-xs text-zinc-500">Səviyyə</div>
-                  <div className="font-bold text-emerald-600">
+                <div className="px-4 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/50 bg-white dark:bg-zinc-900">
+                  <div className="text-[10px] text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Səviyyə</div>
+                  <div className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                     #{userScore.levelId}
                   </div>
                 </div>
               </div>
             )}
-            <p className="text-zinc-500 text-xs mt-3">
-              Sabah yeni tapmaca gələcək!
-            </p>
           </div>
         )}
 
+        {/* Ayın Yekunu */}
         {isMonthEnd && (
-          <div className="mb-6 bg-white border border-zinc-200 rounded-3xl p-8 text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-yellow-400 via-rose-400 to-purple-500"></div>
-            <div className="w-20 h-20 bg-linear-to-tr from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200">
-              <Trophy className="text-white" size={36} />
+          <div className="mb-6 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-amber-50 dark:bg-amber-950/30 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-amber-200 dark:border-amber-800/50">
+              <Trophy className="text-amber-500" size={32} />
             </div>
-            <h2 className="text-3xl font-nouvelr-semibold text-zinc-900 mb-2">
+            <h2 className="text-2xl font-nouvelr-semibold text-zinc-900 dark:text-zinc-50 mb-2">
               🎉 Ayın Yekunu
             </h2>
-            <p className="text-zinc-500 mb-6 max-w-md mx-auto leading-relaxed">
-              Bu ay üçün yarışma sona çatdı! Qaliblər müəyyənləşdi və hədiyyələr
-              veriləcək. Növbəti yarışma{" "}
-              <span className="text-rose-600 font-semibold">ayın 1-i</span>{" "}
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-8 max-w-sm mx-auto leading-relaxed">
+              Bu ay üçün yarışma sona çatdı! Növbəti yarışma{" "}
+              <span className="text-rose-500 font-semibold">ayın 1-i</span>{" "}
               başlayacaq.
             </p>
 
             {/* Top 3 Podium */}
-            {leaderboard.length >= 3 && (
-              <div className="flex items-end justify-center gap-3 mb-6 max-w-md mx-auto">
+            {leaderboard.length > 0 && (
+              <div className="flex items-end justify-center gap-2 mb-8 max-w-sm mx-auto">
                 {/* 2-ci yer */}
-                <div className="flex-1 text-center">
-                  <div className="w-14 h-14 mx-auto mb-2 rounded-full border-3 border-zinc-300 overflow-hidden bg-zinc-100">
-                    {leaderboard[1]?.avatar_url ? (
-                      <img
-                        src={leaderboard[1].avatar_url}
-                        alt={leaderboard[1].full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">
-                        🥈
-                      </div>
-                    )}
+                {leaderboard.length > 1 ? (
+                  <div className="flex-1 text-center">
+                    <div className="w-12 h-12 mx-auto mb-2 rounded-full border-2 border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-50 dark:bg-zinc-800">
+                      {leaderboard[1]?.avatar_url ? (
+                        <img
+                          src={leaderboard[1].avatar_url}
+                          alt={leaderboard[1].full_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl">
+                          🥈
+                        </div>
+                      )}
+                    </div>
+                    <div className="rounded-xl p-2.5 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
+                      <p className="text-sm mb-0.5">🥈</p>
+                      <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                        {leaderboard[1]?.full_name}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        {leaderboard[1]?.total_score} xal
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-zinc-100 rounded-xl p-3 border border-zinc-200">
-                    <p className="text-lg mb-1">🥈</p>
-                    <p className="text-xs font-bold text-zinc-800 truncate">
-                      {leaderboard[1]?.full_name}
-                    </p>
-                    <p className="text-[10px] text-zinc-500">
-                      {leaderboard[1]?.total_score} xal
-                    </p>
-                    <p className="text-[10px] mt-1 text-zinc-400 font-medium">
-                      2-ci yer hədiyyəsi
-                    </p>
-                  </div>
-                </div>
+                ) : (
+                  <div className="flex-1"></div>
+                )}
 
                 {/* 1-ci yer */}
-                <div className="flex-1 text-center -mt-4">
-                  <div className="mx-auto mb-2 rounded-full border-3 border-yellow-400 overflow-hidden bg-yellow-50 ring-4 ring-yellow-100 w-[72px] h-[72px]">
+                <div className={`flex-1 text-center ${leaderboard.length > 1 ? '-mt-4' : ''}`}>
+                  <div className="mx-auto mb-2 rounded-full border-2 border-amber-400 dark:border-amber-600 overflow-hidden bg-amber-50 dark:bg-amber-950/30 w-16 h-16">
                     {leaderboard[0]?.avatar_url ? (
                       <img
                         src={leaderboard[0].avatar_url}
@@ -775,140 +843,137 @@ export default function KrossWordle({ initialUser }: Props) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-3xl">
+                      <div className="w-full h-full flex items-center justify-center text-2xl">
                         🥇
                       </div>
                     )}
                   </div>
-                  <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-200">
-                    <p className="text-xl mb-1">🏆</p>
-                    <p className="text-sm font-bold text-zinc-900 truncate">
+                  <div className="rounded-xl p-3 border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 shadow-lg shadow-amber-500/10">
+                    <p className="text-lg mb-0.5">🏆</p>
+                    <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-50 truncate">
                       {leaderboard[0]?.full_name}
                     </p>
-                    <p className="text-xs text-yellow-700 font-semibold">
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
                       {leaderboard[0]?.total_score} xal
-                    </p>
-                    <p className="text-[10px] mt-1 text-yellow-600 font-medium">
-                      🎁 1-ci yer hədiyyəsi
                     </p>
                   </div>
                 </div>
 
                 {/* 3-cü yer */}
-                <div className="flex-1 text-center">
-                  <div className="w-14 h-14 mx-auto mb-2 rounded-full border-3 border-orange-300 overflow-hidden bg-orange-50">
-                    {leaderboard[2]?.avatar_url ? (
-                      <img
-                        src={leaderboard[2].avatar_url}
-                        alt={leaderboard[2].full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">
-                        🥉
-                      </div>
-                    )}
+                {leaderboard.length > 2 ? (
+                  <div className="flex-1 text-center">
+                    <div className="w-12 h-12 mx-auto mb-2 rounded-full border-2 border-orange-200 dark:border-orange-800 overflow-hidden bg-orange-50 dark:bg-orange-950/30">
+                      {leaderboard[2]?.avatar_url ? (
+                        <img
+                          src={leaderboard[2].avatar_url}
+                          alt={leaderboard[2].full_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl">
+                          🥉
+                        </div>
+                      )}
+                    </div>
+                    <div className="rounded-xl p-2.5 border border-orange-200 dark:border-orange-800/50 bg-orange-50/50 dark:bg-orange-950/20">
+                      <p className="text-sm mb-0.5">🥉</p>
+                      <p className="text-[11px] font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                        {leaderboard[2]?.full_name}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        {leaderboard[2]?.total_score} xal
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-orange-50 rounded-xl p-3 border border-orange-200">
-                    <p className="text-lg mb-1">🥉</p>
-                    <p className="text-xs font-bold text-zinc-800 truncate">
-                      {leaderboard[2]?.full_name}
-                    </p>
-                    <p className="text-[10px] text-zinc-500">
-                      {leaderboard[2]?.total_score} xal
-                    </p>
-                    <p className="text-[10px] mt-1 text-zinc-400 font-medium">
-                      3-cü yer hədiyyəsi
-                    </p>
-                  </div>
-                </div>
+                ) : (
+                  <div className="flex-1"></div>
+                )}
               </div>
             )}
 
             {/* Hədiyyə açıqlaması */}
-            <div className="bg-zinc-50 rounded-2xl p-4 max-w-md mx-auto border border-zinc-100">
-              <h3 className="text-sm font-semibold text-zinc-900 mb-3 flex items-center justify-center gap-2">
+            <div className="rounded-2xl p-4 max-w-sm mx-auto border border-zinc-200 dark:border-zinc-800">
+              <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-50 mb-3 flex items-center justify-center gap-1.5 uppercase tracking-wider">
                 <span>🎁</span> Hədiyyələr
               </h3>
-              <div className="space-y-2 text-left">
-                <div className="flex items-center gap-3 bg-yellow-50 p-2.5 rounded-lg border border-yellow-100">
-                  <span className="text-lg">🥇</span>
+              <div className="space-y-1.5 text-left">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/10">
+                  <span className="text-base">🥇</span>
                   <div>
-                    <p className="text-xs font-bold text-zinc-900">1-ci yer</p>
-                    <p className="text-[10px] text-zinc-600">
+                    <p className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-50">1-ci yer</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
                       Xüsusi hədiyyə paketi
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 bg-zinc-100 p-2.5 rounded-lg border border-zinc-200">
-                  <span className="text-lg">🥈</span>
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+                  <span className="text-base">🥈</span>
                   <div>
-                    <p className="text-xs font-bold text-zinc-900">2-ci yer</p>
-                    <p className="text-[10px] text-zinc-600">Premium üzvlük</p>
+                    <p className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-50">2-ci yer</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Premium üzvlük</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 bg-orange-50 p-2.5 rounded-lg border border-orange-100">
-                  <span className="text-lg">🥉</span>
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-orange-100 dark:border-orange-900/30 bg-orange-50/50 dark:bg-orange-950/10">
+                  <span className="text-base">🥉</span>
                   <div>
-                    <p className="text-xs font-bold text-zinc-900">3-cü yer</p>
-                    <p className="text-[10px] text-zinc-600">Xüsusi badge</p>
+                    <p className="text-[11px] font-semibold text-zinc-900 dark:text-zinc-50">3-cü yer</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Xüsusi badge</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-2 bg-zinc-50 rounded-full px-5 py-2.5 border border-zinc-200 mt-6">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <p className="text-xs font-semibold text-zinc-600 uppercase tracking-wide">
-                Növbəti ay üçün hazır olun!
-              </p>
+            <div className="inline-flex items-center gap-2 mt-6 text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+              Növbəti ay üçün hazır olun!
             </div>
           </div>
         )}
 
+        {/* Leaderboard */}
         {(showLeaderboard || isMonthEnd || noLevelToday) && (
-          <div className="mb-4 bg-white border border-zinc-200 rounded-xl p-4">
+          <div className="mb-4 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base font-nouvelr-semibold flex items-center gap-2">
-                <Trophy className="text-rose-500" size={18} />
-                Aylıq Reytinq
+              <h2 className="text-sm font-nouvelr-semibold flex items-center gap-1.5">
+                <Trophy className="text-rose-500" size={15} />
+                Aylıq reytinq
               </h2>
               {!isMonthEnd && !noLevelToday && (
                 <button
                   onClick={() => setShowLeaderboard(false)}
-                  className="text-zinc-500 hover:text-zinc-700 text-sm"
+                  className="text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 text-xs transition-colors"
                 >
                   Bağla
                 </button>
               )}
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {leaderboard.length === 0 ? (
-                <p className="text-center text-zinc-500 py-3 text-sm">
+                <p className="text-center text-zinc-400 dark:text-zinc-500 py-4 text-xs">
                   Hələ heç kim oynamamışdır
                 </p>
               ) : (
                 leaderboard.map((entry, idx) => (
                   <div
                     key={entry.user_id}
-                    className={`flex items-center gap-2 p-2 rounded-lg ${
+                    className={`flex items-center gap-2.5 p-2 rounded-xl transition-colors ${
                       idx === 0
-                        ? "bg-yellow-50 border border-yellow-200"
+                        ? "bg-amber-50/60 dark:bg-amber-950/10 border border-amber-100 dark:border-amber-900/30"
                         : idx === 1
-                          ? "bg-zinc-100 border border-zinc-200"
+                          ? "bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-100 dark:border-zinc-800"
                           : idx === 2
-                            ? "bg-orange-50 border border-orange-200"
-                            : "bg-zinc-50"
+                            ? "bg-orange-50/60 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30"
+                            : "border border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/20"
                     }`}
                   >
-                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-white font-bold text-xs">
+                    <div className="flex items-center justify-center w-5 h-5 text-[11px] font-bold">
                       {idx === 0
                         ? "🥇"
                         : idx === 1
                           ? "🥈"
                           : idx === 2
                             ? "🥉"
-                            : entry.rank}
+                            : <span className="text-zinc-400 dark:text-zinc-500">{entry.rank}</span>}
                     </div>
                     {entry.avatar_url && (
                       <img
@@ -918,19 +983,16 @@ export default function KrossWordle({ initialUser }: Props) {
                       />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-xs truncate">
-                        {entry.full_name}
-                      </p>
-                      <p className="text-[10px] text-zinc-500">
-                        {entry.games_played} oyun • Ən yaxşı:{" "}
-                        {formatTime(entry.best_time)}
+                      <p className="font-medium text-xs truncate">{entry.full_name}</p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                        {entry.games_played} oyun • {formatTime(entry.best_time)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-rose-500">
+                      <p className="text-xs font-bold text-rose-500">
                         {entry.total_score}
                       </p>
-                      <p className="text-[10px] text-zinc-400">xal</p>
+                      <p className="text-[9px] text-zinc-400 dark:text-zinc-500">xal</p>
                     </div>
                   </div>
                 ))
@@ -939,25 +1001,25 @@ export default function KrossWordle({ initialUser }: Props) {
           </div>
         )}
 
-        {/* Kompakt layout - Grid, Powers, Keyboard sol tərəfdə, İpuçları sağda */}
+        {/* OYUN SAHƏSİ */}
         {!isMonthEnd && !alreadyPlayed && !noLevelToday && (
-          <div className="flex flex-col lg:flex-row gap-4 relative">
+          <div className="flex flex-col lg:flex-row gap-3 relative">
             {/* Start Screen Overlay */}
             {!isPlaying && !gameOver && (
-              <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/50 flex flex-col items-center justify-center rounded-xl">
-                <div className="bg-white p-6 rounded-2xl border border-zinc-200 text-center max-w-sm mx-4">
-                  <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100">
-                    <Clock className="text-rose-500" size={32} />
+              <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/60 dark:bg-zinc-950/60 flex flex-col items-center justify-center rounded-2xl">
+                <div className="max-w-xs mx-4 text-center">
+                  <div className="w-14 h-14 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-zinc-200 dark:border-zinc-700">
+                    <Clock className="text-rose-500" size={26} />
                   </div>
-                  <h3 className="text-xl font-nouvelr-semibold text-zinc-900 mb-2">
+                  <h3 className="text-lg font-nouvelr-semibold text-zinc-900 dark:text-zinc-50 mb-1.5">
                     Hazırsan?
                   </h3>
-                  <p className="text-zinc-500 text-sm mb-6">
-                    "Başla" düyməsinə basan kimi vaxt gedəcək. Uğurlar!
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-6 leading-relaxed">
+                    Başla düyməsinə basan kimi vaxt gedəcək
                   </p>
                   <button
                     onClick={handleStartGame}
-                    className="cursor-pointer w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95"
+                    className="cursor-pointer w-full bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-semibold py-3 rounded-xl transition-colors text-sm"
                   >
                     Oyuna Başla
                   </button>
@@ -967,12 +1029,12 @@ export default function KrossWordle({ initialUser }: Props) {
 
             {/* Sol tərəf - Grid və Keyboard */}
             <div
-              className={`flex-1 space-y-1.5 transition-all duration-300 ${!isPlaying ? "blur-sm opacity-50 pointer-events-none" : ""}`}
+              className={`flex-1 space-y-2 transition-all duration-300 ${!isPlaying ? "blur-sm opacity-40 pointer-events-none" : ""}`}
             >
               {/* Grid */}
               <div className="flex justify-center">
                 <div
-                  className="grid gap-1 bg-zinc-50 p-1.5 rounded-xl border border-zinc-200"
+                  className="grid gap-[3px] p-2 rounded-2xl border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50"
                   style={{
                     gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
                     width: "min(70vw, 280px)",
@@ -985,7 +1047,8 @@ export default function KrossWordle({ initialUser }: Props) {
                       const isSelected =
                         selectedCell?.x === x && selectedCell?.y === y;
                       const isInActive = isCellInActiveWord(x, y);
-                      const isCorrect = cell && isCellCorrect(x, y);
+                      const isCellCompleted = cell && isCellCorrect(x, y);
+                      const isLetterTrue = cell && isLetterCorrect(x, y, cell.letter);
                       const isBomb = cell?.isBombEffect;
 
                       return (
@@ -993,21 +1056,23 @@ export default function KrossWordle({ initialUser }: Props) {
                           key={`${x}-${y}`}
                           onClick={() => cell && selectCell(x, y)}
                           className={`
-                            relative flex items-center justify-center rounded
-                            text-sm sm:text-base font-bold uppercase
+                            relative flex items-center justify-center rounded-[4px]
+                            text-[13px] sm:text-sm font-bold uppercase
                             transition-all duration-150 cursor-pointer
-                            ${!cell ? "bg-zinc-200" : ""}
-                            ${cell && !isInActive && !isSelected && !isCorrect ? "bg-white border border-zinc-300 hover:border-zinc-400" : ""}
-                            ${isInActive && !isSelected && !isCorrect ? "bg-rose-50 border border-rose-200" : ""}
-                            ${isSelected && !isCorrect ? "bg-rose-500 text-white ring-2 ring-rose-300 scale-105 z-10" : ""}
-                            ${isCorrect ? "bg-emerald-500 text-white" : ""}
-                            ${isBomb ? "animate-pulse bg-amber-400 text-zinc-900" : ""}
+                            ${!cell ? "bg-zinc-100 dark:bg-zinc-800/50" : ""}
+                            ${cell && !isInActive && !isSelected && !isCellCompleted && !isLetterTrue ? "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600" : ""}
+                            ${isInActive && !isSelected && !isCellCompleted && !isLetterTrue ? "bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60" : ""}
+                            ${isSelected && !isCellCompleted && !isLetterTrue ? "bg-rose-500 text-white scale-105 z-10 border border-rose-500" : ""}
+                            ${isLetterTrue && !isCellCompleted && !isSelected ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60" : ""}
+                            ${isLetterTrue && !isCellCompleted && isSelected ? "bg-emerald-500 text-white scale-105 z-10 border border-emerald-500" : ""}
+                            ${isCellCompleted ? "bg-emerald-500 text-white border border-emerald-500" : ""}
+                            ${isBomb ? "animate-pulse bg-amber-400 text-zinc-900 border border-amber-400" : ""}
                           `}
                           style={{ aspectRatio: "1" }}
                         >
                           {cell?.letter}
                           {wordStart && (
-                            <span className="absolute top-0 left-0.5 text-[7px] text-zinc-400 font-bold">
+                            <span className="absolute top-0 left-0.5 text-[6px] text-zinc-400 dark:text-zinc-500 font-bold leading-none">
                               {wordStart.id}
                             </span>
                           )}
@@ -1019,8 +1084,8 @@ export default function KrossWordle({ initialUser }: Props) {
               </div>
 
               {/* Keyboard */}
-              <div className="bg-zinc-50 rounded-xl p-1.5 border border-zinc-200">
-                <div className="grid grid-cols-11 gap-0.5">
+              <div className="rounded-2xl p-2 border border-zinc-100 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/50">
+                <div className="grid grid-cols-11 gap-[3px]">
                   {ALPHABET.map((char) => (
                     <button
                       key={char}
@@ -1029,7 +1094,7 @@ export default function KrossWordle({ initialUser }: Props) {
                         updateCell(selectedCell.x, selectedCell.y, char)
                       }
                       disabled={!selectedCell || gameOver}
-                      className="bg-white border border-zinc-300 hover:bg-rose-500 hover:text-white hover:border-rose-500 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed text-zinc-900 font-semibold py-1.5 rounded transition-all text-[10px] sm:text-xs"
+                      className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-rose-500 hover:text-white hover:border-rose-500 active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed text-zinc-800 dark:text-zinc-200 font-semibold py-1.5 rounded-lg transition-all text-[10px] sm:text-xs"
                     >
                       {char}
                     </button>
@@ -1038,37 +1103,47 @@ export default function KrossWordle({ initialUser }: Props) {
                 <button
                   onClick={handleBackspace}
                   disabled={!selectedCell || gameOver}
-                  className="w-full mt-1.5 bg-rose-100 hover:bg-rose-500 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-rose-700 font-semibold py-2 rounded-lg transition-all flex items-center justify-center gap-1 text-sm"
+                  className="w-full mt-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-rose-500 hover:text-white disabled:opacity-25 disabled:cursor-not-allowed text-zinc-600 dark:text-zinc-400 font-semibold py-2 rounded-xl transition-all flex items-center justify-center gap-1 text-xs border border-zinc-200 dark:border-zinc-700"
                 >
-                  <Delete size={14} />
+                  <Delete size={13} />
                   <span>SİL</span>
                 </button>
               </div>
             </div>
 
-            {/* Sağ tərəf - Clues */}
-            <div className="lg:w-64 xl:w-72">
+            {/* Sağ tərəf - Powers + Clues */}
+            <div className="lg:w-60 xl:w-64">
               {/* Powers */}
-              <div className="bg-zinc-50 rounded-xl p-2 border border-zinc-200 mb-3">
+              <div className="rounded-2xl p-2 border border-zinc-100 dark:border-zinc-800/50 mb-2">
                 <div className="flex justify-between gap-1">
                   {powers.map((p) => {
+                    let isDisabledByQuota = false;
+                    if (p.type !== PowerType.Bomb && activeWordId) {
+                      const activeWp = currentLevel.words.find((w) => w.id === activeWordId);
+                      if (activeWp && activeWp.word.length <= 5) {
+                        const usedCount = powersUsedPerWord[activeWordId] || 0;
+                        if (usedCount >= 1) isDisabledByQuota = true;
+                      }
+                    }
+
                     const disabled =
                       p.uses <= 0 ||
                       gameOver ||
-                      (p.type !== PowerType.Bomb && !activeWordId);
+                      (p.type !== PowerType.Bomb && !activeWordId) ||
+                      isDisabledByQuota;
                     return (
                       <button
                         key={p.type}
                         disabled={disabled}
                         onClick={() => usePower(p.type)}
-                        className={`flex-1 flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all ${
+                        className={`flex-1 flex flex-col items-center gap-0.5 p-1.5 rounded-xl transition-all ${
                           disabled
-                            ? "opacity-30 cursor-not-allowed bg-zinc-100"
-                            : "bg-white border border-zinc-200 hover:border-rose-300 hover:bg-rose-50 active:scale-95"
+                            ? "opacity-25 cursor-not-allowed"
+                            : "bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-rose-300 dark:hover:border-rose-700 active:scale-95"
                         }`}
                       >
-                        <span className="text-base">{p.icon}</span>
-                        <span className="text-[9px] font-semibold text-zinc-600">
+                        <span className="text-sm">{p.icon}</span>
+                        <span className="text-[9px] font-medium text-zinc-500 dark:text-zinc-400">
                           {p.label}
                         </span>
                         <span className="text-[10px] font-bold text-rose-500">
@@ -1080,14 +1155,15 @@ export default function KrossWordle({ initialUser }: Props) {
                 </div>
               </div>
 
-              <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-200 lg:sticky lg:top-16">
-                <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb size={14} className="text-rose-500" />
-                  <span className="text-xs font-semibold text-zinc-700 uppercase tracking-wide">
+              {/* İpuçları */}
+              <div className="rounded-2xl p-3 border border-zinc-100 dark:border-zinc-800/50 lg:sticky lg:top-14">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Lightbulb size={13} className="text-rose-500" />
+                  <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                     İpuçları
                   </span>
                 </div>
-                <div className="space-y-1.5 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto">
+                <div className="space-y-1 max-h-[50vh] lg:max-h-[60vh] overflow-y-auto">
                   {currentLevel.words.map((wp) => {
                     const isActive = activeWordId === wp.id;
                     const isCorrect = validatedWords.find(
@@ -1097,48 +1173,48 @@ export default function KrossWordle({ initialUser }: Props) {
                       <button
                         key={wp.id}
                         onClick={() => selectCell(wp.x, wp.y)}
-                        className={`w-full text-left p-2 rounded-lg transition-all ${
+                        className={`w-full text-left p-2 rounded-xl transition-all ${
                           isCorrect
-                            ? "bg-emerald-50 border border-emerald-300"
+                            ? "bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50"
                             : isActive
-                              ? "bg-rose-50 border border-rose-300"
-                              : "bg-white border border-zinc-200 hover:bg-zinc-50"
+                              ? "bg-rose-50/80 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/50"
+                              : "border border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-1 mb-0.5">
                           <div className="flex items-center gap-1.5">
                             <span
-                              className={`text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded ${
+                              className={`text-[10px] font-bold w-4.5 h-4.5 flex items-center justify-center rounded ${
                                 isCorrect
                                   ? "bg-emerald-500 text-white"
                                   : isActive
                                     ? "bg-rose-500 text-white"
-                                    : "bg-zinc-200 text-zinc-600"
+                                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
                               }`}
                             >
                               {wp.id}
                             </span>
                             <span
-                              className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                              className={`text-[10px] font-medium ${
                                 isActive
-                                  ? "bg-rose-100 text-rose-700"
-                                  : "bg-zinc-100 text-zinc-500"
+                                  ? "text-rose-400 dark:text-rose-500"
+                                  : "text-zinc-300 dark:text-zinc-600"
                               }`}
                             >
                               {wp.direction === "H" ? "→" : "↓"}
                             </span>
                           </div>
                           {isCorrect && (
-                            <Trophy size={12} className="text-emerald-400" />
+                            <span className="text-emerald-400 text-xs">✓</span>
                           )}
                         </div>
                         <p
-                          className={`text-xs leading-snug ${
+                          className={`text-[11px] leading-relaxed ${
                             isCorrect
-                              ? "text-emerald-700"
+                              ? "text-emerald-600 dark:text-emerald-400/80"
                               : isActive
-                                ? "text-zinc-900"
-                                : "text-zinc-600"
+                                ? "text-zinc-800 dark:text-zinc-200"
+                                : "text-zinc-500 dark:text-zinc-400"
                           }`}
                         >
                           {wp.clue}
@@ -1155,32 +1231,32 @@ export default function KrossWordle({ initialUser }: Props) {
 
       {/* Win Modal */}
       {gameOver && !alreadyPlayed && !isMonthEnd && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-          <div className="bg-white border border-zinc-200 p-8 rounded-3xl max-w-sm w-full text-center">
-            <div className="w-20 h-20 bg-linear-to-tr from-rose-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Trophy className="w-10 h-10 text-white" />
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl max-w-xs w-full text-center">
+            <div className="w-16 h-16 bg-rose-50 dark:bg-rose-950/30 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-rose-100 dark:border-rose-900/50">
+              <Trophy className="w-8 h-8 text-rose-500" />
             </div>
-            <h2 className="text-3xl font-nouvelr-semibold text-zinc-900 mb-1">
+            <h2 className="text-2xl font-nouvelr-semibold text-zinc-900 dark:text-zinc-50 mb-1">
               Təbriklər!
             </h2>
-            <p className="text-rose-600 font-medium mb-6">
+            <p className="text-rose-500 text-sm font-medium mb-6">
               Tapmaca həll edildi
             </p>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200">
-                <p className="text-[10px] font-semibold text-zinc-500 uppercase">
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              <div className="p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                   Vaxt
                 </p>
-                <p className="text-xl font-bold text-zinc-900">
+                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
                   {formatTime(elapsed)}
                 </p>
               </div>
-              <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200">
-                <p className="text-[10px] font-semibold text-zinc-500 uppercase">
+              <div className="p-3 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                <p className="text-[10px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                   Səviyyə
                 </p>
-                <p className="text-xl font-bold text-zinc-900">
+                <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50 mt-0.5">
                   #{currentLevel.id}
                 </p>
               </div>
@@ -1191,23 +1267,15 @@ export default function KrossWordle({ initialUser }: Props) {
                 setAlreadyPlayed(true);
                 setShowLeaderboard(true);
               }}
-              className="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 mb-3"
+              className="w-full bg-zinc-900 dark:bg-zinc-50 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mb-3 text-sm"
             >
-              <Trophy size={20} />
+              <Trophy size={16} />
               Reytinqə Bax
             </button>
-            <p className="text-xs text-zinc-500">Sabah yeni tapmaca gələcək!</p>
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Sabah yeni tapmaca gələcək!</p>
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer className="py-6 text-center text-zinc-400 text-xs">
-        <a href="/" className="hover:text-rose-500 transition-colors">
-          The99.az
-        </a>{" "}
-        © {new Date().getFullYear()}
-      </footer>
     </div>
   );
 }

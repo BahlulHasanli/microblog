@@ -13,7 +13,7 @@ if (isLoggedIn) {
 }
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} hideFooter={true}>
   <div class="max-w-7xl mx-auto">
     <KrossWordle client:only="react" initialUser={user} />
   </div>

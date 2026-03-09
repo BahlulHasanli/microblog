@@ -6,14 +6,14 @@ export const ALPHABET = "ABCÇDEƏFGĞHXİIJKQLMNOÖPRSŞTUÜVYZ".split("");
 export const INITIAL_POWERS: PowerState[] = [
   {
     type: PowerType.MiddleLetter,
-    uses: 2,
+    uses: 1,
     icon: "🎯",
     label: "Orta Hərf",
     description: "Sözün ortasını açar.",
   },
   {
     type: PowerType.SwapReveal,
-    uses: 10,
+    uses: 1,
     icon: "✨",
     label: "İpucu",
     description: "Təsadüfi bir hərf açar.",
