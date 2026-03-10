@@ -457,12 +457,12 @@
   }
 </script>
 
-<div class="p-4 sm:p-6">
+<div class="p-4 sm:p-6 lg:p-8">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
     <div>
-      <h2 class="text-xl font-nouvelr-bold text-slate-900">KrossWordle Təqvimi</h2>
-      <p class="text-sm text-base-500 mt-1">Hər gün üçün level idarə edin</p>
+      <h2 class="text-xl sm:text-2xl font-nouvelr-bold text-slate-900">KrossWordle Təqvimi</h2>
+      <p class="mt-1 text-sm text-base-500">Hər gün üçün level idarə edin</p>
     </div>
   </div>
 
@@ -475,9 +475,9 @@
 
   {#if showEditor && editingLevel}
     <!-- Level Editor -->
-    <div class="bg-white border border-base-200 rounded-xl overflow-hidden">
+    <div class="bg-white rounded-xl border border-base-200 overflow-hidden shadow-sm">
       <!-- Editor Header -->
-      <div class="p-4 border-b border-base-100 flex items-center justify-between">
+      <div class="px-4 py-5 sm:px-6 border-b border-base-200 bg-base-50/50 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <button
             onclick={closeEditor}
@@ -562,131 +562,143 @@
           {/if}
 
           <!-- AI Generasiya -->
-          <div class="mt-4 p-3 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-200">
-            <h5 class="text-xs font-semibold text-purple-900 mb-2 uppercase tracking-wide flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              AI ilə Yarat
+          <div class="mt-6 p-4 bg-white border border-base-200 rounded-xl shadow-sm">
+            <h5 class="text-sm font-medium text-slate-900 mb-4 flex items-center gap-2">
+              <span class="p-1 bg-purple-50 text-purple-600 rounded-md">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </span>
+              Süni İntellektlə Yarat
             </h5>
-            <div class="grid grid-cols-2 gap-2 mb-2">
+            <div class="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <label class="text-[10px] text-purple-600 font-medium uppercase">Söz sayı</label>
-                <select bind:value={aiWordCount} class="w-full px-2.5 py-1.5 text-sm border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 outline-none">
+                <label for="ai-count" class="block text-xs font-medium text-base-700 mb-1">Söz sayı</label>
+                <select id="ai-count" bind:value={aiWordCount} class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white">
                   {#each [2,3,4,5,6] as n}
                     <option value={n}>{n} söz</option>
                   {/each}
                 </select>
               </div>
               <div>
-                <label class="text-[10px] text-purple-600 font-medium uppercase">Mövzu</label>
-                <input type="text" bind:value={aiTheme} placeholder="meyvələr..." class="w-full px-2.5 py-1.5 text-sm border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 outline-none" />
+                <label for="ai-theme" class="block text-xs font-medium text-base-700 mb-1">Mövzu</label>
+                <input id="ai-theme" type="text" bind:value={aiTheme} placeholder="Məsələn: meyvələr..." class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white" />
               </div>
             </div>
             <button
               onclick={generateWithAI}
               disabled={isGenerating}
-              class="cursor-pointer w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              class="cursor-pointer w-full py-2 bg-slate-100 text-slate-800 text-sm font-medium rounded-lg hover:bg-slate-200 focus:ring-2 focus:ring-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
             >
               {#if isGenerating}
-                <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div class="w-4 h-4 border-2 border-slate-400 border-t-slate-800 rounded-full animate-spin"></div>
                 Yaradılır...
               {:else}
-                ✨ AI ilə Yarat
+                Süni İntellektlə Yarat
               {/if}
             </button>
             {#if editingLevel.words.length > 0}
-              <p class="mt-1.5 text-[10px] text-purple-500 text-center">⚠ Mövcud sözlər əvəz olunacaq</p>
+              <p class="mt-2 text-xs text-amber-600 font-medium text-center">⚠ Mövcud sözlər əvəz olunacaq</p>
             {/if}
           </div>
 
           <!-- Söz əlavə/redaktə -->
-          <div class="mt-4 p-3 rounded-xl border transition-colors {editingWordIdx >= 0 ? 'bg-amber-50 border-amber-300' : 'bg-base-50 border-base-200'}">
-            <div class="flex items-center justify-between mb-2">
-              <h5 class="text-xs font-semibold uppercase tracking-wide {editingWordIdx >= 0 ? 'text-amber-800' : 'text-slate-900'}">
-                {editingWordIdx >= 0 ? `Söz #${editingWordIdx + 1} Redaktə` : 'Söz Əlavə Et'}
+          <div class="mt-4 p-4 rounded-xl border shadow-sm transition-colors {editingWordIdx >= 0 ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-base-200'}">
+            <div class="flex items-center justify-between mb-4">
+              <h5 class="text-sm font-medium {editingWordIdx >= 0 ? 'text-amber-800' : 'text-slate-900'}">
+                {editingWordIdx >= 0 ? `Söz #${editingWordIdx + 1} Redaktə edilir` : 'Yeni Söz Əlavə Et'}
               </h5>
               {#if editingWordIdx >= 0}
-                <button onclick={cancelEdit} class="cursor-pointer text-[10px] px-2 py-0.5 rounded bg-amber-200 text-amber-700 hover:bg-amber-300 transition-colors">
+                <button onclick={cancelEdit} class="cursor-pointer text-xs px-2.5 py-1 rounded-md bg-white border border-amber-200 text-amber-700 hover:bg-amber-50 shadow-sm transition-colors">
                   Ləğv et
                 </button>
               {/if}
             </div>
-            <div class="grid grid-cols-2 gap-2 mb-2">
+            <div class="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <label class="text-[10px] text-base-500 font-medium uppercase">Söz</label>
-                <input type="text" bind:value={newWord} placeholder="ALMA" class="w-full px-2.5 py-1.5 text-sm border border-base-200 rounded-lg uppercase focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label for="new-word" class="block text-xs font-medium text-base-700 mb-1">Söz</label>
+                <input id="new-word" type="text" bind:value={newWord} placeholder="ALMA" class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm uppercase focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white" />
               </div>
               <div>
-                <label class="text-[10px] text-base-500 font-medium uppercase">İpucu</label>
-                <input type="text" bind:value={newClue} placeholder="Qırmızı meyvə" class="w-full px-2.5 py-1.5 text-sm border border-base-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label for="new-clue" class="block text-xs font-medium text-base-700 mb-1">İpucu Yazısı</label>
+                <input id="new-clue" type="text" bind:value={newClue} placeholder="Qırmızı meyvə" class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white" />
               </div>
             </div>
-            <div class="grid grid-cols-3 gap-2 mb-3">
+            <div class="grid grid-cols-3 gap-3 mb-4">
               <div>
-                <label class="text-[10px] text-base-500 font-medium uppercase">X</label>
-                <input type="number" bind:value={newX} min="0" max="6" class="w-full px-2.5 py-1.5 text-sm border border-base-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label for="new-x" class="block text-xs font-medium text-base-700 mb-1">X Mövqeyi</label>
+                <input id="new-x" type="number" bind:value={newX} min="0" max="6" class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white" />
               </div>
               <div>
-                <label class="text-[10px] text-base-500 font-medium uppercase">Y</label>
-                <input type="number" bind:value={newY} min="0" max="6" class="w-full px-2.5 py-1.5 text-sm border border-base-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                <label for="new-y" class="block text-xs font-medium text-base-700 mb-1">Y Mövqeyi</label>
+                <input id="new-y" type="number" bind:value={newY} min="0" max="6" class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white" />
               </div>
               <div>
-                <label class="text-[10px] text-base-500 font-medium uppercase">İstiqamət</label>
-                <select bind:value={newDirection} class="w-full px-2.5 py-1.5 text-sm border border-base-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                  <option value="H">→ H</option>
-                  <option value="V">↓ V</option>
+                <label for="new-dir" class="block text-xs font-medium text-base-700 mb-1">İstiqamət</label>
+                <select id="new-dir" bind:value={newDirection} class="block w-full border border-base-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none bg-white">
+                  <option value="H">→ Üfüqi</option>
+                  <option value="V">↓ Şaquli</option>
                 </select>
               </div>
             </div>
             {#if editingWordIdx >= 0}
-              <div class="grid grid-cols-2 gap-2">
-                <button onclick={updateWord} disabled={!newWord.trim() || !newClue.trim()} class="cursor-pointer w-full py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">✓ Yenilə</button>
-                <button onclick={cancelEdit} class="cursor-pointer w-full py-2 bg-base-200 text-base-700 text-sm font-medium rounded-lg hover:bg-base-300 transition-colors">Ləğv et</button>
+              <div class="grid grid-cols-2 gap-3">
+                <button onclick={updateWord} disabled={!newWord.trim() || !newClue.trim()} class="cursor-pointer w-full py-2 bg-amber-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Yenilə</button>
+                <button onclick={cancelEdit} class="cursor-pointer w-full py-2 bg-white border border-base-300 text-base-700 text-sm font-medium rounded-lg shadow-sm hover:bg-base-50 transition-colors">Ləğv et</button>
               </div>
             {:else}
-              <button onclick={addWord} disabled={!newWord.trim() || !newClue.trim()} class="cursor-pointer w-full py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Əlavə et</button>
+              <button onclick={addWord} disabled={!newWord.trim() || !newClue.trim()} class="cursor-pointer w-full py-2 bg-slate-900 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Siyahıya Əlavə Et</button>
             {/if}
           </div>
         </div>
 
         <!-- Sağ: Sözlər siyahısı -->
-        <div class="p-4">
-          <h4 class="text-sm font-semibold text-slate-900 mb-3">Sözlər ({editingLevel.words.length})</h4>
+        <div class="p-4 sm:p-6 bg-base-50/30">
+          <h4 class="text-base font-semibold text-slate-900 mb-4 flex items-center justify-between">
+            Sözlərin Siyahısı
+            <span class="bg-base-200 text-base-600 text-xs px-2 py-1 rounded-md font-medium">{editingLevel.words.length} <span class="hidden sm:inline">söz</span></span>
+          </h4>
           {#if editingLevel.words.length === 0}
-            <div class="text-center py-8 text-base-400">
-              <p class="text-sm">Hələ söz əlavə edilməyib</p>
-              <p class="text-xs mt-1">AI və ya manual əlavə edin</p>
+            <div class="text-center py-10 bg-white rounded-xl border border-dashed border-base-300">
+              <svg class="mx-auto h-10 w-10 text-base-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <p class="text-sm font-medium text-slate-700">Hələ söz əlavə edilməyib</p>
+              <p class="text-xs text-base-500 mt-1">AI ilə yaradın və ya özünüz əlavə edin</p>
             </div>
           {:else}
-            <div class="space-y-1.5 max-h-[500px] overflow-y-auto">
+            <div class="space-y-2.5 max-h-[500px] overflow-y-auto pr-1">
               {#each editingLevel.words as wp, idx}
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
-                  class="group flex items-center gap-2 p-2 rounded-lg border transition-all cursor-pointer
-                    {outOfBounds.has(idx) ? 'border-red-300 bg-red-50' :
-                     editingWordIdx === idx ? 'border-amber-300 bg-amber-50' :
-                     selectedWordIdx === idx ? 'border-blue-300 bg-blue-50' :
-                     'border-base-200 bg-white hover:bg-base-50'}"
+                  class="group flex items-start gap-3 p-3.5 rounded-xl border shadow-sm transition-all cursor-pointer bg-white
+                    {outOfBounds.has(idx) ? 'border-red-200 bg-red-50/50' :
+                     editingWordIdx === idx ? 'border-amber-300 bg-amber-50/50' :
+                     selectedWordIdx === idx ? 'border-slate-400 bg-slate-50' :
+                     'border-base-200 hover:border-slate-300 hover:shadow-md'}"
                   onclick={() => editWord(idx)}
                 >
-                  <span class="w-6 h-6 flex items-center justify-center rounded bg-base-100 text-[10px] font-bold text-base-600 shrink-0">{wp.id}</span>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-1.5">
-                      <span class="font-mono text-sm font-bold text-slate-900">{wp.word}</span>
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-base-100 text-base-500">
-                        {wp.direction === 'H' ? '→' : '↓'} ({wp.x},{wp.y})
+                  <span class="w-7 h-7 flex items-center justify-center rounded-lg {editingWordIdx === idx || selectedWordIdx === idx ? 'bg-slate-900 text-white' : 'bg-base-100 text-base-600'} text-xs font-semibold shrink-0 transition-colors">{wp.id}</span>
+                  <div class="flex-1 min-w-0 pt-0.5">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="font-mono text-[14px] font-bold text-slate-900 tracking-wide">{wp.word}</span>
+                      <span class="text-[11px] px-2 py-0.5 rounded-md {wp.direction === 'H' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'} font-medium">
+                        {wp.direction === 'H' ? '→ Üfüqi' : '↓ Şaquli'} <span class="opacity-60 ml-0.5">({wp.x},{wp.y})</span>
                       </span>
                       {#if outOfBounds.has(idx)}
-                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600">kənarda!</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-600 font-medium">Kənarda!</span>
                       {/if}
                     </div>
-                    <p class="text-xs text-base-500 truncate">{wp.clue}</p>
+                    <p class="text-sm text-base-600 truncate">{wp.clue}</p>
                   </div>
                   <button
                     onclick={(e) => { e.stopPropagation(); removeWord(idx); }}
-                    class="cursor-pointer p-1 hover:bg-red-100 rounded text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="cursor-pointer p-1.5 focus:outline-none focus:ring-2 focus:ring-red-500 hover:bg-red-50 rounded-lg text-red-400 hover:text-red-600 sm:opacity-0 sm:group-hover:opacity-100 transition-all self-center"
+                    title="Sil"
+                    aria-label="Sözü sil"
                   >
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </div>
               {/each}
@@ -700,31 +712,31 @@
     <!-- Təqvim Görünüşü -->
     <div class="bg-white border border-base-200 rounded-xl overflow-hidden">
       <!-- Ay naviqasiyası -->
-      <div class="p-4 border-b border-base-100 flex items-center justify-between">
-        <button onclick={prevMonth} class="cursor-pointer p-2 hover:bg-base-100 rounded-lg transition-colors">
-          <svg class="w-5 h-5 text-base-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="px-5 py-5 sm:px-6 border-b border-base-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <button onclick={prevMonth} class="cursor-pointer p-2 bg-white border border-base-200 hover:bg-base-50 rounded-lg transition-colors shadow-sm" aria-label="Əvvəlki ay">
+          <svg class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
         <div class="text-center">
-          <h3 class="text-lg font-semibold text-slate-900">
+          <h3 class="text-lg font-semibold text-slate-900 tracking-tight">
             {MONTH_NAMES[currentMonth]} {currentYear}
           </h3>
-          <p class="text-xs text-base-500">
+          <p class="text-xs text-base-500 font-medium mt-1">
             {levels.length}/{daysInMonth} gün dolu
             {#if emptyDaysCount > 0}
-              · <span class="text-amber-600">{emptyDaysCount} boş</span>
+              <span class="mx-1">•</span> <span class="text-amber-600">{emptyDaysCount} boş</span>
             {:else}
-              · <span class="text-emerald-600">Tam!</span>
+              <span class="mx-1">•</span> <span class="text-emerald-600">Tam!</span>
             {/if}
           </p>
         </div>
-        <div class="flex items-center gap-1">
-          <button onclick={goToToday} class="cursor-pointer px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+        <div class="flex items-center gap-2">
+          <button onclick={goToToday} class="cursor-pointer px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-base-300 hover:bg-base-50 rounded-lg transition-colors shadow-sm">
             Bu gün
           </button>
-          <button onclick={nextMonth} class="cursor-pointer p-2 hover:bg-base-100 rounded-lg transition-colors">
-            <svg class="w-5 h-5 text-base-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <button onclick={nextMonth} class="cursor-pointer p-2 bg-white border border-base-200 hover:bg-base-50 rounded-lg transition-colors shadow-sm" aria-label="Növbəti ay">
+            <svg class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -733,24 +745,26 @@
 
       <!-- Bulk AI düyməsi -->
       {#if futureEmptyDaysCount > 0}
-        <div class="px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-sm">✨</span>
+        <div class="px-5 py-4 bg-slate-50 border-b border-base-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-white border border-base-200 shadow-sm flex items-center justify-center shrink-0">
+              <span class="text-sm">✨</span>
+            </div>
             <div>
-              <p class="text-sm font-medium text-purple-900">Gələcək boş günləri doldur</p>
-              <p class="text-[10px] text-purple-600">{futureEmptyDaysCount} gün üçün (bu gündən etibarən) AI ilə level yarat</p>
+              <p class="text-sm font-semibold text-slate-900">Avtomatik Doldurma</p>
+              <p class="text-xs text-slate-600 mt-0.5"><span class="font-medium text-slate-900">{futureEmptyDaysCount} boş günü</span> (bugündən etibarən) AI ilə yarat</p>
             </div>
           </div>
           <button
             onclick={bulkGenerateMonth}
             disabled={isBulkGenerating}
-            class="cursor-pointer px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+            class="cursor-pointer w-full sm:w-auto px-5 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 whitespace-nowrap"
           >
             {#if isBulkGenerating}
               <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              {bulkProgress}/{bulkTotal}
+              {bulkProgress}/{bulkTotal} Yüklənir
             {:else}
-              Hamısını yarat
+              Hamısını Yarat
             {/if}
           </button>
         </div>
@@ -762,17 +776,17 @@
         </div>
       {:else}
         <!-- Həftə günləri -->
-        <div class="grid grid-cols-7 border-b border-base-100">
+        <div class="grid grid-cols-7 border-b border-base-200 bg-base-50/50">
           {#each WEEKDAYS as day}
-            <div class="py-2 text-center text-[10px] font-semibold text-base-500 uppercase">{day}</div>
+            <div class="py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{day}</div>
           {/each}
         </div>
 
         <!-- Təqvim günləri -->
-        <div class="grid grid-cols-7">
+        <div class="grid grid-cols-7 bg-base-200 gap-px border-b border-base-200">
           <!-- Boş xanalar (ayın ilk günündən əvvəl) -->
           {#each { length: firstDayOfWeek } as _}
-            <div class="aspect-square border-r border-b border-base-50"></div>
+            <div class="aspect-square bg-base-50/50"></div>
           {/each}
 
           <!-- Ayın günləri -->
@@ -784,57 +798,59 @@
             {@const isPast = dateStr < today}
             <button
               onclick={() => openDayEditor(day)}
-              class="cursor-pointer aspect-square p-1.5 border-r border-b border-base-50 flex flex-col items-center justify-start gap-0.5 transition-all hover:bg-base-50 relative group
-                {isToday ? 'bg-blue-50' : ''}"
+              class="cursor-pointer aspect-square p-2 bg-white flex flex-col items-center justify-start gap-1 transition-all hover:bg-slate-50 relative group
+                {isToday ? 'ring-inset ring-2 ring-slate-900 z-10' : ''}"
             >
               <!-- Gün nömrəsi -->
-              <span class="text-sm font-semibold {isToday ? 'text-blue-600' : isPast && !level ? 'text-red-400' : 'text-slate-700'}">
+              <span class="text-sm font-semibold {isToday ? 'text-slate-900' : isPast && !level ? 'text-red-400' : 'text-slate-700'}">
                 {day}
               </span>
 
               <!-- Level statusu -->
-              {#if level}
-                <div class="w-5 h-5 rounded-full flex items-center justify-center {level.is_active ? 'bg-emerald-500' : 'bg-base-300'}">
-                  <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <span class="text-[8px] text-base-500 hidden sm:block">{level.words.length} söz</span>
-              {:else}
-                <div class="w-5 h-5 rounded-full border-2 border-dashed {isPast ? 'border-red-300' : 'border-base-200'} flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity">
-                  <svg class="w-3 h-3 {isPast ? 'text-red-300' : 'text-base-300'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </div>
-              {/if}
+              <div class="flex-1 flex flex-col items-center justify-center w-full">
+                {#if level}
+                  <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center {level.is_active ? 'bg-emerald-100 text-emerald-600' : 'bg-base-100 text-base-500'} group-hover:scale-110 transition-transform">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <span class="text-[9px] font-medium text-base-500 mt-1 hidden sm:block bg-base-50 px-1.5 py-0.5 rounded">{level.words.length} söz</span>
+                {:else}
+                  <div class="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-dashed {isPast ? 'border-red-200 bg-red-50/30 text-red-400' : 'border-base-200 text-base-300'} flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
+                    <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                {/if}
+              </div>
 
               <!-- Bu gün marker -->
               {#if isToday}
-                <div class="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <div class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-slate-900"></div>
               {/if}
             </button>
           {/each}
         </div>
 
         <!-- Altdakı legend -->
-        <div class="p-3 border-t border-base-100 flex flex-wrap gap-4 text-[10px] text-base-500">
-          <span class="flex items-center gap-1.5">
-            <span class="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-              <svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width={3} d="M5 13l4 4L19 7" /></svg>
+        <div class="px-5 py-4 bg-white flex flex-wrap gap-5 text-[11px] font-medium text-slate-600">
+          <span class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center">
+              <svg class="w-2.5 h-2.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
             </span>
-            Level var
+            Dolu Gün
           </span>
-          <span class="flex items-center gap-1.5">
+          <span class="flex items-center gap-2">
             <span class="w-4 h-4 rounded-full border-2 border-dashed border-base-200"></span>
-            Boş
+            Boş Gün
           </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-4 h-4 rounded-full border-2 border-dashed border-red-300"></span>
-            Keçmiş (boş)
+          <span class="flex items-center gap-2">
+            <span class="w-4 h-4 rounded-full border-2 border-dashed border-red-200 bg-red-50/30"></span>
+            Keçmiş Boş
           </span>
-          <span class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-            Bu gün
+          <span class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-slate-900 ring-2 ring-slate-100 ring-offset-1"></span>
+            Bu Gün
           </span>
         </div>
       {/if}
