@@ -66,7 +66,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Ən azı bir kateqoriya seçilməlidir",
+          message: "Ən azı bir bölmə seçilməlidir",
         }),
         {
           status: 400,

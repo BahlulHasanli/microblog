@@ -11,7 +11,7 @@ export interface Category {
 }
 
 /**
- * Düz kateqoriya siyahısını ağac strukturuna çevirir
+ * Düz bölmə siyahısını ağac strukturuna çevirir
  */
 function buildCategoryTree(categories: Category[]): Category[] {
   const map = new Map<number, Category>();
@@ -46,11 +46,11 @@ export const GET: APIRoute = async ({ url }) => {
       .order("id", { ascending: true });
 
     if (error) {
-      console.error("Kategoriyalar çəkilərkən xəta:", error);
+      console.error("Bölmələr çəkilərkən xəta:", error);
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Kategoriyalar çəkilə bilmədi",
+          message: "Bölmələr çəkilə bilmədi",
         }),
         {
           status: 500,
@@ -73,11 +73,11 @@ export const GET: APIRoute = async ({ url }) => {
       },
     );
   } catch (error) {
-    console.error("Kategoriyalar API xətası:", error);
+    console.error("Bölmələr API xətası:", error);
     return new Response(
       JSON.stringify({
         success: false,
-        message: "Kategoriyalar çəkilərkən xəta baş verdi",
+        message: "Bölmələr çəkilərkən xəta baş verdi",
       }),
       {
         status: 500,

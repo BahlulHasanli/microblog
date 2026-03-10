@@ -9,7 +9,7 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
-// Supabase-dən kateqoriyaları al
+// Supabase-dən bölmələrı al
 const { data: categoriesData } = await supabase
   .from("categories")
   .select("*")
@@ -28,15 +28,15 @@ if (!category) {
 // Breadcrumb yolu
 const breadcrumb = getCategoryBreadcrumb(categories, slug!);
 
-// Alt kateqoriyalar
+// Alt bölmələr
 const childCategories = getDirectChildren(categories, slug!);
 
-// Bu kateqoriyanın bütün alt slugları (postlar üçün filtr)
+// Bu bölmənın bütün alt slugları (postlar üçün filtr)
 const allChildSlugs = getAllChildSlugs(categories, slug!);
 const slugsToFilter = [category.slug, ...allChildSlugs];
 
-// Supabase-dən kateqoriyaya görə postları al
-// Həm bu kateqoriyanın, həm də alt kateqoriyaların postlarını göstər
+// Supabase-dən bölməya görə postları al
+// Həm bu bölmənın, həm də alt bölmələrın postlarını göstər
 let allPosts: any[] = [];
 
 for (const filterSlug of slugsToFilter) {
@@ -51,7 +51,7 @@ for (const filterSlug of slugsToFilter) {
     .order("pub_date", { ascending: false });
 
   if (error) {
-    console.error('Kateqoriya postları yüklənərkən xəta:', error);
+    console.error('Bölmə postları yüklənərkən xəta:', error);
   }
 
   if (postsData) {
@@ -69,7 +69,7 @@ allPosts.sort((a, b) => new Date(b.pub_date).getTime() - new Date(a.pub_date).ge
 
 const filteredPosts = allPosts;
 
-console.log(`Kateqoriya: ${category.slug}, Tapılan post sayı: ${filteredPosts.length}`);
+console.log(`Bölmə: ${category.slug}, Tapılan post sayı: ${filteredPosts.length}`);
 
 // Postları formatla
 const sortedPosts = (filteredPosts || []).map(post => ({
@@ -141,7 +141,7 @@ const olderImage = older.find(cat => cat.category === category.slug)?.older
           </h1>
     </div>
 
-    {/* Alt kateqoriyalar */}
+    {/* Alt bölmələr */}
     {childCategories.length > 0 && (
       <div class="flex flex-wrap gap-2 sm:gap-3 mt-4 sm:mt-6 mb-2">
         <a 

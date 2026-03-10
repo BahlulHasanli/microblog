@@ -8,7 +8,7 @@ export interface Category {
 }
 
 /**
- * Düz kateqoriya siyahısını ağac strukturuna çevirir
+ * Düz bölmə siyahısını ağac strukturuna çevirir
  */
 export function buildCategoryTree(categories: Category[]): Category[] {
   const map = new Map<number, Category>();
@@ -29,11 +29,22 @@ export function buildCategoryTree(categories: Category[]): Category[] {
     }
   });
 
+  // Uşaqları sort_order-ə görə azalan sıra ilə sırala
+  roots.forEach(function sortChildren(node) {
+    if (node.children && node.children.length > 0) {
+      node.children.sort((a, b) => (b.sort_order || 0) - (a.sort_order || 0));
+      node.children.forEach(sortChildren);
+    }
+  });
+
+  // Kök bölmələrı sort_order-ə görə azalan sıra ilə sırala
+  roots.sort((a, b) => (b.sort_order || 0) - (a.sort_order || 0));
+
   return roots;
 }
 
 /**
- * Kateqoriyanın tam yolunu (breadcrumb) qaytarır
+ * Bölmənın tam yolunu (breadcrumb) qaytarır
  * Məsələn: ["Tədbirlər", "State of Play"]
  */
 export function getCategoryBreadcrumb(
@@ -63,7 +74,7 @@ export function getCategoryBreadcrumb(
 }
 
 /**
- * Bir kateqoriyanın bütün alt kateqoriya slug-larını qaytarır
+ * Bir bölmənın bütün alt bölmə slug-larını qaytarır
  */
 export function getAllChildSlugs(
   categories: Category[],
@@ -87,7 +98,7 @@ export function getAllChildSlugs(
 }
 
 /**
- * Bir kateqoriyanın birbaşa uşaqlarını qaytarır
+ * Bir bölmənın birbaşa uşaqlarını qaytarır
  */
 export function getDirectChildren(
   categories: Category[],
@@ -99,7 +110,7 @@ export function getDirectChildren(
 }
 
 /**
- * Kateqoriyanın parent-ini qaytarır
+ * Bölmənın parent-ini qaytarır
  */
 export function getParentCategory(
   categories: Category[],
@@ -111,7 +122,7 @@ export function getParentCategory(
 }
 
 /**
- * Kateqoriyaları parent_id-yə görə qruplaşdırır
+ * Bölmələrı parent_id-yə görə qruplaşdırır
  */
 export function groupCategoriesByParent(
   categories: Category[],

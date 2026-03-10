@@ -9,7 +9,7 @@
 
   let { postSlug, commentId, initialComment, initialReplies, initialUser, backUrl, postTitle, postDescription, postImage, postImageAlt, postCategories } = $props();
   
-  // Kateqoriyaları Supabase-dən çək
+  // Bölmələrı Supabase-dən çək
   let categoriesList: { slug: string; name: string }[] = $state([]);
   
   onMount(async () => {

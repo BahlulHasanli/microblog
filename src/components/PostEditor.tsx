@@ -206,7 +206,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
     }
 
     if (selectedCategories.length === 0) {
-      const errMsg = "Ən azı bir kateqoriya seçilməlidir";
+      const errMsg = "Ən azı bir bölmə seçilməlidir";
       console.error(errMsg);
       setErrorMessage(errMsg);
       setSaveStatus("error");

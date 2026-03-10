@@ -25,7 +25,7 @@ export const GET: APIRoute = async () => {
     .eq("approved", true)
     .order("pub_date", { ascending: false });
 
-  // Kateqoriyaları al
+  // Bölmələrı al
   const { data: categories } = await supabase
     .from("categories")
     .select("slug")
@@ -69,7 +69,7 @@ export const GET: APIRoute = async () => {
     }
   }
 
-  // Kateqoriyalar
+  // Bölmələr
   if (categories) {
     for (const category of categories) {
       xml += `  <url>

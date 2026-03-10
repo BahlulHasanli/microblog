@@ -36,7 +36,7 @@ const dbAudioUrl = postData?.audio_url || null;
 const dbAudioTitle = postData?.audio_title || null;
 const dbAudioArtist = postData?.audio_artist || null;
 
-// Kateqoriyaları Supabase-dən çək
+// Bölmələrı Supabase-dən çək
 const { data: categoriesData } = await supabase
   .from('categories')
   .select('slug, name');

@@ -78,7 +78,7 @@ export default function ProfileTabs({
         const { data } = await supabase.from("categories").select("slug, name");
         if (data) setCategories(data);
       } catch (error) {
-        console.error("Kateqoriyalar yüklənərkən xəta:", error);
+        console.error("Bölmələr yüklənərkən xəta:", error);
       }
     };
     fetchCategories();

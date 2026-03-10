@@ -9,6 +9,7 @@
   import SharesTab from './SharesTab.svelte';
   import AdvertisementTab from './AdvertisementTab.svelte';
   import KrossWordleTab from './KrossWordleTab.svelte';
+  import CategoriesTab from './CategoriesTab.svelte';
   import { hasPermission, Permissions, DefaultRolePermissions } from '@/utils/permissions';
 
   interface Props {
@@ -17,7 +18,7 @@
 
   const { user }: Props = $props();
 
-  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' | 'krosswordle' = $state('posts');
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' | 'krosswordle' | 'categories' = $state('posts');
   let userPermissions: string[] = $state([]);
   
   // Permission əsaslı yoxlamalar
@@ -440,6 +441,32 @@
           {/if}
           {#if canViewSettings}
             <button
+              onclick={() => activeTab = 'categories'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'categories' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg
+                  class="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+                Bölmələr
+              </span>
+              {#if activeTab === 'categories'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+          {/if}
+          {#if canViewSettings}
+            <button
               onclick={() => activeTab = 'settings'}
               class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'settings' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
             >
@@ -551,6 +578,8 @@
           <UsersTab canEdit={canEditUsers} canDelete={canDeleteUsers} />
         {:else if activeTab === 'comments'}
           <CommentsTab canDelete={canDeleteComments} />
+        {:else if activeTab === 'categories'}
+          <CategoriesTab canEdit={canEditSettings} canDelete={canEditSettings} />
         {:else if activeTab === 'settings'}
           <SettingsTab canEdit={canEditSettings} />
         {:else if activeTab === 'roles'}

@@ -368,7 +368,7 @@ export function SimpleEditor({
   const [existingAudioUrl, setExistingAudioUrl] =
     React.useState(initialAudioUrl);
 
-  // Supabase-dən kategoriyaları çək
+  // Supabase-dən bölmələrı çək
   React.useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -379,7 +379,7 @@ export function SimpleEditor({
           .order("id", { ascending: true });
         if (data) setSupabaseCategories(data);
       } catch (error) {
-        console.warn("Kategoriyalar çəkilərkən xəta:", error);
+        console.warn("Bölmələr çəkilərkən xəta:", error);
       }
     };
     fetchCategories();
@@ -892,7 +892,7 @@ export function SimpleEditor({
             >
               <div className="flex items-center justify-between mb-2 px-1">
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider font-inter">
-                  Kateqoriyalar
+                  Bölmələr
                 </span>
                 <button
                   type="button"
@@ -923,7 +923,7 @@ export function SimpleEditor({
 
               <div className="categories-list">
                 {(() => {
-                  // Parent kateqoriyaları (parent_id === null) tap
+                  // Parent bölmələrı (parent_id === null) tap
                   const parentCategories = supabaseCategories.filter(
                     (c) => c.parent_id === null,
                   );
@@ -951,7 +951,7 @@ export function SimpleEditor({
                     );
                     return (
                       <React.Fragment key={parent.slug}>
-                        {/* Parent kateqoriya */}
+                        {/* Parent bölmə */}
                         <button
                           type="button"
                           className={`category-item category-parent cursor-pointer ${
@@ -963,7 +963,7 @@ export function SimpleEditor({
                         >
                           {parent.name}
                         </button>
-                        {/* Alt kateqoriyalar */}
+                        {/* Alt bölmələr */}
                         {children.map((child) => (
                           <button
                             key={child.slug}

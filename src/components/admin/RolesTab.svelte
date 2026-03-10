@@ -179,7 +179,7 @@
     }
   }
 
-  // Permissions-ı kateqoriyaya görə qruplaşdır
+  // Permissions-ı bölməya görə qruplaşdır
   function groupPermissionsByCategory(perms: Permission[]): Record<string, Permission[]> {
     return perms.reduce((acc, perm) => {
       if (!acc[perm.category]) {
