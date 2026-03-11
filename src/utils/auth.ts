@@ -38,22 +38,12 @@ export async function getUserFromCookies(
     const accessToken = cookies.get("sb-access-token");
     const refreshToken = cookies.get("sb-refresh-token");
 
-    console.log(
-      "getUserFromCookies - accessToken exists:",
-      !!accessToken?.value,
-    );
-    console.log(
-      "getUserFromCookies - refreshToken exists:",
-      !!refreshToken?.value,
-    );
-
     if (
       !accessToken ||
       !accessToken.value ||
       !refreshToken ||
       !refreshToken.value
     ) {
-      console.log("getUserFromCookies - tokens missing");
       return null;
     }
 
@@ -67,17 +57,7 @@ export async function getUserFromCookies(
         access_token: accessToken.value,
       });
 
-    console.log(
-      "getUserFromCookies - setSession error:",
-      sessionError?.message,
-    );
-    console.log(
-      "getUserFromCookies - sessionData.user:",
-      sessionData?.user?.email,
-    );
-
     if (sessionError || !sessionData?.user) {
-      console.log("Session error:", sessionError?.message);
       // Cookie-ləri sil
       cookies.delete("sb-access-token", { path: "/" });
       cookies.delete("sb-refresh-token", { path: "/" });
@@ -92,17 +72,12 @@ export async function getUserFromCookies(
       .eq("email", userEmail)
       .single();
 
-    console.log("getUserFromCookies - userError:", userError?.message);
-    console.log("getUserFromCookies - userData found:", !!userData);
-
     if (userError) {
-      console.log("User not found in database:", userError);
       return null;
     }
 
     return userData;
   } catch (error) {
-    console.log("getUserFromCookies - error:", error);
     return null;
   }
 }

@@ -19,7 +19,6 @@ let enableRegistration = true;
 if (isLoggedIn && user) {
   // user artıq BaseLayout-dan gəlir, role_id orada olmalıdır
   const roleId = user.role_id;
-  console.log("Navigation - user.role_id:", roleId);
   isAdmin = roleId === 1;
   isModerator = roleId === 1 || roleId === 2;
   isEditor = roleId === 1 || roleId === 2 || roleId === 3;

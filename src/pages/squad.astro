@@ -12,9 +12,6 @@ const { data: teamMembers, error } = await supabase
 if (error) {
   console.error("Squad üzvlərini çəkərkən xəta:", error);
 }
-
-console.log(teamMembers)
-
  
 // Avatar şəkilləri optimize et 
 const optimizedMembers = await Promise.all(
