@@ -262,45 +262,8 @@ export const POST: APIRoute = async ({
       );
     }
 
-    // Qeydiyyatdan sonra avtomatik login et
-    const { data: signInData, error: signInError } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-    if (signInError || !signInData.session) {
-      return new Response(
-        JSON.stringify({
-          message:
-            "Qeydiyyat uğurla tamamlandı, ancaq avtomatik login uğursuz oldu. Zəhmət olmasa daxil olun.",
-          status: 200,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      );
-    }
-
-    // Session token-larını Astro cookies API-sı ilə saxla
-    const { access_token, refresh_token } = signInData.session;
-
-    cookies.set("sb-access-token", access_token, {
-      path: "/",
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 gün
-    });
-
-    cookies.set("sb-refresh-token", refresh_token, {
-      path: "/",
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 gün
-    });
-
     return new Response(
-      JSON.stringify({ email, message: "Qeydiyyat uğurla tamamlandı" }),
+      JSON.stringify({ email, message: "Qeydiyyat uğurla tamamlandı. Zəhmət olmasa emailinizi yoxlayaraq hesabınızı təsdiqləyin." }),
       {
         status: 200,
         headers: {
