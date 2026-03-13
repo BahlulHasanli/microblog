@@ -18,12 +18,34 @@ export const GET: APIRoute = async (context) => {
       );
     }
 
+    // Get current user blocks
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUserId = userData?.user?.id;
+    let blockedUserIds: string[] = [];
+
+    if (currentUserId) {
+      const { data: blocks } = await supabase
+        .from("user_blocks")
+        .select("blocker_id, blocked_id")
+        .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
+
+      if (blocks) {
+        blockedUserIds = blocks.map(b => b.blocker_id === currentUserId ? b.blocked_id : b.blocker_id);
+      }
+    }
+
     // Fetch comments for this share
-    const { data: comments, error } = await supabase
+    let query = supabase
       .from("share_comments")
       .select("*, users:user_id(id, fullname, username, avatar)")
       .eq("share_id", id)
       .order("created_at", { ascending: true });
+
+    if (blockedUserIds.length > 0) {
+      query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
+    }
+
+    const { data: comments, error } = await query;
 
     if (error) {
       throw error;
