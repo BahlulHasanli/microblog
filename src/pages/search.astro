@@ -1,0 +1,12 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SearchResults from "@/components/global/SearchResults.svelte";
+
+const query = Astro.url.searchParams.get("q") || "";
+---
+
+<BaseLayout title={query ? `"${query}" axtarış nəticələri` : "Axtarış"}>
+  <section class="py-8 sm:py-12 max-w-3xl mx-auto px-4 sm:px-0">
+    <SearchResults client:load initialQuery={query} />
+  </section>
+</BaseLayout>

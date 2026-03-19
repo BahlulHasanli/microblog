@@ -402,7 +402,7 @@
                     src={generateBunnyCDNUrl(post.data.author?.avatar, 56)}
                     srcset={`${generateBunnyCDNUrl(post.data.author?.avatar, 40)} 40w, ${generateBunnyCDNUrl(post.data.author?.avatar, 56)} 56w, ${generateBunnyCDNUrl(post.data.author?.avatar, 112)} 112w`}
                     sizes={avatarSizes}
-                    alt=""
+                    alt={post.data.author?.fullname}
                     class="w-full h-full object-cover"
                 />
               </button>

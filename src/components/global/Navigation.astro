@@ -1,6 +1,7 @@
 ---
 import ProfileDropdown from "./ProfileDropdown";
 import ThemeToggle from "./ThemeToggle.svelte";
+import GlobalSearch from "./GlobalSearch.svelte";
 import { supabase } from "@/db/supabase";
 import { getUserFromCookies } from "@/utils/auth";
 
@@ -91,6 +92,11 @@ try {
     > 
       {!isLoggedIn ? (
         <div class="relative z-10 flex flex-col md:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+          <div class="flex items-center justify-center gap-2 ml-2">
+            <GlobalSearch client:load />
+            <ThemeToggle client:only="svelte" />
+          </div>
+
           <a
             href="/signin"
             class="py-1.5 px-2.5 border focus:ring-2 h-7.5 text-xs sm:text-sm rounded-full 
@@ -109,10 +115,6 @@ try {
               Qeydiyyat
             </a>
           )}
-          
-          <div class="flex items-center justify-center ml-2">
-            <ThemeToggle client:only="svelte" />
-          </div>
         </div> 
       ) : (
         <div class="relative z-10 flex items-center gap-2 sm:gap-3">
@@ -128,6 +130,7 @@ try {
               {isAdmin ? 'Admin' : isModerator ? 'Moderator' : 'Panel'}
             </a>
           )}
+           <GlobalSearch client:load />
            <ThemeToggle client:only="svelte" />
            <ProfileDropdown
               client:only="react"

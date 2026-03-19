@@ -1,4 +1,4 @@
-import { encode } from "blurhash";
+import { encode, decode } from "blurhash";
 
 /**
  * Browser-da şəkil faylından blurhash generasiya edir (client-side)
@@ -105,4 +105,53 @@ export async function generateBlurhashFromUrl(
 
     img.src = imageUrl;
   });
+}
+
+/**
+ * Blurhash-ı kiçik BMP data URL-ə çevirir (instant placeholder üçün)
+ */
+export function blurhashToDataURL(hash: string | null | undefined, w: number = 4, h: number = 3): string {
+  if (!hash) return '';
+  try {
+    const pixels = decode(hash, w, h);
+    const rowSize = Math.ceil(w * 3 / 4) * 4;
+    const pixelDataSize = rowSize * h;
+    const fileSize = 54 + pixelDataSize;
+    const buffer = new Uint8Array(fileSize);
+    const view = new DataView(buffer.buffer);
+    buffer[0] = 0x42; buffer[1] = 0x4D;
+    view.setUint32(2, fileSize, true);
+    view.setUint32(10, 54, true);
+    view.setUint32(14, 40, true);
+    view.setInt32(18, w, true);
+    view.setInt32(22, -h, true);
+    view.setUint16(26, 1, true);
+    view.setUint16(28, 24, true);
+    view.setUint32(30, 0, true);
+    view.setUint32(34, pixelDataSize, true);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const si = (y * w + x) * 4;
+        const di = 54 + y * rowSize + x * 3;
+        buffer[di] = pixels[si + 2];
+        buffer[di + 1] = pixels[si + 1];
+        buffer[di + 2] = pixels[si];
+      }
+    }
+    let binary = '';
+    for (let i = 0; i < buffer.length; i++) binary += String.fromCharCode(buffer[i]);
+    return `data:image/bmp;base64,${btoa(binary)}`;
+  } catch { return ''; }
+}
+
+/**
+ * Tarix formatlaması — "Yan 15, 2026" formatı
+ */
+export function formatSimpleDate(date: string | Date): string {
+  const d = new Date(date);
+  const months = [
+    'Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn',
+    'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'
+  ];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
