@@ -210,22 +210,20 @@
               <p class="text-sm text-base-500 dark:text-base-400 line-clamp-2 mb-2">
                 {@html highlightMatch(truncate(post.description, 150), query)}
               </p>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
                 {#if post.author}
                   <div class="flex items-center gap-1.5">
-                    {#if post.author.avatar}
-                      <div class="overflow-hidden size-10! sm:size-14! squircle cursor-pointer shrink-0">
-                        <img src={post.author.avatar} alt={post.author.fullname} class="!w-10! sm:!w-14! !h-10! sm:!h-14! object-cover" />
-                      </div>
-                    {/if}
+                    <!-- {#if post.author.avatar}
+                      <button type="button" class="user-avatar overflow-hidden size-10! sm:size-14! squircle cursor-pointer shrink-0 relative bg-base-100 dark:bg-base-800">
+                        <img src={post.author.avatar} alt={post.author.fullname} class="size-14! object-cover" />
+                      </button>
+                    {/if} -->
                     <span class="text-xs text-base-500 dark:text-base-400">{post.author.fullname}</span>
                   </div>
                 {/if}
                 {#if post.date}
+                  <span class="text-xs text-base-400 dark:text-base-500">·</span>
                   <div class="flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5 text-base-400">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-                    </svg>
                     <span class="text-xs text-base-400 dark:text-base-500">{formatSimpleDate(post.date)}</span>
                   </div>
                 {/if}
@@ -240,7 +238,7 @@
   <!-- İstifadəçilər -->
   {#if results.users?.length > 0 && (activeFilter === 'all' || activeFilter === 'users')}
     <div class="mb-8">
-      <div class="flex items-center gap-2 mb-4">
+      <div class="flex items-center gap-2 mb-4"> 
         <User class="w-4 h-4 text-green-500" />
         <h2 class="text-sm font-semibold text-base-900 dark:text-base-100">İstifadəçilər</h2>
         <span class="text-xs text-base-400 dark:text-base-500 bg-base-100 dark:bg-base-800 px-2 py-0.5 rounded-full">{results.users.length}</span>
@@ -252,13 +250,13 @@
             class="flex items-center gap-3 p-4 bg-white dark:bg-base-900 rounded-xl border border-base-100 dark:border-base-800 hover:border-base-300 dark:hover:border-base-600 transition-all group"
           >
             {#if user.avatar}
-              <div class="overflow-hidden size-12 rounded-[30%] shrink-0 ring-2 ring-base-100 dark:ring-base-700">
+              <!-- <div class="overflow-hidden size-12 rounded-[30%] shrink-0 ring-2 ring-base-100 dark:ring-base-700">
                 <img
                   src={user.avatar}
                   alt={user.fullname}
                   class="w-full h-full object-cover"
                 />
-              </div>
+              </div> -->
             {:else}
               <div class="w-12 h-12 rounded-full bg-base-100 dark:bg-base-800 flex items-center justify-center shrink-0">
                 <User class="w-5 h-5 text-base-400" />
@@ -293,13 +291,15 @@
             class="block p-4 bg-white dark:bg-base-900 rounded-xl border border-base-100 dark:border-base-800 hover:border-base-300 dark:hover:border-base-600 transition-all group"
           >
             <div class="flex items-center gap-2 mb-2">
-              {#if share.author?.avatar}
-                <img
-                  src={share.author.avatar}
-                  alt={share.author.fullname}
-                  class="w-6 h-6 rounded-full object-cover ring-1 ring-base-200 dark:ring-base-700"
-                />
-              {/if}
+              <!-- {#if share.author?.avatar}
+                <div class="user-avatar overflow-hidden w-6! h-6! squircle shrink-0 relative bg-base-100 dark:bg-base-800">
+                  <img
+                    src={share.author.avatar}
+                    alt={share.author.fullname}
+                    class="absolute inset-0 w-full h-full object-cover"
+                  />
+                </div>
+              {/if} -->
               <span class="text-xs font-medium text-base-700 dark:text-base-300">{share.author?.fullname || 'Anonim'}</span>
               <span class="text-xs text-base-400 dark:text-base-500">· {formatSimpleDate(share.date)}</span>
             </div>
