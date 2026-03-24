@@ -99,22 +99,13 @@ try {
 
           <a
             href="/signin"
-            class="py-1.5 px-2.5 border focus:ring-2 h-7.5 text-xs sm:text-sm rounded-full 
-            border-transparent bg-base-900 hover:bg-white text-white dark:bg-base-100 dark:text-base-900 dark:hover:bg-base-300
-            duration-200 focus:ring-offset-2 focus:ring-white hover:text-base-900 inline-flex 
-            items-center justify-center ring-1 ring-transparent"
+            class="py-1.5 px-4 border focus:ring-2 h-7.5 text-xs sm:text-sm rounded-full 
+            border-transparent bg-base-900 hover:bg-rose-500 text-white dark:bg-base-100 dark:text-base-900 dark:hover:bg-rose-500 dark:hover:text-white
+            transition-all duration-200 focus:ring-offset-2 focus:ring-white inline-flex 
+            items-center justify-center font-medium"
           >
-            Giriş
-          </a> 
-
-          {enableRegistration && (
-            <a
-              href="/signup"
-              class="text-base-900 dark:text-base-50 justify-center flex hover:bg-rose-500 hover:border-rose-500 hover:text-white dark:hover:text-white font-medium text-xs sm:text-sm border py-1.5 px-2.5 rounded-full transition-all duration-200"
-            >
-              Qeydiyyat
-            </a>
-          )}
+            Qoşul
+          </a>
         </div> 
       ) : (
         <div class="relative z-10 flex items-center gap-2 sm:gap-3">

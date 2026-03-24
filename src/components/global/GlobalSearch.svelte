@@ -105,7 +105,7 @@
   <Search class="w-3.5 h-3.5" />
   <span class="hidden sm:inline">Axtar</span>
   <kbd class="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-base-400 dark:text-base-500 bg-white dark:bg-base-900 rounded border border-base-200 dark:border-base-700 ml-1">
-    ⌘K
+    ⌘ K
   </kbd>
 </button>
 
