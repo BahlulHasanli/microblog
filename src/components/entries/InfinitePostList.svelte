@@ -221,14 +221,6 @@
     }
   }
 
-  function getSponsorBanner(index: number) {
-    const bannerIndex = Math.floor((index + 1) / 2) - 1;
-    if ((index + 1) % 2 === 0 && bannerIndex < sponsorBanners.length) {
-      return sponsorBanners[bannerIndex];
-    }
-    return null;
-  }
-
   function setupUserAvatarClick() {
     const userAvatars = document.querySelectorAll('.user-avatar');
     userAvatars.forEach(avatar => {
@@ -246,50 +238,70 @@
     loadViewCounts();
     setupUserAvatarClick();
   });
-  // Postları yenidən sırala: icmal postları boşluq yaratmasın
+  // Postları yenidən sırala: icmal postları və reklam bannerləri boşluq yaratmasın
   // İcmal postları 2 sütun tutur, ona görə onları cüt pozisiyalarda yerləşdirmək lazımdır
-  $: organizedPosts = (() => {
-    const icmalPosts = posts.filter(p => p.data.categories?.includes('icmal'));
+  $: displayItems = (() => {
     const normalPosts = posts.filter(p => !p.data.categories?.includes('icmal'));
     
     const result: any[] = [];
-    let normalIndex = 0;
-    let icmalIndex = 0;
     let gridPosition = 0; // Cari grid pozisiyası (0-based, hər sütun 1)
+    let postsPlacedCount = 0;
+    let bannerIndex = 0;
+    const placedPosts = new Set();
+    
+    function tryPlaceBanner() {
+      if (postsPlacedCount > 0 && postsPlacedCount % 2 === 0 && bannerIndex < sponsorBanners.length) {
+        result.push({ type: 'banner', data: sponsorBanners[bannerIndex] });
+        bannerIndex++;
+        gridPosition += 1;
+      }
+    }
     
     // Postları orijinal sıra ilə gəz
     for (const post of posts) {
+      if (placedPosts.has(post)) continue;
+      
       const isIcmal = post.data.categories?.includes('icmal');
       
       if (isIcmal) {
         // İcmal postu əlavə etməzdən əvvəl, əgər tək pozisiyadadırsa, normal post əlavə et
-        if (gridPosition % 2 === 1) {
-          // Tək pozisiyada - əvvəlcə normal post əlavə et
-          // Bu artıq result-da olmayan növbəti normal postu tap
-          const remainingNormals = normalPosts.filter(np => !result.includes(np));
+        while (gridPosition % 2 === 1) {
+          const remainingNormals = normalPosts.filter(np => !placedPosts.has(np));
           if (remainingNormals.length > 0) {
-            result.push(remainingNormals[0]);
+            const np = remainingNormals[0];
+            result.push({ type: 'post', data: np });
+            placedPosts.add(np);
             gridPosition += 1;
+            postsPlacedCount += 1;
+            tryPlaceBanner();
+          } else {
+            break;
           }
         }
-        result.push(post);
-        gridPosition += 2; // İcmal 2 sütun tutur
-      } else {
-        // Normal post - əgər artıq əlavə edilməyibsə.
-        if (!result.includes(post)) {
-          result.push(post);
-          gridPosition += 1;
-        }
       }
+      
+      result.push({ type: 'post', data: post });
+      placedPosts.add(post);
+      gridPosition += isIcmal ? 2 : 1;
+      postsPlacedCount += 1;
+      tryPlaceBanner();
     }
     
     // Əgər axırıncı sətirdə 1 boş yer qalırsa və hələ də yeni postlar yüklənə bilərsə, 
-    // sonuncu normal postu siyahıdan çıxarırıq ki, grid tam simmetrik görünsün və boş yer qalmasın.
+    // sonuncu 1-col elementi siyahıdan çıxarırıq ki, grid tam simmetrik görünsün və boş yer qalmasın.
     if (hasMore && gridPosition % 2 === 1) {
       for (let i = result.length - 1; i >= 0; i--) {
-        if (!result[i].data.categories?.includes('icmal')) {
+        const item = result[i];
+        if (item.type === 'banner') {
           result.splice(i, 1);
           gridPosition -= 1;
+          bannerIndex -= 1;
+          break;
+        } else if (item.type === 'post' && !item.data.categories?.includes('icmal')) {
+          result.splice(i, 1);
+          placedPosts.delete(item.data);
+          gridPosition -= 1;
+          postsPlacedCount -= 1;
           break;
         }
       }
@@ -300,11 +312,12 @@
 </script>
 
 <div class="grid grid-cols-1 gap-6 sm:gap-8 gap-y-16 sm:gap-y-16 sm:grid-cols-2">
-  {#each organizedPosts as post, index}
-    {@const isIcmal = post.data.categories?.includes('icmal') || false}
-    {@const banner = getSponsorBanner(index)}
-    
-    {#if isIcmal}
+  {#each displayItems as item, index}
+    {#if item.type === 'post'}
+      {@const post = item.data}
+      {@const isIcmal = post.data.categories?.includes('icmal') || false}
+      
+      {#if isIcmal}
       <!-- İcmal Post - Full Width -->
       <div class="sm:col-span-2">
         <article class="relative w-full rounded-2xl overflow-hidden group min-h-[450px] sm:min-h-[500px] lg:min-h-[600px] flex items-center">
@@ -449,9 +462,9 @@
         </article>
       </div>
     {/if}
-    
-    <!-- Sponsor Banner (hər 2 postdan sonra) -->
-    {#if banner}
+    {:else if item.type === 'banner'}
+      {@const banner = item.data}
+      <!-- Sponsor Banner -->
       <div>
         <article class="flex flex-col flex-1 h-full group">
           <a 
