@@ -3,51 +3,9 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
 import VideoPlayer from "@/components/video/VideoPlayer.svelte";
+import { windowsVideos } from "@/data/windows-videos";
 
-const videos = [
-  {
-    id: 1,
-    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
-    title: "Video 1",
-    authorName: "Bəhlul Həsənli",
-    authorAvatar: "/squad/bahlulhasanli.png"
-  },
-  {
-    id: 2,
-    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
-    title: "Video 2",
-    authorName: "Elcan Eyvazlı",
-    authorAvatar: "/squad/eljaneyvazli.png"
-  },
-  {
-    id: 3,
-    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
-    title: "Video 3",
-    authorName: "Bəhlul Həsənli",
-    authorAvatar: "/squad/bahlulhasanli.png"
-  },
-  {
-    id: 4,
-    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
-    title: "Video 4",
-    authorName: "Elcan Eyvazlı",
-    authorAvatar: "/squad/eljaneyvazli.png"
-  },
-  {
-    id: 5,
-    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
-    title: "Video 5",
-    authorName: "Bəhlul Həsənli",
-    authorAvatar: "/squad/bahlulhasanli.png"
-  },
-  {
-    id: 6,
-    videoUrl: "https://vz-300fcde7-b36.b-cdn.net/68d06fac-3f7d-4f9f-8e8c-e9b07c172567/playlist.m3u8",
-    title: "Video 6",
-    authorName: "Elcan Eyvazlı",
-    authorAvatar: "/squad/eljaneyvazli.png"
-  },
-];
+const videos = windowsVideos;
 ---
 
 <BaseLayout
