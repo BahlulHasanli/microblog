@@ -9,33 +9,9 @@ Disallow: /admin
 Disallow: /studio
 Disallow: /api
 Disallow: /private
-Disallow: /*.json$
-Disallow: /*?*sort=
-Disallow: /*?*filter=
+Disallow: /*.json
 
 Crawl-delay: 1
-
-# AI Bots
-User-agent: GPTBot
-Disallow: /
-
-User-agent: ChatGPT-User
-Disallow: /
-
-User-agent: CCBot
-Disallow: /
-
-User-agent: anthropic-ai
-Disallow: /
-
-User-agent: Google-Extended
-Disallow: /
-
-User-agent: Bytespider
-Disallow: /
-
-User-agent: ClaudeBot
-Disallow: /
 
 Sitemap: https://the99.az/sitemap.xml
 `;
