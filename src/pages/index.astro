@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import InfinitePostList from "@/components/entries/InfinitePostList.svelte";
 import Slider from "@/components/entries/HomeSlider.astro";
+import HomeVideoSlider from "@/components/entries/HomeVideoSlider.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
 import { supabase } from "@/db/supabase";
@@ -108,6 +109,7 @@ const posts = (postsData || []).map(post => {
 <BaseLayout>
   <section> 
     <Slider />
+    <HomeVideoSlider />
     <FixedTabBar activeTab="weekly" />
     
     <div class="py-6 sm:py-8 md:py-12 max-w-3xl mx-auto px-4 sm:px-0">
