@@ -1,48 +1,112 @@
 <script lang="ts">
+  import Hls from "hls.js";
+
   interface Props {
     videoUrl: string;
     title?: string;
     authorName?: string;
     authorAvatar?: string;
+    /** true: video tam görünsün (letterbox), modal üçün */
+    fitContain?: boolean;
+    /** Supabase `stream_video.id` — unikal sayım serverdə IP ilə (record-view API) */
+    streamVideoId?: string | null;
+    /** API uğurlu olduqda — kart/modalda sayı dərhal yenilənsin */
+    onSiteViewRecorded?: (streamVideoId: string, count: number) => void;
   }
-  
-  let { videoUrl, title = "", authorName = "", authorAvatar = "" }: Props = $props();
 
-  let videoElement: HTMLVideoElement;
+  let {
+    videoUrl,
+    title = "",
+    authorName = "",
+    authorAvatar = "",
+    fitContain = false,
+    streamVideoId = null,
+    onSiteViewRecorded,
+  }: Props = $props();
+
+  let videoElement: HTMLVideoElement | undefined;
   let isPlaying = $state(false);
   let isMuted = $state(true);
   let currentTime = $state(0);
   let duration = $state(0);
   let showControls = $state(false);
-  let controlsTimeout: number;
+  let controlsTimeout: any;
   let hasStarted = $state(false);
   let containerElement: HTMLDivElement;
 
+  function syncDurationFromVideo() {
+    if (!videoElement) return;
+    const d = videoElement.duration;
+    if (Number.isFinite(d) && d > 0 && d !== Number.POSITIVE_INFINITY) {
+      duration = d;
+      return;
+    }
+    try {
+      const sb = videoElement.seekable;
+      if (sb.length > 0) {
+        const end = sb.end(sb.length - 1);
+        if (Number.isFinite(end) && end > 0) {
+          duration = end;
+        }
+      }
+    } catch {
+      /* seekable bəzən HLS buffer qədərini verir */
+    }
+  }
+
+  function applyHlsPlaylistDuration(details: { totalduration?: number; live?: boolean } | null | undefined) {
+    if (!details || details.live) return;
+    const d = details.totalduration;
+    if (typeof d === "number" && Number.isFinite(d) && d > 0) {
+      duration = d;
+    }
+  }
+
   function togglePlay() {
+    if (!videoElement) return;
     if (isPlaying) {
       videoElement.pause();
-    } else {
-      videoElement.play();
-      hasStarted = true;
+      isPlaying = false;
+      return;
     }
-    isPlaying = !isPlaying;
+    const p = videoElement.play();
+    if (p !== undefined) {
+      void p
+        .then(() => {
+          isPlaying = true;
+          hasStarted = true;
+          recordSiteViewOnce();
+        })
+        .catch(() => {
+          /* play() rədd — avtopley / HLS hazır deyil və s. */
+        });
+    } else {
+      isPlaying = true;
+      hasStarted = true;
+      recordSiteViewOnce();
+    }
   }
 
   function toggleMute() {
+    if (!videoElement) return;
     isMuted = !isMuted;
     videoElement.muted = isMuted;
   }
 
   function handleTimeUpdate() {
+    if (!videoElement) return;
     currentTime = videoElement.currentTime;
-    duration = videoElement.duration;
+    syncDurationFromVideo();
   }
 
   function handleSeek(e: MouseEvent) {
+    if (!videoElement) return;
+    const total = Number.isFinite(duration) && duration > 0 ? duration : videoElement.duration;
+    if (!Number.isFinite(total) || total <= 0) return;
     const progressBar = e.currentTarget as HTMLElement;
     const rect = progressBar.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
-    videoElement.currentTime = pos * duration;
+    videoElement.currentTime = pos * total;
   }
 
   function handleMouseMove() {
@@ -62,10 +126,10 @@
   }
 
   function formatTime(seconds: number): string {
-    if (isNaN(seconds)) return "0:00";
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
   function toggleFullscreen() {
@@ -77,6 +141,107 @@
   }
 
   let progress = $derived(duration > 0 ? (currentTime / duration) * 100 : 0);
+
+  function supportsNativeHls(el: HTMLVideoElement): boolean {
+    return (
+      el.canPlayType("application/vnd.apple.mpegurl") !== "" ||
+      el.canPlayType("application/x-mpegURL") !== ""
+    );
+  }
+
+  /** Bunny CDN HLS: playlist.m3u8 — Chrome-da hls.js ilə ABR, Safari-də nativ */
+  $effect(() => {
+    const el = videoElement;
+    const url = videoUrl?.trim();
+    if (!el || !url) return;
+
+    let hlsRef: Hls | null = null;
+
+    const teardown = () => {
+      if (hlsRef) {
+        hlsRef.destroy();
+        hlsRef = null;
+      }
+      el.pause();
+      el.removeAttribute("src");
+      el.load();
+      duration = 0;
+      currentTime = 0;
+    };
+
+    const isHls = /\.m3u8(\?.*)?$/i.test(url);
+
+    if (isHls) {
+      if (supportsNativeHls(el)) {
+        el.src = url;
+      } else if (Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          capLevelToPlayerSize: true,
+        });
+        hls.loadSource(url);
+        hls.attachMedia(el);
+
+        hls.on(Hls.Events.LEVEL_LOADED, (_e, data) => {
+          applyHlsPlaylistDuration(data.details);
+        });
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          for (const level of hls.levels) {
+            if (level.details?.totalduration) {
+              applyHlsPlaylistDuration(level.details);
+              break;
+            }
+          }
+        });
+
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (!data.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hls.startLoad();
+          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls.recoverMediaError();
+          }
+        });
+        hlsRef = hls;
+      } else {
+        el.src = url;
+      }
+    } else {
+      el.src = url;
+    }
+
+    return teardown;
+  });
+
+  /** Eyni oynatma anında `playing` + `play().then` iki dəfə çağırmasın deyə */
+  let viewRecordInFlight = false;
+
+  function recordSiteViewOnce() {
+    const id = streamVideoId?.trim();
+    if (!id || viewRecordInFlight) return;
+    viewRecordInFlight = true;
+    fetch("/api/stream-videos/record-view", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ streamVideoId: id }),
+    })
+      .then(async (r) => {
+        const j = await r.json().catch(() => null);
+        if (r.ok && j?.success) {
+          const raw = j.siteViewCount;
+          const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+          if (Number.isFinite(n)) {
+            onSiteViewRecorded?.(id, Math.floor(n));
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        viewRecordInFlight = false;
+      });
+  }
 </script>
 
 <div 
@@ -91,9 +256,12 @@
 >
   <video
     bind:this={videoElement}
-    src={videoUrl}
     class="video-element"
+    class:video-element--contain={fitContain}
     ontimeupdate={handleTimeUpdate}
+    onloadedmetadata={syncDurationFromVideo}
+    ondurationchange={syncDurationFromVideo}
+    onplaying={recordSiteViewOnce}
     onended={() => isPlaying = false}
     muted={isMuted}
     loop
@@ -197,6 +365,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  .video-element.video-element--contain {
+    object-fit: contain;
   }
 
   .play-overlay {
