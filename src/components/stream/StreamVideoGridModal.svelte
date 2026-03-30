@@ -44,6 +44,8 @@
   let commentError = $state("");
   /** Mobil/tablet: şərh formu altdan sheet */
   let commentSheetOpen = $state(false);
+  /** iOS/Android: klaviatura açılanda sheet-in altı görünsün */
+  let commentSheetKeyboardPad = $state(0);
   /** record-view cavabı — kart/modal dərhal yenilənsin */
   let siteViewCountById = $state<Record<string, number>>({});
 
@@ -71,6 +73,35 @@
     document.documentElement.classList.add("overflow-hidden");
     return () => {
       document.documentElement.classList.remove("overflow-hidden");
+    };
+  });
+
+  function updateCommentSheetKeyboardPad() {
+    if (typeof window === "undefined") return;
+    const vv = window.visualViewport;
+    if (!vv) {
+      commentSheetKeyboardPad = 0;
+      return;
+    }
+    const hidden = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    commentSheetKeyboardPad = hidden;
+  }
+
+  $effect(() => {
+    if (!commentSheetOpen) {
+      commentSheetKeyboardPad = 0;
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const vv = window.visualViewport;
+    updateCommentSheetKeyboardPad();
+    if (!vv) return;
+    vv.addEventListener("resize", updateCommentSheetKeyboardPad);
+    vv.addEventListener("scroll", updateCommentSheetKeyboardPad);
+    return () => {
+      vv.removeEventListener("resize", updateCommentSheetKeyboardPad);
+      vv.removeEventListener("scroll", updateCommentSheetKeyboardPad);
+      commentSheetKeyboardPad = 0;
     };
   });
 
@@ -194,6 +225,11 @@
   function commentSheetBackdropClick(e: MouseEvent) {
     if (e.target === e.currentTarget) closeCommentSheet();
   }
+
+  /** Bəzi mobil brauzerlərdə yalnız touch ilə click gecikir və ya çatışmır */
+  function commentSheetBackdropTouchend(e: TouchEvent) {
+    if (e.target === e.currentTarget) closeCommentSheet();
+  }
 </script>
 
 <svelte:window onkeydown={modalKeydown} />
@@ -207,18 +243,22 @@
       <input
         type="text"
         bind:value={guestName}
+        name="guestName"
+        autocomplete="name"
         placeholder="Ad və soyad"
         maxlength="200"
         disabled={commentSubmitting}
-        class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
+        class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-base leading-normal text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
       />
       <input
         type="email"
         bind:value={guestEmail}
+        name="guestEmail"
+        autocomplete="email"
         placeholder="Email ünvanınız"
         maxlength="320"
         disabled={commentSubmitting}
-        class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
+        class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-base leading-normal text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
       />
     </div>
   {/if}
@@ -227,7 +267,8 @@
     rows="3"
     maxlength="1000"
     placeholder="Nə düşünürsən?"
-    class="mb-2 w-full resize-none rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
+    enterkeyhint="send"
+    class="mb-2 w-full touch-manipulation resize-none rounded-lg border border-base-200 bg-white px-3 py-2 text-base leading-normal text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
     disabled={commentSubmitting}
   ></textarea>
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -508,13 +549,15 @@
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
-        class="fixed inset-0 z-[120] flex items-end justify-center bg-black/50 lg:hidden"
+        class="fixed inset-0 z-[120] flex touch-manipulation items-end justify-center bg-black/50 lg:hidden"
         onclick={commentSheetBackdropClick}
+        ontouchend={commentSheetBackdropTouchend}
         role="presentation"
         transition:fade={{ duration: 180 }}
       >
         <div
-          class="max-h-[min(88dvh,640px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl border border-base-200/80 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl dark:border-base-700/80 dark:bg-base-900"
+          class="max-h-[min(88dvh,640px)] w-full max-w-lg touch-manipulation overflow-y-auto overscroll-contain rounded-t-2xl border border-base-200/80 bg-white px-4 pt-2 shadow-2xl dark:border-base-700/80 dark:bg-base-900"
+          style="padding-bottom: calc(max(1rem, env(safe-area-inset-bottom)) + {commentSheetKeyboardPad}px)"
           role="dialog"
           aria-modal="true"
           aria-labelledby="stream-comment-sheet-title"

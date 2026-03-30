@@ -88,17 +88,28 @@ export const POST: APIRoute = async (context) => {
 
     if (error) {
       console.error("[stream-videos/add-comment]", error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: error.message.includes("stream_video_comments")
-            ? "Şərh cədvəli mövcud deyil — migrasiyanı tətbiq edin"
-            : error.message.includes("stream_video_comments_author_chk")
-              ? "Ad və email mütləqdir"
-              : error.message,
-        }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      const msg = error.message;
+      const code = "code" in error ? String((error as { code?: string }).code ?? "") : "";
+      // PG check constraint: mesajda həmişə cədvəl adı da olur — əvvəlcə author_chk yoxlanmalıdır
+      const isAuthorCheck =
+        msg.includes("stream_video_comments_author_chk") ||
+        (code === "23514" && /author_chk/i.test(msg));
+      const isMissingCommentsTable =
+        /relation ["'][^"']*stream_video_comments["'] does not exist/i.test(msg) ||
+        /Could not find the table[^\n]*stream_video_comments/i.test(msg) ||
+        (code === "42P01" && msg.includes("stream_video_comments"));
+
+      let clientMessage = msg;
+      if (isAuthorCheck) {
+        clientMessage = "Ad və email mütləqdir";
+      } else if (isMissingCommentsTable) {
+        clientMessage = "Şərh cədvəli mövcud deyil — migrasiyanı tətbiq edin";
+      }
+
+      return new Response(JSON.stringify({ success: false, message: clientMessage }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const commentOut = user
