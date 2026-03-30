@@ -2,50 +2,77 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
-import VideoPlayer from "@/components/video/VideoPlayer.svelte";
-import { windowsVideos } from "@/data/windows-videos";
+import StreamVideoGridModal from "@/components/stream/StreamVideoGridModal.svelte";
+import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
-const videos = windowsVideos;
+const videos = await fetchHomeStreamVideos({ runtimeEnv: Astro.locals.runtime?.env });
+
+let streamUserPayload: {
+  id: string;
+  fullname: string;
+  username: string;
+  avatar?: string | null;
+} | null = null;
+if (isAuthenticated(Astro.cookies)) {
+  const u = await getUserFromCookies(Astro.cookies, Astro.redirect);
+  if (u) {
+    streamUserPayload = {
+      id: u.id,
+      fullname: u.fullname,
+      username: u.username,
+      avatar: u.avatar,
+    };
+  }
+}
 ---
 
 <BaseLayout
   title="Pəncərələr"
-  description="The 99-un video məzmunu. Eksklyuziv videolar, intervyular və əyləncə məzmunu tezliklə."
+  description="The 99-un video məzmunu. Eksklyuziv videolar, intervyular və əyləncə məzmunu."
 >
   <section>
     <FixedTabBar activeTab="window" />
 
-    <div class="py-6 sm:py-8 md:py-12 max-w-3xl mx-auto px-4 sm:px-0">
-      <div class="mb-8 sm:mb-12">
+    <div class="py-6 sm:py-8 md:py-12 max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="mb-8 sm:mb-12 max-w-3xl mx-auto sm:px-0">
         <MainTabs activeTab="window" />
-
-          <div class="flex flex-col items-center justify-center text-center py-16 sm:py-24">
-          <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-base-800">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-slate-400">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
-            </svg>
-          </div>
-          <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 dark:text-base-50 mb-2">Pəncərələr tezliklə</h3>
-          <p class="text-sm sm:text-sm text-slate-500 dark:text-base-400 max-w-sm">Bu bölmə hazırlanır...</p>
-        </div>
-
-        <!-- <div class="grid grid-cols-3 gap-3 sm:gap-4 mt-8">
-          {videos.map((video) => (
-            <div class="group">
-              <div class="relative bg-black rounded-lg overflow-hidden" style="aspect-ratio: 9/16;">
-                <VideoPlayer 
-                  videoUrl={video.videoUrl}
-                  title={video.title}
-                  authorName={video.authorName}
-                  authorAvatar={video.authorAvatar}
-                  client:load
-                />
-              </div>
-            </div>
-          ))}
-        </div> -->
       </div>
+
+      {
+        videos.length > 0 ? (
+          <div class="mt-4">
+            <StreamVideoGridModal
+              client:load
+              videos={videos}
+              user={streamUserPayload}
+              anchorScroll={true}
+            />
+          </div>
+        ) : (
+          <div class="flex flex-col items-center justify-center text-center py-16 sm:py-24 max-w-3xl mx-auto">
+            <div class="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-base-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="w-12 h-12 text-slate-400"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59"
+                />
+              </svg>
+            </div>
+            <h3 class="text-lg sm:text-lg font-nouvelr-semibold text-slate-900 dark:text-base-50 mb-2">
+              Pəncərələr tezliklə
+            </h3>
+          </div>
+        )
+      }
     </div>
   </section>
 </BaseLayout>
-

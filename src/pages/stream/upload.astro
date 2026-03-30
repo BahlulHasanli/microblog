@@ -1,0 +1,28 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import StreamVideoUploadForm from "@/components/stream/StreamVideoUploadForm.svelte";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+
+if (!isAuthenticated(Astro.cookies)) {
+  return Astro.redirect("/signin");
+}
+
+const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+if (!user) {
+  return Astro.redirect("/signin");
+}
+
+const isEditor = user.role_id === 1 || user.role_id === 2 || user.role_id === 3;
+if (!isEditor) {
+  return Astro.redirect("/");
+}
+---
+
+<BaseLayout
+  title="Video əlavə et"
+  description="Pəncərələr üçün Bunny Stream: fayl yüklə və ya HLS playlist linki ilə qeydiyyat."
+>
+  <section class="py-8 sm:py-12 px-4">
+    <StreamVideoUploadForm client:load />
+  </section>
+</BaseLayout>

@@ -2,14 +2,41 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import InfinitePostList from "@/components/entries/InfinitePostList.svelte";
 import Slider from "@/components/entries/HomeSlider.astro";
-import HomeVideoSlider from "@/components/entries/HomeVideoSlider.astro";
+import HomeStreamVideoSection from "@/components/entries/HomeStreamVideoSection.svelte";
+import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
 import { supabase } from "@/db/supabase";
-import { isAuthenticated } from "@/utils/auth";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { buildCategoryTree, type Category } from "@/utils/category-helpers";
 
 const currentPath = Astro.url.pathname;
+
+const homeStreamVideos = await fetchHomeStreamVideos({
+  limit: 4,
+  dbOnly: true,
+  runtimeEnv: Astro.locals.runtime?.env,
+});
+
+let streamUserPayload: {
+  id: string;
+  fullname: string;
+  username: string;
+  avatar?: string | null;
+} | null = null;
+if (isAuthenticated(Astro.cookies)) {
+  const u = await getUserFromCookies(Astro.cookies, Astro.redirect);
+  if (u) {
+    streamUserPayload = {
+      id: u.id,
+      fullname: u.fullname,
+      username: u.username,
+      avatar: u.avatar,
+    };
+  }
+}
+
+
 
 // Get site settings for structured data
 let siteTitle = "THE DOXSANDOQQUZ";
@@ -109,7 +136,7 @@ const posts = (postsData || []).map(post => {
 <BaseLayout>
   <section> 
     <Slider />
-    <HomeVideoSlider />
+    <HomeStreamVideoSection client:load videos={homeStreamVideos} user={streamUserPayload} />
     <FixedTabBar activeTab="weekly" />
     
     <div class="py-6 sm:py-8 md:py-12 max-w-3xl mx-auto px-4 sm:px-0">
