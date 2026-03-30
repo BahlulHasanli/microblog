@@ -1,12 +1,8 @@
 import type { APIRoute } from "astro";
-import { getSupabaseAdmin, type SupabaseRuntimeEnv } from "@/db/supabase";
+import { getSupabaseAdmin } from "@/db/supabase";
 
-export const GET: APIRoute = async (context) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   try {
-    const { url } = context;
-    const runtimeEnv = (context.locals as { runtime?: { env?: SupabaseRuntimeEnv } })?.runtime?.env;
-    const admin = getSupabaseAdmin(runtimeEnv);
-
     const streamVideoId = url.searchParams.get("streamVideoId")?.trim();
     if (!streamVideoId) {
       return new Response(JSON.stringify({ success: false, message: "streamVideoId tələb olunur" }), {
@@ -15,6 +11,7 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
+    const admin = getSupabaseAdmin({ locals });
     const { data: raw, error } = await admin
       .from("stream_video_comments")
       .select(

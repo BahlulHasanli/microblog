@@ -4,9 +4,6 @@
   import { formatSimpleDate } from "@/utils/date";
   import { fade, fly } from "svelte/transition";
 
-  /** Müvəqqəti: şərh yazmanı yenidən açmaq üçün true edin */
-  const streamVideoCommentsWriteEnabled = false;
-
   type StreamUser = {
     id: string;
     fullname: string;
@@ -487,11 +484,7 @@
           {:else if commentsLoading}
             <p class="text-sm text-base-500 dark:text-base-400">Şərhlər yüklənir…</p>
           {:else if comments.length === 0}
-            <p class="text-sm text-base-500 dark:text-base-400">
-              {streamVideoCommentsWriteEnabled
-                ? "Hələ şərh yoxdur — ilk sən yaz."
-                : "Hələ şərh yoxdur."}
-            </p>
+            <p class="text-sm text-base-500 dark:text-base-400">Hələ şərh yoxdur — ilk sən yaz.</p>
           {:else}
             <ul class="space-y-4">
               {#each comments as c (c.id)}
@@ -529,10 +522,10 @@
           {/if}
         </div>
 
-        {#if selected.streamVideoId && streamVideoCommentsWriteEnabled}
-          <footer
-            class="shrink-0 border-t border-base-200 bg-base-50/95 px-4 py-3 backdrop-blur-md dark:border-base-800 dark:bg-base-950/90 sm:px-5"
-          >
+        <footer
+          class="shrink-0 border-t border-base-200 bg-base-50/95 px-4 py-3 backdrop-blur-md dark:border-base-800 dark:bg-base-950/90 sm:px-5"
+        >
+          {#if selected.streamVideoId}
             <button
               type="button"
               class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-base-900 py-3 text-sm font-nouvelr-semibold text-white shadow-sm transition-opacity active:opacity-90 dark:bg-base-100 dark:text-base-900 lg:hidden"
@@ -547,12 +540,12 @@
               <h3 class="mb-2 text-sm font-nouvelr-semibold text-base-900 dark:text-base-50">Şərh yaz</h3>
               {@render streamCommentForm()}
             </div>
-          </footer>
-        {/if}
+          {/if}
+        </footer>
       </div>
     </div>
 
-    {#if commentSheetOpen && selected?.streamVideoId && streamVideoCommentsWriteEnabled}
+    {#if commentSheetOpen && selected?.streamVideoId}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div

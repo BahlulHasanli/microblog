@@ -1,7 +1,7 @@
 import { jwtVerify, errors } from "jose";
 import type { APIContext } from "astro";
 import type { AstroCookies } from "astro";
-import { supabase, supabaseAdmin } from "@/db/supabase";
+import { getSupabaseAdmin, supabase, type SupabaseServiceRoleSource } from "@/db/supabase";
 
 // JWT secrets
 const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key-change-this";
@@ -33,6 +33,8 @@ export function isAuthenticated(
 export async function getUserFromCookies(
   cookies: AstroCookies,
   redirect: any,
+  /** Cloudflare-da service role üçün `context.locals` / Astro-da `Astro.locals` ötürün */
+  locals?: SupabaseServiceRoleSource["locals"],
 ): Promise<any> {
   try {
     const accessToken = cookies.get("sb-access-token");
@@ -66,7 +68,9 @@ export async function getUserFromCookies(
 
     // İstifadəçini verilənlər bazasından al
     const userEmail = sessionData.user.email;
-    const { data: userData, error: userError } = await supabaseAdmin
+    const { data: userData, error: userError } = await getSupabaseAdmin(
+      locals ? { locals } : undefined,
+    )
       .from("users")
       .select("*")
       .eq("email", userEmail)
@@ -158,7 +162,7 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
  */
 export async function requireAuth(ctx: APIContext): Promise<Response | any> {
   try {
-    const user = await getUserFromCookies(ctx.cookies, () => null);
+    const user = await getUserFromCookies(ctx.cookies, () => null, ctx.locals);
 
     if (!user) {
       return new Response(
@@ -193,9 +197,12 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
  * Admin yoxlaması - istifadəçinin admin olub-olmadığını yoxlayır
  * role_id: 1 = Admin
  */
-export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
+export async function isAdmin(
+  cookies: AstroCookies,
+  locals?: SupabaseServiceRoleSource["locals"],
+): Promise<boolean> {
   try {
-    const user = await getUserFromCookies(cookies, () => null);
+    const user = await getUserFromCookies(cookies, () => null, locals);
     if (!user) return false;
 
     return user.role_id === 1;
@@ -210,9 +217,12 @@ export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
  * role_id: 1 = Admin, 2 = Moderator
  * Admin də moderator hüquqlarına malikdir
  */
-export async function isModerator(cookies: AstroCookies): Promise<boolean> {
+export async function isModerator(
+  cookies: AstroCookies,
+  locals?: SupabaseServiceRoleSource["locals"],
+): Promise<boolean> {
   try {
-    const user = await getUserFromCookies(cookies, () => null);
+    const user = await getUserFromCookies(cookies, () => null, locals);
     if (!user) return false;
 
     return user.role_id === 1 || user.role_id === 2;
@@ -227,9 +237,12 @@ export async function isModerator(cookies: AstroCookies): Promise<boolean> {
  * role_id: 1 = Admin, 2 = Moderator, 3 = Editor
  * Admin və Moderator da editor hüquqlarına malikdir
  */
-export async function isEditor(cookies: AstroCookies): Promise<boolean> {
+export async function isEditor(
+  cookies: AstroCookies,
+  locals?: SupabaseServiceRoleSource["locals"],
+): Promise<boolean> {
   try {
-    const user = await getUserFromCookies(cookies, () => null);
+    const user = await getUserFromCookies(cookies, () => null, locals);
     if (!user) return false;
 
     return user.role_id === 1 || user.role_id === 2 || user.role_id === 3;
@@ -245,7 +258,7 @@ export async function isEditor(cookies: AstroCookies): Promise<boolean> {
 export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
   try {
     // Cookie-dən istifadəçi məlumatlarını al
-    const user = await getUserFromCookies(ctx.cookies, () => null);
+    const user = await getUserFromCookies(ctx.cookies, () => null, ctx.locals);
 
     if (!user) {
       return new Response(
@@ -261,7 +274,7 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
     }
 
     // Admin yoxlaması
-    const adminCheck = await isAdmin(ctx.cookies);
+    const adminCheck = await isAdmin(ctx.cookies, ctx.locals);
     if (!adminCheck) {
       return new Response(
         JSON.stringify({
@@ -299,7 +312,7 @@ export async function requireModerator(
 ): Promise<Response | any> {
   try {
     // Cookie-dən istifadəçi məlumatlarını al
-    const user = await getUserFromCookies(ctx.cookies, () => null);
+    const user = await getUserFromCookies(ctx.cookies, () => null, ctx.locals);
 
     if (!user) {
       return new Response(
@@ -315,7 +328,7 @@ export async function requireModerator(
     }
 
     // Moderator yoxlaması
-    const modCheck = await isModerator(ctx.cookies);
+    const modCheck = await isModerator(ctx.cookies, ctx.locals);
     if (!modCheck) {
       return new Response(
         JSON.stringify({

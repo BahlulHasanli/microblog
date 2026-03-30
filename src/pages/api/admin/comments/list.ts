@@ -2,9 +2,9 @@ import type { APIRoute } from "astro";
 import { isModerator } from "@/utils/auth";
 import { supabase } from "@/db/supabase";
 
-export const GET: APIRoute = async ({ cookies, redirect }) => {
+export const GET: APIRoute = async ({ cookies, redirect, locals }) => {
   // Moderator kontrolü (admin və moderator)
-  const modCheck = await isModerator(cookies);
+  const modCheck = await isModerator(cookies, locals);
   if (!modCheck) {
     return new Response(
       JSON.stringify({

@@ -4,8 +4,6 @@
 interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL: string;
   readonly PUBLIC_SUPABASE_KEY: string;
-  /** Server-only; Cloudflare-da çox vaxt yalnız runtime env-də olur */
-  readonly SUPABASE_SERVICE_ROLE_KEY?: string;
   
   readonly BUNNY_API_KEY: string;
   readonly BUNNY_STORAGE_ZONE: string;
