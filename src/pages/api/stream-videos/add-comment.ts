@@ -1,11 +1,14 @@
 import type { APIRoute } from "astro";
-import { supabaseAdmin } from "@/db/supabase";
+import { getSupabaseAdmin, type SupabaseRuntimeEnv } from "@/db/supabase";
 import { getUserFromCookies } from "@/utils/auth";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const POST: APIRoute = async (context) => {
   try {
+    const runtimeEnv = (context.locals as { runtime?: { env?: SupabaseRuntimeEnv } })?.runtime?.env;
+    const admin = getSupabaseAdmin(runtimeEnv);
+
     const user = await getUserFromCookies(context.cookies, () => null);
 
     const body = await context.request.json().catch(() => null);
@@ -52,7 +55,7 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
-    const { data: exists } = await supabaseAdmin
+    const { data: exists } = await admin
       .from("stream_video")
       .select("id")
       .eq("id", streamVideoId)
@@ -80,7 +83,7 @@ export const POST: APIRoute = async (context) => {
           user_fullname: guestName,
         };
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await admin
       .from("stream_video_comments")
       .insert(insertRow)
       .select("id, content, created_at, user_id, user_name, user_fullname")
@@ -98,12 +101,19 @@ export const POST: APIRoute = async (context) => {
         /relation ["'][^"']*stream_video_comments["'] does not exist/i.test(msg) ||
         /Could not find the table[^\n]*stream_video_comments/i.test(msg) ||
         (code === "42P01" && msg.includes("stream_video_comments"));
+      const isRlsViolation =
+        /row level security/i.test(msg) ||
+        /violates row-level security/i.test(msg) ||
+        (code === "42501" && msg.includes("stream_video_comments"));
 
       let clientMessage = msg;
       if (isAuthorCheck) {
         clientMessage = "Ad və email mütləqdir";
       } else if (isMissingCommentsTable) {
         clientMessage = "Şərh cədvəli mövcud deyil — migrasiyanı tətbiq edin";
+      } else if (isRlsViolation) {
+        clientMessage =
+          "Şərh yazmaq üçün serverdə SUPABASE_SERVICE_ROLE_KEY lazımdır (məs. Cloudflare Pages → Environment variables).";
       }
 
       return new Response(JSON.stringify({ success: false, message: clientMessage }), {
