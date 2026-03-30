@@ -7,15 +7,69 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function clientIp(request: Request, clientAddress?: string): string {
-  const cf = request.headers.get("cf-connecting-ip")?.trim();
-  if (cf) return cf.slice(0, 128);
+  const ordered = [
+    request.headers.get("cf-connecting-ip"),
+    request.headers.get("CF-Connecting-IP"),
+    request.headers.get("true-client-ip"),
+    request.headers.get("True-Client-IP"),
+  ];
+  for (const h of ordered) {
+    const v = h?.trim();
+    if (v) return v.split(",")[0]!.trim().slice(0, 128);
+  }
   const astro = clientAddress?.trim();
-  if (astro) return astro.slice(0, 128);
+  if (astro) return astro.split(",")[0]!.trim().slice(0, 128);
   const xff = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   if (xff) return xff.slice(0, 128);
   const real = request.headers.get("x-real-ip")?.trim();
   if (real) return real.slice(0, 128);
   return "unknown";
+}
+
+/** Yalnız ictimai IP üçün ip: dedupe — əks halda anon UUID (lokal / header yox) */
+function isPlausiblePublicClientIp(s: string): boolean {
+  if (!s || s === "unknown") return false;
+  const ip = s.trim();
+  if (ip === "::1" || ip === "0:0:0:0:0:0:0:1") return false;
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(ip);
+  if (m) {
+    const a = Number(m[1]);
+    const b = Number(m[2]);
+    if ([a, b, Number(m[3]), Number(m[4])].some((n) => n > 255)) return false;
+    if (a === 10) return false;
+    if (a === 127) return false;
+    if (a === 172 && b >= 16 && b <= 31) return false;
+    if (a === 192 && b === 168) return false;
+    if (a === 169 && b === 254) return false;
+    if (a === 100 && b >= 64 && b <= 127) return false;
+    return true;
+  }
+  if (ip.includes(":")) {
+    const lower = ip.toLowerCase();
+    if (lower.startsWith("fe80:") || lower.startsWith("fc") || lower.startsWith("fd")) return false;
+    if (lower.startsWith("::ffff:")) {
+      const v4 = lower.slice(7);
+      return isPlausiblePublicClientIp(v4);
+    }
+    return true;
+  }
+  return false;
+}
+
+function buildDedupeKey(
+  request: Request,
+  clientAddress: string | undefined,
+  viewerId: string | undefined
+): string {
+  const raw = clientIp(request, clientAddress);
+  if (isPlausiblePublicClientIp(raw)) {
+    return `ip:${raw.slice(0, 128)}`;
+  }
+  const vid = typeof viewerId === "string" ? viewerId.trim() : "";
+  if (vid && UUID_RE.test(vid)) {
+    return `anon:${vid}`;
+  }
+  return "anon:unknown";
 }
 
 function parseRpcBigint(data: unknown): number | null {
@@ -29,8 +83,7 @@ function parseRpcBigint(data: unknown): number | null {
 }
 
 /**
- * Sayt baxışı: eyni IP + video üçün bir dəfə sayılır (post_views məntiqi).
- * Bunny panel statistikası ilə əlaqəsi yoxdur.
+ * Sayt baxışı: ictimai IP varsa (ip:...) hər IP üçün bir dəfə; yoxdakı hallarda brauzer viewerId (anon:...).
  */
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
@@ -46,6 +99,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
     const body = await request.json().catch(() => null);
     const streamVideoId = typeof body?.streamVideoId === "string" ? body.streamVideoId.trim() : "";
+    const viewerId = typeof body?.viewerId === "string" ? body.viewerId.trim() : "";
 
     if (!streamVideoId || !UUID_RE.test(streamVideoId)) {
       return new Response(JSON.stringify({ success: false, message: "streamVideoId tələb olunur" }), {
@@ -68,24 +122,25 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       });
     }
 
-    const ip = clientIp(request, clientAddress);
+    const dedupeKey = buildDedupeKey(request, clientAddress, viewerId || undefined);
 
-    const { data, error } = await supabaseAdmin.rpc("record_stream_video_site_view_by_ip", {
+    const { data, error } = await supabaseAdmin.rpc("record_stream_video_site_view", {
       p_id: streamVideoId,
-      p_ip: ip,
+      p_dedupe_key: dedupeKey,
     });
 
     if (error) {
       if (
+        error.message?.includes("record_stream_video_site_view") ||
         error.message?.includes("record_stream_video_site_view_by_ip") ||
         error.message?.includes("increment_stream_video_site_views") ||
         error.message?.includes("function")
       ) {
-        console.error("[stream-videos/record-view] RPC yoxdur — migrasiya tətbiq edin", error.message);
+        console.error("[stream-videos/record-view] RPC / sxem xətası", error.message);
         return new Response(
           JSON.stringify({
             success: false,
-            message: "Sayğac funksiyası yoxdur — server migrasiyasını işə salın",
+            message: "Sayğac funksiyası yoxdur və ya köhnədir — Supabase migrasiyasını tətbiq edin (20260414)",
           }),
           { status: 503, headers: { "Content-Type": "application/json" } }
         );
