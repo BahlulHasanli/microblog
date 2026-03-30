@@ -30,7 +30,7 @@ export type WindowsVideo = {
   category: string;
   /** Bunny Stream baxış sayı (mövcud deyilsə null) */
   viewCount?: number | null;
-  /** Saytda oynatma ilə artırılan baxış (DB `site_view_count`) */
+  /** Saytda baxış sayı — `stream_video_site_views` sətirlərinin sayı */
   siteViewCount?: number | null;
 };
 

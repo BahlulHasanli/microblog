@@ -30,10 +30,9 @@ type StreamVideoRow = {
   stream_video_category?: { id?: string; name?: string; slug?: string } | null;
   /** Bunny API `views` */
   bunny_views?: number | string | null;
-  site_view_count?: number | string | null;
 };
 
-function mapRow(row: StreamVideoRow, cdnHostname: string): WindowsVideo {
+function mapRow(row: StreamVideoRow, cdnHostname: string, siteViewCountFromTable: number): WindowsVideo {
   const host = cdnHostname.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const base = `https://${host}/${row.bunny_video_guid}`;
   const sec = row.duration_seconds ?? 0;
@@ -57,7 +56,7 @@ function mapRow(row: StreamVideoRow, cdnHostname: string): WindowsVideo {
     duration: formatDuration(sec),
     category: row.stream_video_category?.name?.trim() || "Pəncərələr",
     viewCount: parseBunnyViews(row.bunny_views),
-    siteViewCount: parseBunnyViews(row.site_view_count),
+    siteViewCount: siteViewCountFromTable,
   };
 }
 
@@ -66,6 +65,30 @@ function parseBunnyViews(raw: number | string | null | undefined): number | null
   const n = typeof raw === "string" ? Number(raw) : raw;
   if (!Number.isFinite(n) || n < 0) return null;
   return Math.floor(n);
+}
+
+async function fetchSiteViewCountsByVideoIds(videoIds: string[]): Promise<Map<string, number>> {
+  const map = new Map<string, number>();
+  const ids = videoIds.filter(Boolean);
+  if (ids.length === 0) return map;
+
+  const { data, error } = await supabaseAdmin.rpc("stream_video_site_view_counts", {
+    p_ids: ids,
+  });
+
+  if (error) {
+    console.warn("[stream-videos-db] stream_video_site_view_counts", error.message);
+    return map;
+  }
+
+  for (const row of (data || []) as { stream_video_id: string; cnt: number | string }[]) {
+    const id = row.stream_video_id;
+    if (!id) continue;
+    const raw = row.cnt;
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : 0;
+    map.set(id, Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0);
+  }
+  return map;
 }
 
 function readEnv(name: string, runtimeEnv?: Record<string, string | undefined>): string | undefined {
@@ -94,7 +117,6 @@ const STREAM_SELECT_FULL = `
       bunny_thumbnail_updated_at,
       bunny_stream_meta_fetched_at,
       bunny_views,
-      site_view_count,
       users:user_id (fullname, username, avatar),
       stream_video_category (id, name, slug)
     `;
@@ -109,7 +131,6 @@ const STREAM_SELECT_NO_USER = `
       bunny_thumbnail_updated_at,
       bunny_stream_meta_fetched_at,
       bunny_views,
-      site_view_count,
       stream_video_category (id, name, slug)
     `;
 
@@ -140,7 +161,6 @@ function streamMetaColumnsMissingFromDbError(message: string | undefined): boole
   return (
     m.includes("bunny_thumbnail_updated_at") ||
     m.includes("bunny_stream_meta_fetched_at") ||
-    m.includes("site_view_count") ||
     (m.includes("column") && m.includes("does not exist"))
   );
 }
@@ -337,7 +357,9 @@ export async function fetchHomeStreamVideos(
 
   rows = await enrichStreamRowsFromBunny(rows, options?.runtimeEnv);
 
-  let dbVideos = rows.map((r) => mapRow(r, cdn));
+  const siteViewById = await fetchSiteViewCountsByVideoIds(rows.map((r) => r.id));
+
+  let dbVideos = rows.map((r) => mapRow(r, cdn, siteViewById.get(r.id) ?? 0));
 
   if (dbOnly) {
     return typeof limit === "number" && limit > 0 ? dbVideos.slice(0, limit) : dbVideos;

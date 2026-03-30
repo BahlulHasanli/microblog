@@ -218,34 +218,14 @@
   /** Eyni oynatma anında `playing` + `play().then` iki dəfə çağırmasın deyə */
   let viewRecordInFlight = false;
 
-  const SV_VIEWER_STORAGE = "the99_stream_site_viewer";
-
-  function stableSiteViewerId(): string {
-    if (typeof window === "undefined") return "";
-    try {
-      let v = localStorage.getItem(SV_VIEWER_STORAGE);
-      if (
-        !v ||
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v)
-      ) {
-        v = crypto.randomUUID();
-        localStorage.setItem(SV_VIEWER_STORAGE, v);
-      }
-      return v;
-    } catch {
-      return "";
-    }
-  }
-
   function recordSiteViewOnce() {
     const id = streamVideoId?.trim();
     if (!id || viewRecordInFlight) return;
     viewRecordInFlight = true;
-    const viewerId = stableSiteViewerId();
     fetch("/api/stream-videos/record-view", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ streamVideoId: id, viewerId }),
+      body: JSON.stringify({ streamVideoId: id }),
     })
       .then(async (r) => {
         const j = await r.json().catch(() => null);

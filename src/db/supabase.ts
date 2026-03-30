@@ -14,13 +14,12 @@ const SUPABASE_ANON_KEY =
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/** RPC / server-only əməliyyatlar (məs. record-view) üçün service role vacibdir */
+/** Admin / server-only əməliyyatlar üçün service role */
 export const hasSupabaseServiceRole = Boolean(supabaseServiceKey);
 
-// Admin əməliyyatları üçün service role client (RLS-i bypass edir)
 if (!supabaseServiceKey) {
   console.warn(
-    "⚠️ SUPABASE_SERVICE_ROLE_KEY tapılmadı! Admin əməliyyatları və video sayğacı (record-view) işləməyə bilər. .env faylında SUPABASE_SERVICE_ROLE_KEY əlavə edin.",
+    "⚠️ SUPABASE_SERVICE_ROLE_KEY tapılmadı! Bəzi admin əməliyyatları işləməyə bilər. .env faylında SUPABASE_SERVICE_ROLE_KEY əlavə edin.",
   );
 }
 
