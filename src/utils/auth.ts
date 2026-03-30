@@ -1,7 +1,7 @@
 import { jwtVerify, errors } from "jose";
 import type { APIContext } from "astro";
 import type { AstroCookies } from "astro";
-import { getSupabaseAdmin, supabase, type SupabaseServiceRoleSource } from "@/db/supabase";
+import { createEphemeralSupabaseClient, supabaseAdmin } from "@/db/supabase";
 
 // JWT secrets
 const JWT_SECRET = import.meta.env.JWT_SECRET || "your-secret-key-change-this";
@@ -27,36 +27,60 @@ export function isAuthenticated(
   );
 }
 
+function parseCookieHeader(header: string | null | undefined): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  for (const segment of header.split(";")) {
+    const trimmed = segment.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const name = trimmed.slice(0, eq).trim();
+    let val = trimmed.slice(eq + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    try {
+      val = decodeURIComponent(val);
+    } catch {
+      /* olduğu kimi saxla */
+    }
+    out[name] = val;
+  }
+  return out;
+}
+
+function resolveSupabaseTokensFromRequest(
+  cookies: AstroCookies,
+  headers?: Headers | null,
+): { access: string; refresh: string } {
+  let access = cookies.get("sb-access-token")?.value?.trim() ?? "";
+  let refresh = cookies.get("sb-refresh-token")?.value?.trim() ?? "";
+  if ((!access || !refresh) && headers) {
+    const p = parseCookieHeader(headers.get("cookie"));
+    access = access || (p["sb-access-token"] ?? "").trim();
+    refresh = refresh || (p["sb-refresh-token"] ?? "").trim();
+  }
+  return { access, refresh };
+}
+
 /**
  * Get user info from access token cookie
  */
 export async function getUserFromCookies(
   cookies: AstroCookies,
   redirect: any,
-  /** Cloudflare-da service role üçün `context.locals` / Astro-da `Astro.locals` ötürün */
-  locals?: SupabaseServiceRoleSource["locals"],
+  headers?: Headers | null,
 ): Promise<any> {
   try {
-    const accessToken = cookies.get("sb-access-token");
-    const refreshToken = cookies.get("sb-refresh-token");
+    const { access, refresh } = resolveSupabaseTokensFromRequest(cookies, headers);
 
-    if (
-      !accessToken ||
-      !accessToken.value ||
-      !refreshToken ||
-      !refreshToken.value
-    ) {
+    if (!access || !refresh) {
       return null;
     }
 
-    // Supabase client-i yarat və session-u qur
-    const supabaseAuth = supabase.auth;
-
-    // Session-u qur
+    const ephemeral = createEphemeralSupabaseClient();
     const { data: sessionData, error: sessionError } =
-      await supabaseAuth.setSession({
-        refresh_token: refreshToken.value,
-        access_token: accessToken.value,
+      await ephemeral.auth.setSession({
+        refresh_token: refresh,
+        access_token: access,
       });
 
     if (sessionError || !sessionData?.user) {
@@ -68,9 +92,7 @@ export async function getUserFromCookies(
 
     // İstifadəçini verilənlər bazasından al
     const userEmail = sessionData.user.email;
-    const { data: userData, error: userError } = await getSupabaseAdmin(
-      locals ? { locals } : undefined,
-    )
+    const { data: userData, error: userError } = await supabaseAdmin
       .from("users")
       .select("*")
       .eq("email", userEmail)
@@ -162,7 +184,7 @@ export async function verifyAccessToken(ctx: APIContext): Promise<any> {
  */
 export async function requireAuth(ctx: APIContext): Promise<Response | any> {
   try {
-    const user = await getUserFromCookies(ctx.cookies, () => null, ctx.locals);
+    const user = await getUserFromCookies(ctx.cookies, () => null);
 
     if (!user) {
       return new Response(
@@ -197,12 +219,9 @@ export async function requireAuth(ctx: APIContext): Promise<Response | any> {
  * Admin yoxlaması - istifadəçinin admin olub-olmadığını yoxlayır
  * role_id: 1 = Admin
  */
-export async function isAdmin(
-  cookies: AstroCookies,
-  locals?: SupabaseServiceRoleSource["locals"],
-): Promise<boolean> {
+export async function isAdmin(cookies: AstroCookies): Promise<boolean> {
   try {
-    const user = await getUserFromCookies(cookies, () => null, locals);
+    const user = await getUserFromCookies(cookies, () => null);
     if (!user) return false;
 
     return user.role_id === 1;
@@ -217,12 +236,9 @@ export async function isAdmin(
  * role_id: 1 = Admin, 2 = Moderator
  * Admin də moderator hüquqlarına malikdir
  */
-export async function isModerator(
-  cookies: AstroCookies,
-  locals?: SupabaseServiceRoleSource["locals"],
-): Promise<boolean> {
+export async function isModerator(cookies: AstroCookies): Promise<boolean> {
   try {
-    const user = await getUserFromCookies(cookies, () => null, locals);
+    const user = await getUserFromCookies(cookies, () => null);
     if (!user) return false;
 
     return user.role_id === 1 || user.role_id === 2;
@@ -237,12 +253,9 @@ export async function isModerator(
  * role_id: 1 = Admin, 2 = Moderator, 3 = Editor
  * Admin və Moderator da editor hüquqlarına malikdir
  */
-export async function isEditor(
-  cookies: AstroCookies,
-  locals?: SupabaseServiceRoleSource["locals"],
-): Promise<boolean> {
+export async function isEditor(cookies: AstroCookies): Promise<boolean> {
   try {
-    const user = await getUserFromCookies(cookies, () => null, locals);
+    const user = await getUserFromCookies(cookies, () => null);
     if (!user) return false;
 
     return user.role_id === 1 || user.role_id === 2 || user.role_id === 3;
@@ -258,7 +271,7 @@ export async function isEditor(
 export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
   try {
     // Cookie-dən istifadəçi məlumatlarını al
-    const user = await getUserFromCookies(ctx.cookies, () => null, ctx.locals);
+    const user = await getUserFromCookies(ctx.cookies, () => null);
 
     if (!user) {
       return new Response(
@@ -274,7 +287,7 @@ export async function requireAdmin(ctx: APIContext): Promise<Response | any> {
     }
 
     // Admin yoxlaması
-    const adminCheck = await isAdmin(ctx.cookies, ctx.locals);
+    const adminCheck = await isAdmin(ctx.cookies);
     if (!adminCheck) {
       return new Response(
         JSON.stringify({
@@ -312,7 +325,7 @@ export async function requireModerator(
 ): Promise<Response | any> {
   try {
     // Cookie-dən istifadəçi məlumatlarını al
-    const user = await getUserFromCookies(ctx.cookies, () => null, ctx.locals);
+    const user = await getUserFromCookies(ctx.cookies, () => null);
 
     if (!user) {
       return new Response(
@@ -328,7 +341,7 @@ export async function requireModerator(
     }
 
     // Moderator yoxlaması
-    const modCheck = await isModerator(ctx.cookies, ctx.locals);
+    const modCheck = await isModerator(ctx.cookies);
     if (!modCheck) {
       return new Response(
         JSON.stringify({

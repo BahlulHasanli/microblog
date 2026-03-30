@@ -10,11 +10,11 @@ if (!isAuthenticated(cookies)) {
   return redirect("/signin");
 }
 
-const user = await getUserFromCookies(cookies, redirect, Astro.locals);
+const user = await getUserFromCookies(cookies, redirect);
 
 // Admin və ya Moderator yoxlaması
-const adminCheck = await isAdmin(Astro.cookies, Astro.locals);
-const modCheck = await isModerator(Astro.cookies, Astro.locals);
+const adminCheck = await isAdmin(Astro.cookies);
+const modCheck = await isModerator(Astro.cookies);
 
 if (!adminCheck && !modCheck) {
   return new Response(null, {

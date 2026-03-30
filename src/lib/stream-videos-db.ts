@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "@/db/supabase";
+import { supabaseAdmin } from "@/db/supabase";
 import {
   buildBunnyStreamThumbnailUrl,
   fetchBunnyVideoDetails,
@@ -67,16 +67,12 @@ function parseBunnyViews(raw: number | string | null | undefined): number | null
   return Math.floor(n);
 }
 
-async function fetchSiteViewCountsByVideoIds(
-  videoIds: string[],
-  runtimeEnv?: Record<string, string | undefined>,
-): Promise<Map<string, number>> {
+async function fetchSiteViewCountsByVideoIds(videoIds: string[]): Promise<Map<string, number>> {
   const map = new Map<string, number>();
   const ids = videoIds.filter(Boolean);
   if (ids.length === 0) return map;
 
-  const admin = getSupabaseAdmin({ runtimeEnv });
-  const { data, error } = await admin.rpc("stream_video_site_view_counts", {
+  const { data, error } = await supabaseAdmin.rpc("stream_video_site_view_counts", {
     p_ids: ids,
   });
 
@@ -196,7 +192,6 @@ async function enrichStreamRowsFromBunny(
   rows: StreamVideoRow[],
   runtimeEnv?: Record<string, string | undefined>
 ): Promise<StreamVideoRow[]> {
-  const admin = getSupabaseAdmin({ runtimeEnv });
   const apiKey = readEnv("BUNNY_STREAM_API_KEY", runtimeEnv);
   if (!apiKey || rows.length === 0) {
     return rows;
@@ -267,7 +262,7 @@ async function enrichStreamRowsFromBunny(
       if (patch.bunny_thumbnail_file != null) dbPatch.bunny_thumbnail_file = patch.bunny_thumbnail_file;
       if (patch.bunny_views != null) dbPatch.bunny_views = patch.bunny_views;
 
-      void admin
+      void supabaseAdmin
         .from("stream_video")
         .update(dbPatch)
         .eq("id", row.id)
@@ -297,8 +292,6 @@ export async function fetchHomeStreamVideos(
   options?: FetchHomeStreamVideosOptions
 ): Promise<WindowsVideo[]> {
   const dbOnly = options?.dbOnly === true;
-  const runtimeEnv = options?.runtimeEnv;
-  const admin = getSupabaseAdmin({ runtimeEnv });
 
   const cdn =
     readEnv("BUNNY_STREAM_CDN_HOSTNAME", options?.runtimeEnv) ||
@@ -310,7 +303,7 @@ export async function fetchHomeStreamVideos(
   let selectNoUser = STREAM_SELECT_NO_USER;
 
   function buildStreamQuery(select: string) {
-    let qq = admin
+    let qq = supabaseAdmin
       .from("stream_video")
       .select(select)
       .eq("published", true)
@@ -364,10 +357,7 @@ export async function fetchHomeStreamVideos(
 
   rows = await enrichStreamRowsFromBunny(rows, options?.runtimeEnv);
 
-  const siteViewById = await fetchSiteViewCountsByVideoIds(
-    rows.map((r) => r.id),
-    runtimeEnv,
-  );
+  const siteViewById = await fetchSiteViewCountsByVideoIds(rows.map((r) => r.id));
 
   let dbVideos = rows.map((r) => mapRow(r, cdn, siteViewById.get(r.id) ?? 0));
 

@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
 import { isAdmin } from "@/utils/auth";
-import { getSupabaseAdmin } from "@/db/supabase";
+import { supabaseAdmin } from "@/db/supabase";
 
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
   // Admin kontrolü
-  const adminCheck = await isAdmin(cookies, locals);
+  const adminCheck = await isAdmin(cookies);
   if (!adminCheck) {
     return new Response(
       JSON.stringify({
@@ -19,7 +19,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   }
 
   try {
-    const admin = getSupabaseAdmin({ locals });
     const { commentId } = await request.json();
 
     if (!commentId) {
@@ -36,7 +35,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     }
 
     // Önce bu yorumun alt yorumlarını sil
-    const { error: repliesError } = await admin
+    const { error: repliesError } = await supabaseAdmin
       .from("comments")
       .delete()
       .eq("parent_id", commentId);
@@ -56,7 +55,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     }
 
     // Sonra ana yorumu sil
-    const { error: commentError } = await admin
+    const { error: commentError } = await supabaseAdmin
       .from("comments")
       .delete()
       .eq("id", commentId);

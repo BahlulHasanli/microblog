@@ -15,7 +15,7 @@ let streamUserPayload: {
   avatar?: string | null;
 } | null = null;
 if (isAuthenticated(Astro.cookies)) {
-  const u = await getUserFromCookies(Astro.cookies, Astro.redirect, Astro.locals);
+  const u = await getUserFromCookies(Astro.cookies, Astro.redirect);
   if (u) {
     streamUserPayload = {
       id: u.id,

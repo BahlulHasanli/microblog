@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
-import { getSupabaseAdmin } from "@/db/supabase";
+import { supabaseAdmin } from "@/db/supabase";
 
-export const GET: APIRoute = async ({ url, locals }) => {
+export const GET: APIRoute = async ({ url }) => {
   try {
     const streamVideoId = url.searchParams.get("streamVideoId")?.trim();
     if (!streamVideoId) {
@@ -11,8 +11,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       });
     }
 
-    const admin = getSupabaseAdmin({ locals });
-    const { data: raw, error } = await admin
+    const { data: raw, error } = await supabaseAdmin
       .from("stream_video_comments")
       .select(
         "id, content, created_at, user_id, user_name, user_fullname, users:user_id (id, fullname, username, avatar)"

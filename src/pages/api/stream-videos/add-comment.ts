@@ -1,34 +1,32 @@
 import type { APIRoute } from "astro";
-import { getSupabaseAdmin, resolveServiceRoleKey } from "@/db/supabase";
+import { supabaseAdmin } from "@/db/supabase";
 import { getUserFromCookies } from "@/utils/auth";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Mobil klaviatura / avtodoldurma ilə gələn görünməz simvolları təmizləyir */
+function sanitizeGuestInput(raw: string): string {
+  return raw
+    .normalize("NFC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
 export const POST: APIRoute = async (context) => {
   try {
-    const { locals } = context;
-    const serviceKey = resolveServiceRoleKey({ locals });
-    if (!serviceKey) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message:
-            "Error: Service not found.",
-        }),
-        { status: 503, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const admin = getSupabaseAdmin({ locals });
-    const user = await getUserFromCookies(context.cookies, () => null, locals);
+    const user = await getUserFromCookies(
+      context.cookies,
+      () => null,
+      context.request.headers,
+    );
 
     const body = await context.request.json().catch(() => null);
     const streamVideoId = typeof body?.streamVideoId === "string" ? body.streamVideoId.trim() : "";
     const content = typeof body?.content === "string" ? body.content.trim() : "";
     const guestName =
-      typeof body?.guestName === "string" ? body.guestName.trim() : "";
+      typeof body?.guestName === "string" ? sanitizeGuestInput(body.guestName) : "";
     const guestEmail =
-      typeof body?.guestEmail === "string" ? body.guestEmail.trim() : "";
+      typeof body?.guestEmail === "string" ? sanitizeGuestInput(body.guestEmail) : "";
 
     if (!streamVideoId) {
       return new Response(JSON.stringify({ success: false, message: "streamVideoId tələb olunur" }), {
@@ -66,7 +64,7 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
-    const { data: exists } = await admin
+    const { data: exists } = await supabaseAdmin
       .from("stream_video")
       .select("id")
       .eq("id", streamVideoId)
@@ -94,7 +92,7 @@ export const POST: APIRoute = async (context) => {
           user_fullname: guestName,
         };
 
-    const { data, error } = await admin
+    const { data, error } = await supabaseAdmin
       .from("stream_video_comments")
       .insert(insertRow)
       .select("id, content, created_at, user_id, user_name, user_fullname")
@@ -102,32 +100,17 @@ export const POST: APIRoute = async (context) => {
 
     if (error) {
       console.error("[stream-videos/add-comment]", error);
-      const msg = error.message;
-      const code = "code" in error ? String((error as { code?: string }).code ?? "") : "";
-      // PG check constraint: mesajda həmişə cədvəl adı da olur — əvvəlcə author_chk yoxlanmalıdır
-      const isAuthorCheck =
-        msg.includes("stream_video_comments_author_chk") ||
-        (code === "23514" && /author_chk/i.test(msg));
-      const isMissingCommentsTable =
-        /relation ["'][^"']*stream_video_comments["'] does not exist/i.test(msg) ||
-        /Could not find the table[^\n]*stream_video_comments/i.test(msg) ||
-        (code === "42P01" && msg.includes("stream_video_comments"));
-      const isRlsViolation = /row-level security|violates row-level security/i.test(msg);
-
-      let clientMessage = msg;
-      if (isAuthorCheck) {
-        clientMessage = "Ad və email mütləqdir";
-      } else if (isRlsViolation) {
-        clientMessage =
-          "RLS: INSERT yalnız service role ilə mümkündür. Deploy mühitində SUPABASE_SERVICE_ROLE_KEY düzgün təyin olunub-olunmadığını yoxlayın (anon açar ilə şərh yazılmır).";
-      } else if (isMissingCommentsTable) {
-        clientMessage = "Şərh cədvəli mövcud deyil — migrasiyanı tətbiq edin";
-      }
-
-      return new Response(JSON.stringify({ success: false, message: clientMessage }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: error.message.includes("stream_video_comments")
+            ? "Şərh cədvəli mövcud deyil — migrasiyanı tətbiq edin"
+            : error.message.includes("stream_video_comments_author_chk")
+              ? "Ad və email mütləqdir"
+              : error.message,
+        }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     const commentOut = user
