@@ -132,12 +132,71 @@
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }
 
+  function isIOSDevice(): boolean {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent;
+    if (/iP(ad|hone|od)/i.test(ua)) return true;
+    const nav = navigator as Navigator & { maxTouchPoints?: number };
+    return nav.platform === "MacIntel" && (nav.maxTouchPoints ?? 0) > 1;
+  }
+
   function toggleFullscreen() {
-    if (!document.fullscreenElement) {
-      containerElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
+    const v = videoElement;
+    if (!v || !containerElement) return;
+
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      mozFullScreenElement?: Element | null;
+      webkitExitFullscreen?: () => void;
+      mozCancelFullScreen?: () => void;
+    };
+
+    if (document.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement) {
+      if (document.exitFullscreen) {
+        void document.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen();
+      }
+      return;
     }
+
+    const wkv = v as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+    if (isIOSDevice() && typeof wkv.webkitEnterFullscreen === "function") {
+      try {
+        wkv.webkitEnterFullscreen();
+      } catch {
+        /* iOS bəzən yalnız user gesture + oynatma sonrası qəbul edir */
+      }
+      return;
+    }
+
+    type FsEl = HTMLElement & {
+      requestFullscreen?: () => Promise<void>;
+      webkitRequestFullscreen?: () => Promise<void>;
+      mozRequestFullScreen?: () => Promise<void>;
+    };
+
+    function requestFs(el: HTMLElement | HTMLVideoElement): Promise<void> {
+      const e = el as FsEl;
+      if (e.requestFullscreen) {
+        return e.requestFullscreen();
+      }
+      if (e.webkitRequestFullscreen) {
+        const w = e.webkitRequestFullscreen();
+        return w ?? Promise.resolve();
+      }
+      if (e.mozRequestFullScreen) {
+        e.mozRequestFullScreen();
+        return Promise.resolve();
+      }
+      return Promise.reject(new Error("no fullscreen"));
+    }
+
+    void requestFs(v)
+      .catch(() => requestFs(containerElement))
+      .catch(() => {});
   }
 
   let progress = $derived(duration > 0 ? (currentTime / duration) * 100 : 0);
@@ -266,6 +325,7 @@
     muted={isMuted}
     loop
     playsinline
+    webkit-playsinline=""
   ></video>
 
   <!-- Title Overlay -->
