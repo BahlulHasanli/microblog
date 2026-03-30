@@ -10,9 +10,8 @@ import { supabaseAdmin } from "@/db/supabase";
 import { bunnyCreateVideo, bunnyUploadVideoFile, readStreamEnv } from "@/lib/bunny-stream-upload";
 import { resolveOrCreateBunnyCollectionForCategory } from "@/lib/bunny-stream-collections";
 
-function isEditor(u: { role_id?: number }): boolean {
-  const r = u?.role_id;
-  return r === 1 || r === 2 || r === 3;
+function isStreamVideoUploader(u: { role_id?: number }): boolean {
+  return u?.role_id === 1;
 }
 
 const DEFAULT_LIBRARY = 486986;
@@ -24,8 +23,8 @@ export const POST: APIRoute = async (context) => {
     const user = await requireAuth(context);
     if (user instanceof Response) return user;
 
-    if (!isEditor(user)) {
-      return new Response(JSON.stringify({ success: false, message: "Video yükləmək üçün redaktor hüququ lazımdır" }), {
+    if (!isStreamVideoUploader(user)) {
+      return new Response(JSON.stringify({ success: false, message: "Video yükləmək üçün admin hüququ lazımdır" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });

@@ -12,8 +12,9 @@ if (!user) {
   return Astro.redirect("/signin");
 }
 
-const isEditor = user.role_id === 1 || user.role_id === 2 || user.role_id === 3;
-if (!isEditor) {
+/** Müvəqqəti: yalnız admin (role_id === 1). Moderator/editor sonra açıla bilər. */
+const isAdmin = user.role_id === 1;
+if (!isAdmin) {
   return Astro.redirect("/");
 }
 ---
