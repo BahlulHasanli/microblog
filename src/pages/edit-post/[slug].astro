@@ -59,8 +59,10 @@ const postData = {
     content={post.content} 
     slug={slug} 
     author={user} 
-    client:visible 
-  />
+    client:only="react"
+  >
+    <p slot="fallback" class="p-8 text-center text-slate-500 dark:text-slate-400">Redaktor yüklənir…</p>
+  </PostEditor>
 </BaseLayout>
 
 <style>

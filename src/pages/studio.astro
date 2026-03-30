@@ -27,7 +27,9 @@ if (!canWrite) {
   hideFooter={true}
   hideHeader={true}
 >
-  <Editor author={user} client:visible />
+  <Editor author={user} client:only="react">
+    <p slot="fallback" class="p-8 text-center text-slate-500 dark:text-slate-400">Redaktor yüklənir…</p>
+  </Editor>
 </BaseLayout>
 
 <style>
