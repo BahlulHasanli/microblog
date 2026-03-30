@@ -2,6 +2,7 @@
   import type { WindowsVideo } from "@/lib/bunny-stream-videos";
   import VideoPlayer from "@/components/video/VideoPlayer.svelte";
   import { formatSimpleDate } from "@/utils/date";
+  import { fade, fly } from "svelte/transition";
 
   type StreamUser = {
     id: string;
@@ -41,6 +42,8 @@
   let guestEmail = $state("");
   let commentSubmitting = $state(false);
   let commentError = $state("");
+  /** Mobil/tablet: şərh formu altdan sheet */
+  let commentSheetOpen = $state(false);
   /** record-view cavabı — kart/modal dərhal yenilənsin */
   let siteViewCountById = $state<Record<string, number>>({});
 
@@ -71,6 +74,15 @@
     };
   });
 
+  function sortCommentsNewestFirst(list: CommentRow[]): CommentRow[] {
+    return [...list].sort((a, b) => {
+      const ta = new Date(a.created_at).getTime();
+      const tb = new Date(b.created_at).getTime();
+      if (tb !== ta) return tb - ta;
+      return b.id - a.id;
+    });
+  }
+
   async function loadComments(streamVideoId: string | null | undefined) {
     commentsLoading = true;
     comments = [];
@@ -83,7 +95,9 @@
         `/api/stream-videos/comments?streamVideoId=${encodeURIComponent(streamVideoId)}`
       );
       const j = await r.json();
-      if (j.success) comments = j.comments ?? [];
+      if (j.success) {
+        comments = sortCommentsNewestFirst((j.comments ?? []) as CommentRow[]);
+      }
     } catch {
       comments = [];
     } finally {
@@ -94,6 +108,7 @@
   function openModal(guid: string) {
     selectedGuid = guid;
     modalOpen = true;
+    commentSheetOpen = false;
     commentText = "";
     guestName = "";
     guestEmail = "";
@@ -103,8 +118,13 @@
   }
 
   function closeModal() {
+    commentSheetOpen = false;
     modalOpen = false;
     selectedGuid = null;
+  }
+
+  function closeCommentSheet() {
+    commentSheetOpen = false;
   }
 
   function backdropClick(e: MouseEvent) {
@@ -153,7 +173,8 @@
       commentText = "";
       guestName = "";
       guestEmail = "";
-      if (j.comment) comments = [...comments, j.comment];
+      if (j.comment) comments = sortCommentsNewestFirst([...comments, j.comment as CommentRow]);
+      commentSheetOpen = false;
     } catch {
       commentError = "Şəbəkə xətası";
     } finally {
@@ -162,11 +183,72 @@
   }
 
   function modalKeydown(e: KeyboardEvent) {
-    if (e.key === "Escape") closeModal();
+    if (e.key !== "Escape") return;
+    if (commentSheetOpen) {
+      commentSheetOpen = false;
+      return;
+    }
+    closeModal();
+  }
+
+  function commentSheetBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) closeCommentSheet();
   }
 </script>
 
 <svelte:window onkeydown={modalKeydown} />
+
+{#snippet streamCommentForm()}
+  {#if commentError}
+    <p class="mb-2 text-xs text-red-600 dark:text-red-400">{commentError}</p>
+  {/if}
+  {#if !user}
+    <div class="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <input
+        type="text"
+        bind:value={guestName}
+        placeholder="Ad və soyad"
+        maxlength="200"
+        disabled={commentSubmitting}
+        class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
+      />
+      <input
+        type="email"
+        bind:value={guestEmail}
+        placeholder="Email ünvanınız"
+        maxlength="320"
+        disabled={commentSubmitting}
+        class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
+      />
+    </div>
+  {/if}
+  <textarea
+    bind:value={commentText}
+    rows="3"
+    maxlength="1000"
+    placeholder="Nə düşünürsən?"
+    class="mb-2 w-full resize-none rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
+    disabled={commentSubmitting}
+  ></textarea>
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    {#if !user}
+      <p class="text-xs text-base-500 dark:text-base-400 font-nouvelr">
+        Daxil olaraq daha çox imkandan yararlana bilərsiniz.
+        <a href="/signin" class="font-medium text-rose-600 hover:underline dark:text-rose-400">Daxil ol</a>
+      </p>
+    {:else}
+      <span></span>
+    {/if}
+    <button
+      type="button"
+      onclick={submitComment}
+      disabled={commentSubmitting || !commentText.trim()}
+      class="w-full cursor-pointer rounded-full bg-base-900 py-2.5 text-sm font-nouvelr-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 dark:bg-base-100 dark:text-base-900 sm:w-auto sm:px-6"
+    >
+      {commentSubmitting ? "Göndərilir…" : "Paylaş"}
+    </button>
+  </div>
+{/snippet}
 
 {#if videos.length > 0}
   <ul class="stream-video-card-grid grid list-none grid-cols-1 gap-6 p-0 md:grid-cols-2 lg:grid-cols-4">
@@ -291,7 +373,7 @@
       </button>
 
       <div
-        class="relative w-full min-h-[36vh] flex-[6] basis-0 bg-black lg:min-h-0 lg:flex-1 lg:basis-0"
+        class="relative w-full shrink-0 bg-black max-lg:h-[min(38dvh,280px)] max-lg:min-h-[180px] max-lg:max-h-[42vh] lg:relative lg:min-h-0 lg:h-auto lg:max-h-none lg:flex-[6] lg:basis-0 lg:shrink"
       >
         <div class="absolute inset-0">
           {#key selected.guid}
@@ -309,9 +391,11 @@
       </div>
 
       <div
-        class="flex min-h-0 min-w-0 flex-[4] basis-0 flex-col border-t border-base-200 dark:border-base-800 lg:max-w-[440px] lg:flex-none lg:basis-[40%] lg:border-l lg:border-t-0"
+        class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-t border-base-200 dark:border-base-800 lg:max-w-[440px] lg:basis-[40%] lg:flex-[4] lg:border-l lg:border-t-0"
       >
-        <header class="shrink-0 border-b border-base-200 px-4 py-3 pt-12 dark:border-base-800 sm:px-5 sm:py-4 sm:pt-5">
+        <header
+          class="shrink-0 border-b border-base-200 px-4 pt-3 pb-3 dark:border-base-800 sm:px-5 sm:pb-4 lg:pt-12 lg:pb-4"
+        >
           <h2 id="stream-modal-title" class="font-nouvelr-semibold text-base leading-snug text-base-900 dark:text-base-50">
             {selected.title}
           </h2>
@@ -397,62 +481,69 @@
           {/if}
         </div>
 
-        <footer class="shrink-0 border-t border-base-200 bg-base-50/80 px-4 py-3 dark:border-base-800 dark:bg-base-950/80 sm:px-5">
+        <footer
+          class="shrink-0 border-t border-base-200 bg-base-50/95 px-4 py-3 backdrop-blur-md dark:border-base-800 dark:bg-base-950/90 sm:px-5"
+        >
           {#if selected.streamVideoId}
-            <h3 class="mb-2 text-sm font-nouvelr-semibold text-base-900 dark:text-base-50">Şərh yaz</h3>
-            {#if commentError}
-              <p class="mb-2 text-xs text-red-600 dark:text-red-400">{commentError}</p>
-            {/if}
-            {#if !user}
-              <div class="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <input
-                  type="text"
-                  bind:value={guestName}
-                  placeholder="Ad və soyad"
-                  maxlength="200"
-                  disabled={commentSubmitting}
-                  class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
-                />
-                <input
-                  type="email"
-                  bind:value={guestEmail}
-                  placeholder="Email ünvanınız"
-                  maxlength="320"
-                  disabled={commentSubmitting}
-                  class="w-full rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
-                />
-              </div>
-            {/if}
-            <textarea
-              bind:value={commentText}
-              rows="2"
-              maxlength="1000"
-              placeholder="Nə düşünürsən?"
-              class="mb-2 w-full resize-none rounded-lg border border-base-200 bg-white px-3 py-2 text-sm text-base-900 placeholder:text-base-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 dark:border-base-700 dark:bg-base-900 dark:text-base-50 font-nouvelr"
-              disabled={commentSubmitting}
-            ></textarea>
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              {#if !user}
-                <p class="text-xs text-base-500 dark:text-base-400 font-nouvelr">
-                  Daxil olaraq daha çox imkandan yararlana bilərsiniz.
-                  <a href="/signin" class="font-medium text-rose-600 hover:underline dark:text-rose-400">Daxil ol</a>
-                </p>
-              {:else}
-                <span></span>
-              {/if}
-              <button
-                type="button"
-                onclick={submitComment}
-                disabled={commentSubmitting || !commentText.trim()}
-                class="w-full cursor-pointer rounded-full bg-base-900 py-2.5 text-sm font-nouvelr-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50 dark:bg-base-100 dark:text-base-900 sm:w-auto sm:px-6"
-              >
-                {commentSubmitting ? "Göndərilir…" : "Paylaş"}
-              </button>
+            <button
+              type="button"
+              class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-base-900 py-3 text-sm font-nouvelr-semibold text-white shadow-sm transition-opacity active:opacity-90 dark:bg-base-100 dark:text-base-900 lg:hidden"
+              onclick={() => (commentSheetOpen = true)}
+            >
+              <svg class="size-4 shrink-0 opacity-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Şərh yaz
+            </button>
+            <div class="hidden lg:block">
+              <h3 class="mb-2 text-sm font-nouvelr-semibold text-base-900 dark:text-base-50">Şərh yaz</h3>
+              {@render streamCommentForm()}
             </div>
           {/if}
         </footer>
       </div>
     </div>
+
+    {#if commentSheetOpen && selected?.streamVideoId}
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="fixed inset-0 z-[120] flex items-end justify-center bg-black/50 lg:hidden"
+        onclick={commentSheetBackdropClick}
+        role="presentation"
+        transition:fade={{ duration: 180 }}
+      >
+        <div
+          class="max-h-[min(88dvh,640px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl border border-base-200/80 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 shadow-2xl dark:border-base-700/80 dark:bg-base-900"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="stream-comment-sheet-title"
+          tabindex="-1"
+          transition:fly={{ y: 320, duration: 280, opacity: 1 }}
+          onclick={(e) => e.stopPropagation()}
+        >
+          <div class="sticky top-0 z-10 -mx-4 mb-1 bg-white px-4 pb-2 pt-1 dark:bg-base-900">
+            <div class="relative flex h-8 items-center justify-center">
+              <div class="h-1 w-11 shrink-0 rounded-full bg-base-300 dark:bg-base-600" aria-hidden="true"></div>
+              <button
+                type="button"
+                class="absolute right-0 top-1/2 flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-base-500 hover:bg-base-100 dark:text-base-400 dark:hover:bg-base-800"
+                onclick={closeCommentSheet}
+                aria-label="Bağla"
+              >
+                <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <h3 id="stream-comment-sheet-title" class="mb-3 text-base font-nouvelr-semibold text-base-900 dark:text-base-50">
+            Şərh yaz
+          </h3>
+          {@render streamCommentForm()}
+        </div>
+      </div>
+    {/if}
   </div>
 {/if}
 

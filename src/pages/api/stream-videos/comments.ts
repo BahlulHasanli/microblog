@@ -17,7 +17,8 @@ export const GET: APIRoute = async ({ url }) => {
         "id, content, created_at, user_id, user_name, user_fullname, users:user_id (id, fullname, username, avatar)"
       )
       .eq("stream_video_id", streamVideoId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
     if (error) {
       console.error("[stream-videos/comments]", error);

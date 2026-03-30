@@ -3,9 +3,8 @@ import { requireAuth } from "@/utils/auth";
 import { supabaseAdmin } from "@/db/supabase";
 import { parseBunnyStreamPlaylistUrl } from "@/lib/bunny-hls-url";
 
-function isEditor(u: { role_id?: number }): boolean {
-  const r = u?.role_id;
-  return r === 1 || r === 2 || r === 3;
+function isStreamVideoUploader(u: { role_id?: number }): boolean {
+  return u?.role_id === 1;
 }
 
 export const POST: APIRoute = async (context) => {
@@ -13,8 +12,8 @@ export const POST: APIRoute = async (context) => {
     const user = await requireAuth(context);
     if (user instanceof Response) return user;
 
-    if (!isEditor(user)) {
-      return new Response(JSON.stringify({ success: false, message: "Video əlavə etmək üçün redaktor hüququ lazımdır" }), {
+    if (!isStreamVideoUploader(user)) {
+      return new Response(JSON.stringify({ success: false, message: "Video əlavə etmək üçün admin hüququ lazımdır" }), {
         status: 403,
         headers: { "Content-Type": "application/json" },
       });
