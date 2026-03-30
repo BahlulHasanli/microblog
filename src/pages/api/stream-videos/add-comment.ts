@@ -99,18 +99,34 @@ export const POST: APIRoute = async (context) => {
       .single();
 
     if (error) {
-      console.error("[stream-videos/add-comment]", error);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: error.message.includes("stream_video_comments")
-            ? "Şərh cədvəli mövcud deyil — migrasiyanı tətbiq edin"
-            : error.message.includes("stream_video_comments_author_chk")
-              ? "Ad və email mütləqdir"
-              : error.message,
-        }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      const code = "code" in error ? String((error as { code?: string }).code ?? "") : "";
+      const msg = error.message || "";
+      console.error("[stream-videos/add-comment]", { code, message: msg, details: (error as { details?: string }).details });
+
+      const missingTable =
+        code === "PGRST205" ||
+        /Could not find the table.*in the schema cache/i.test(msg) ||
+        /relation\s+["']?public\.stream_video_comments["']?\s+does not exist/i.test(msg);
+
+      const authorCheck =
+        msg.includes("stream_video_comments_author_chk") ||
+        /check constraint.*stream_video_comments_author_chk/i.test(msg);
+
+      let userMessage = msg;
+      if (missingTable) {
+        userMessage =
+          "Şərh cədvəli API tərəfindən tapılmadı (PostgREST keşi / sxem). Supabase-də cədvəl varsa: Dashboard → Settings → API → Reload schema, və ya migrasiyanı yoxlayın.";
+      } else if (authorCheck) {
+        userMessage = "Ad və email mütləqdir";
+      } else if (/row-level security/i.test(msg) || code === "42501") {
+        userMessage =
+          "Şərh yazmaq üçün server icazəsi yoxdur (RLS və ya service role açarı). İdarəçiyə bildirin.";
+      }
+
+      return new Response(JSON.stringify({ success: false, message: userMessage }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const commentOut = user
