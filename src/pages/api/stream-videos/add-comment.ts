@@ -1,8 +1,35 @@
 import type { APIRoute } from "astro";
-import { supabaseAdmin } from "@/db/supabase";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getUserFromCookies } from "@/utils/auth";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const SUPABASE_URL_FALLBACK = "https://upegfchzvcnmoxfwamod.supabase.co";
+
+function supabaseProjectUrl(): string {
+  const u = import.meta.env.PUBLIC_SUPABASE_URL;
+  return typeof u === "string" && u.trim().length > 0 ? u.trim() : SUPABASE_URL_FALLBACK;
+}
+
+/**
+ * Post şərhləri (`CommentForm`) brauzerdə birbaşa Supabase-ə yazır; serverdə isə
+ * `stream_video_comments` üçün RLS-də INSERT siyasəti yoxdur — yalnız service role
+ * RLS-i keçir. Cloudflare-da açar tez-tez `runtime.env`-də olur, `import.meta.env`-də yox.
+ */
+function resolveServiceRoleKey(context: { locals: App.Locals }): string | undefined {
+  const runtime = (context.locals as { runtime?: { env?: Record<string, string | undefined> } }).runtime;
+  return (
+    runtime?.env?.SUPABASE_SERVICE_ROLE_KEY ||
+    import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
+    (typeof process !== "undefined" ? process.env.SUPABASE_SERVICE_ROLE_KEY : undefined)
+  );
+}
+
+function createServiceRoleClient(serviceKey: string): SupabaseClient {
+  return createClient(supabaseProjectUrl(), serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
 
 /** Mobil klaviatura / avtodoldurma ilə gələn görünməz simvolları təmizləyir */
 function sanitizeGuestInput(raw: string): string {
@@ -14,6 +41,21 @@ function sanitizeGuestInput(raw: string): string {
 
 export const POST: APIRoute = async (context) => {
   try {
+    const serviceKey = resolveServiceRoleKey(context);
+    if (!serviceKey?.trim()) {
+      console.error("[stream-videos/add-comment] SUPABASE_SERVICE_ROLE_KEY tapılmadı (runtime.env / .env)");
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message:
+            "Şərh serverdən yazıla bilmədi: SUPABASE_SERVICE_ROLE_KEY təyin deyil. Cloudflare Pages → Settings → Environment variables (və ya `wrangler secret`) ilə əlavə edin; lokalda `.env`-ə yazın.",
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const db = createServiceRoleClient(serviceKey.trim());
+
     const user = await getUserFromCookies(
       context.cookies,
       () => null,
@@ -45,7 +87,7 @@ export const POST: APIRoute = async (context) => {
     if (content.length > 1000) {
       return new Response(
         JSON.stringify({ success: false, message: "Şərh 1000 simvoldan çox ola bilməz" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json" } },
       );
     }
 
@@ -53,22 +95,18 @@ export const POST: APIRoute = async (context) => {
       if (!guestName) {
         return new Response(
           JSON.stringify({ success: false, message: "Zəhmət olmasa ad və soyadınızı daxil edin" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
+          { status: 400, headers: { "Content-Type": "application/json" } },
         );
       }
       if (!guestEmail || !emailRe.test(guestEmail)) {
         return new Response(
           JSON.stringify({ success: false, message: "Düzgün email ünvanı daxil edin" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
+          { status: 400, headers: { "Content-Type": "application/json" } },
         );
       }
     }
 
-    const { data: exists } = await supabaseAdmin
-      .from("stream_video")
-      .select("id")
-      .eq("id", streamVideoId)
-      .maybeSingle();
+    const { data: exists } = await db.from("stream_video").select("id").eq("id", streamVideoId).maybeSingle();
 
     if (!exists) {
       return new Response(JSON.stringify({ success: false, message: "Video tapılmadı" }), {
@@ -77,11 +115,15 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
+    // Post `CommentForm.svelte` ilə eyni məntiq: daxil olmuşda profil sahələri də göndərilir
     const insertRow = user
       ? {
           stream_video_id: streamVideoId,
           user_id: user.id,
           content,
+          user_email: user.email ?? null,
+          user_name: user.username ?? null,
+          user_fullname: user.fullname ?? null,
         }
       : {
           stream_video_id: streamVideoId,
@@ -92,7 +134,7 @@ export const POST: APIRoute = async (context) => {
           user_fullname: guestName,
         };
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await db
       .from("stream_video_comments")
       .insert(insertRow)
       .select("id, content, created_at, user_id, user_name, user_fullname")
@@ -115,12 +157,9 @@ export const POST: APIRoute = async (context) => {
       let userMessage = msg;
       if (missingTable) {
         userMessage =
-          "Şərh cədvəli API tərəfindən tapılmadı (PostgREST keşi / sxem). Supabase-də cədvəl varsa: Dashboard → Settings → API → Reload schema, və ya migrasiyanı yoxlayın.";
+          "Şərh cədvəli API tərəfindən tapılmadı (PostgREST keşi / sxem). Supabase-də cədvəl varsa: Dashboard → Settings → API → Reload schema.";
       } else if (authorCheck) {
         userMessage = "Ad və email mütləqdir";
-      } else if (/row-level security/i.test(msg) || code === "42501") {
-        userMessage =
-          "Şərh yazmaq üçün server icazəsi yoxdur (RLS və ya service role açarı). İdarəçiyə bildirin.";
       }
 
       return new Response(JSON.stringify({ success: false, message: userMessage }), {
