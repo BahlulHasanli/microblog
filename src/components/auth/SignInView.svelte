@@ -1,13 +1,8 @@
 <script lang="ts">
 import { navigate } from "astro:transitions/client";
 import { Toaster, toast } from 'svelte-sonner'
-import { createClient } from '@supabase/supabase-js'
 import { Eye, EyeOff } from "lucide-svelte";
-
-const supabaseClient = createClient(
-  import.meta.env.PUBLIC_SUPABASE_URL, 
-  import.meta.env.PUBLIC_SUPABASE_KEY
-);
+import { supabase } from "@/db/supabase";
 
  const formState = $state.raw({
     email: "",
@@ -34,7 +29,7 @@ const supabaseClient = createClient(
     sessionStorage.setItem("oauthFlow", "true");
     
     try {
-      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -57,7 +52,7 @@ const supabaseClient = createClient(
     sessionStorage.setItem("oauthFlow", "true");
     
     try {
-      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
