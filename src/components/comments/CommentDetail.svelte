@@ -106,7 +106,7 @@
         {#if postImage}
           <a 
             href={`/posts/${postSlug}`}
-            class="flex-shrink-0 w-24 h-24 overflow-hidden rounded-xl"
+            class="hrink-0 w-24 h-24 overflow-hidden rounded-xl"
           >
             <img 
               src={postImage} 
@@ -115,7 +115,7 @@
             />
           </a>
         {/if}
-        <div class="flex-grow">
+        <div class="grow">
           <a href={`/posts/${postSlug}`} class="group">
             <h2 class="text-lg font-nouvelr-semibold text-base-800 dark:text-base-50 group-hover:text-rose-600 transition-colors">
               {postTitle}
@@ -157,12 +157,12 @@
   <!-- Main Comment -->
   <div class="border-b border-zinc-100 dark:border-base-800 pb-6">
     <div class="flex items-start gap-3">
-      <div class="flex-shrink-0">
+      <div class="shrink-0">
         {#if comment.user_id && comment.user_avatar}
           <button
             type="button"
             onclick={() => navigateToProfile(comment.user_name)}
-            class="cursor-pointer overflow-hidden !size-12 squircle hover:opacity-80 transition-opacity"
+            class="cursor-pointer overflow-hidden size-12! squircle hover:opacity-80 transition-opacity"
           >
             <img
               src={comment.user_avatar}
@@ -184,7 +184,7 @@
           </div>
         {/if}
       </div>
-      <div class="flex-grow">
+      <div class="grow">
         <div class="flex justify-between items-start">
           <div>
             {#if comment.user_id}
@@ -238,7 +238,7 @@
         {#each replies as reply (reply.id)}
           <div class="mt-6">
             <div class="flex items-start gap-3">
-              <div class="flex-shrink-0">
+              <div class="shrink-0">
                 {#if reply.user_id && reply.user_avatar}
                   <button
                     type="button"
@@ -271,7 +271,7 @@
                   </div>
                 {/if}
               </div>
-              <div class="flex-grow">
+              <div class="grow">
                 <div class="flex justify-between items-start">
                   <div>
                     {#if reply.user_id}

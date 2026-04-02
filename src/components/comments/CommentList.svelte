@@ -38,7 +38,7 @@
         .from('comments')
         .select(`
           *,
-          users:user_id (avatar, fullname)
+          users:user_id (avatar, fullname, username)
         `)
         .eq('post_slug', postSlug)
         .is('parent_id', null)
@@ -58,6 +58,7 @@
             ...comment,
             user_avatar: comment.users?.avatar || null,
             user_fullname: comment.users?.fullname || comment.user_name,
+            user_name: comment.users?.username || comment.user_name,
             reply_count: count || 0
           };
         })

@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
       {
         status: 403,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 
@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
           avatar,
           fullname
         )
-      `
+      `,
       )
       .order("created_at", { ascending: false });
 
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
@@ -61,7 +61,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
           user_fullname: comment.users?.fullname || comment.user_name,
           reply_count: count || 0,
         };
-      })
+      }),
     );
 
     return new Response(
@@ -72,7 +72,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Şərhlər yüklənərkən xəta:", error);
@@ -84,7 +84,7 @@ export const GET: APIRoute = async ({ cookies, redirect }) => {
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
-      }
+      },
     );
   }
 };
