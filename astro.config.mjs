@@ -18,6 +18,26 @@ export default defineConfig({
     build: {
       chunkSizeWarningLimit: 500,
     },
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom",
+        "@tiptap/react",
+        "@tiptap/core",
+        "@tiptap/starter-kit",
+        "@tiptap/extensions",
+        "@tiptap/extension-document",
+        "@tiptap/extension-highlight",
+        "@tiptap/extension-image",
+        "@tiptap/extension-list",
+        "@tiptap/extension-placeholder",
+        "@tiptap/extension-subscript",
+        "@tiptap/extension-superscript",
+        "@tiptap/extension-text-align",
+        "@tiptap/extension-typography",
+        "@tiptap/extension-youtube",
+      ],
+    },
   },
   markdown: {
     drafts: true,
