@@ -43,6 +43,24 @@ if (!post.approved && !isOwner) {
 // Əvvəlcə escape edilmiş \n simvollarını real yeni sətir simvolları ilə əvəz et
 const cleanContent = post.content.replace(/\\n/g, '\n');
 
+function firstImageFromMarkdown(md: string): string {
+  const match = md.match(/!\[[^\]]*\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/);
+  const raw = match?.[1]?.trim();
+  if (!raw) return "";
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+  if (raw.startsWith("//")) return `https:${raw}`;
+  try {
+    return new URL(raw, Astro.site ?? "https://the99.az").href;
+  } catch {
+    return raw;
+  }
+}
+
+const heroImageUrl =
+  (post.image_url && String(post.image_url).trim()) ||
+  firstImageFromMarkdown(cleanContent) ||
+  "";
+
 // Custom renderer configuration
 const renderer = new marked.Renderer();
 
@@ -82,10 +100,7 @@ htmlContent = htmlContent.replace(ratingRegex, (match, score) => {
 
 // Custom Audio Player Replacement
 const audioRegex = /<audio\s+controls\s+src=["']([^"']+)["'](?:\s+data-title=["']([^"']*)["'])?(?:\s+data-artist=["']([^"']*)["'])?><\/audio>/gi;
-htmlContent = htmlContent.replace(audioRegex, (match, src, title, artist) => {
-  // Cover image variable from post data
-  const coverImage = post.image_url || "";
-  
+htmlContent = htmlContent.replace(audioRegex, (match, src) => {
   let playerHtml = '<div class="custom-audio-player" data-src="' + src + '">';
   playerHtml += '<audio src="' + src + '" preload="metadata"></audio>';
   playerHtml += '<div class="player-container">';
@@ -141,8 +156,8 @@ const frontmatter = {
   description: post.description,
   pubDate: post.pub_date ? new Date(post.pub_date) : new Date(),
   image: {
-    url: post.image_url || '',
-    alt: post.image_alt || post.title
+    url: heroImageUrl,
+    alt: post.image_alt || post.title,
   },
   categories: post.categories || [],
   author: post.users,

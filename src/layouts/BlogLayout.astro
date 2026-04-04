@@ -78,6 +78,11 @@ function calculateReadTime(content: string): number {
 
 const readTime = calculateReadTime(frontmatter.content || '');
 
+const postCanonical = new URL(
+  `/posts/${postSlug}`,
+  Astro.site ?? "https://the99.az",
+).href;
+
 // Audio/Musiqi məlumatları - Supabase-dən və ya frontmatter-dən
 const hasAudio = dbAudioUrl || frontmatter.audio?.url;
 const audioData = hasAudio ? {
@@ -105,10 +110,12 @@ const avatarSrcset = frontmatter.author?.avatar ? `${generateBunnyCDNUrl(frontma
 const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
 
 ---
-<BaseLayout 
-  title={frontmatter.title} 
+<BaseLayout
+  title={frontmatter.title}
   description={frontmatter.description}
-  image={frontmatter.image?.url}
+  image={frontmatter.image?.url?.trim() || undefined}
+  canonical={postCanonical}
+  openGraphType="article"
 >
   <Fragment slot="head">
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
@@ -116,7 +123,10 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       "@type": "NewsArticle",
       "headline": frontmatter.title,
       "description": frontmatter.description,
-      "image": [frontmatter.image?.url || "https://the99.az/og-image.jpg"],
+      "image": [
+        frontmatter.image?.url?.trim() ||
+          "https://the99.az/og-image.jpg",
+      ],
       "datePublished": new Date(frontmatter.pubDate).toISOString(),
       "dateModified": frontmatter.modifiedDate 
         ? new Date(frontmatter.modifiedDate).toISOString() 

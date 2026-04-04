@@ -11,9 +11,19 @@ interface Props {
   hideFooter?: boolean;
   hideHeader?: boolean;
   image?: string;
+  canonical?: string;
+  openGraphType?: string;
 }
 
-const { title: pageTitle, description: pageDescription, hideFooter = false, hideHeader = false, image } = Astro.props;
+const {
+  title: pageTitle,
+  description: pageDescription,
+  hideFooter = false,
+  hideHeader = false,
+  image,
+  canonical,
+  openGraphType,
+} = Astro.props;
 const isLoggedIn = isAuthenticated(Astro.cookies);
 let user = null;
 
@@ -58,7 +68,13 @@ const finalDescription = pageDescription || siteDescription;
 
 <html lang="az">  
   <head>   
-    <BaseHead title={finalTitle} description={finalDescription} image={image} />
+    <BaseHead
+      title={finalTitle}
+      description={finalDescription}
+      image={image}
+      canonical={canonical}
+      openGraphType={openGraphType}
+    />
     <slot name="head" />
     <script is:inline>
       const initTheme = () => {

@@ -564,7 +564,7 @@
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
-        class="fixed inset-0 z-[1010] flex items-end justify-center bg-black/50 dark:bg-black/70 lg:hidden pointer-events-auto"
+        class="fixed inset-0 z-1010 flex items-end justify-center bg-black/50 dark:bg-black/70 lg:hidden pointer-events-auto"
         onclick={commentSheetBackdropClick}
         role="presentation"
         transition:fade={{ duration: 260, easing: cubicOut }}

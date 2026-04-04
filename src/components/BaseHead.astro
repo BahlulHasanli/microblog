@@ -9,6 +9,8 @@ export interface Props {
   description?: string;
   canonical?: string;
   image?: string;
+  /** Open Graph type, məs. post səhifələri üçün "article" */
+  openGraphType?: string;
   keywords?: string;
   xHandle?: string;
   facebookHandle?: string;
@@ -32,16 +34,30 @@ try {
   console.error("Settings yüklənərkən xəta:", error);
 }
 
-const { 
+const {
   title = settings.site_title,
   description = settings.site_description,
-  canonical = Astro.url.origin,
-  image = settings.og_image || `${Astro.url.origin}/og-image.jpg`,
+  canonical: canonicalProp,
+  image: imageProp,
+  openGraphType = "website",
   keywords = settings.site_keywords,
   xHandle = settings.x_handle,
   facebookHandle = settings.facebook_handle,
-  siteName = settings.site_title
+  siteName = settings.site_title,
 } = Astro.props;
+
+const siteBase = Astro.site ?? Astro.url;
+const canonical =
+  typeof canonicalProp === "string" && canonicalProp.trim()
+    ? canonicalProp.trim()
+    : new URL(Astro.url.pathname, siteBase).href;
+
+const defaultOgImage =
+  settings.og_image || `${new URL("/", siteBase).origin}/og-image.jpg`;
+const image =
+  typeof imageProp === "string" && imageProp.trim()
+    ? imageProp.trim()
+    : defaultOgImage;
 ---
 
 <meta charset="UTF-8" />
@@ -54,7 +70,7 @@ const {
   openGraph={{
     basic: {
       title: title,
-      type: "website",
+      type: openGraphType,
       image: image,
       url: canonical,
     },
@@ -110,7 +126,7 @@ const {
 <meta name="apple-mobile-web-app-title" content={siteName} />
 
 <!-- Open Graph Additional Tags -->
-<meta property="og:type" content="website" />
+<meta property="og:type" content={openGraphType} />
 <meta property="og:site_name" content={siteName} />
 <meta property="og:locale" content="az_AZ" />
 
