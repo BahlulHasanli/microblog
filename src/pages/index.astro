@@ -136,7 +136,7 @@ const posts = (postsData || []).map(post => {
 <BaseLayout>
   <section> 
     <Slider />
-    <HomeStreamVideoSection client:load videos={homeStreamVideos} user={streamUserPayload} />
+    <HomeStreamVideoSection client:load videos={homeStreamVideos} />
     <FixedTabBar activeTab="weekly" />
     
     <div class="py-6 sm:py-8 md:py-12 max-w-3xl mx-auto px-4 sm:px-0">

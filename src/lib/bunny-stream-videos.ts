@@ -26,6 +26,8 @@ export type WindowsVideo = {
   authorName: string;
   authorAvatar: string;
   thumbnail: string;
+  /** Hover-da göstərilən animasyalı önizləmə — `{cdn}/{guid}/preview.webp` */
+  previewUrl: string;
   duration: string;
   category: string;
   /** Bunny Stream baxış sayı (mövcud deyilsə null) */
@@ -132,6 +134,7 @@ function mapBunnyItem(v: BunnyVideoItem, cdnHostname: string): WindowsVideo {
       v.thumbnailFileName,
       v.thumbnailUpdatedAt
     ),
+    previewUrl: `https://${host}/${v.guid}/preview.webp`,
     duration: formatDuration(v.length),
     category,
     viewCount: typeof v.views === "number" && Number.isFinite(v.views) && v.views >= 0 ? Math.floor(v.views) : null,

@@ -4,27 +4,8 @@ import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
 import StreamVideoGridModal from "@/components/stream/StreamVideoGridModal.svelte";
 import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
-import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 
 const videos = await fetchHomeStreamVideos({ runtimeEnv: Astro.locals.runtime?.env });
-
-let streamUserPayload: {
-  id: string;
-  fullname: string;
-  username: string;
-  avatar?: string | null;
-} | null = null;
-if (isAuthenticated(Astro.cookies)) {
-  const u = await getUserFromCookies(Astro.cookies, Astro.redirect);
-  if (u) {
-    streamUserPayload = {
-      id: u.id,
-      fullname: u.fullname,
-      username: u.username,
-      avatar: u.avatar,
-    };
-  }
-}
 ---
 
 <BaseLayout
@@ -45,7 +26,6 @@ if (isAuthenticated(Astro.cookies)) {
             <StreamVideoGridModal
               client:load
               videos={videos}
-              user={streamUserPayload}
               anchorScroll={true}
             />
           </div>

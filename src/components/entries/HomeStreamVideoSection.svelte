@@ -2,14 +2,7 @@
   import type { WindowsVideo } from "@/lib/bunny-stream-videos";
   import StreamVideoGridModal from "@/components/stream/StreamVideoGridModal.svelte";
 
-  type StreamUser = {
-    id: string;
-    fullname: string;
-    username: string;
-    avatar?: string | null;
-  } | null;
-
-  let { videos = [], user = null }: { videos: WindowsVideo[]; user: StreamUser } = $props();
+  let { videos = [] }: { videos: WindowsVideo[] } = $props();
 </script>
 
 {#if videos.length > 0}
@@ -47,7 +40,7 @@
       </a>
     </div>
 
-    <StreamVideoGridModal {videos} {user} anchorScroll={false} />
+    <StreamVideoGridModal {videos} anchorScroll={false} />
   </section>
 {/if}
 

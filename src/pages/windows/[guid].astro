@@ -1,0 +1,53 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
+import StreamVideoPage from "@/components/stream/StreamVideoPage.svelte";
+import { fetchSingleStreamVideo } from "@/lib/stream-videos-db";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+
+const { guid } = Astro.params;
+
+if (!guid) {
+  return Astro.redirect("/windows");
+}
+
+const video = await fetchSingleStreamVideo(guid, Astro.locals.runtime?.env);
+
+if (!video) {
+  return Astro.redirect("/windows");
+}
+
+let streamUserPayload: {
+  id: string;
+  fullname: string;
+  username: string;
+  avatar?: string | null;
+} | null = null;
+if (isAuthenticated(Astro.cookies)) {
+  const u = await getUserFromCookies(Astro.cookies, Astro.redirect);
+  if (u) {
+    streamUserPayload = {
+      id: u.id,
+      fullname: u.fullname,
+      username: u.username,
+      avatar: u.avatar,
+    };
+  }
+}
+---
+
+<BaseLayout
+  title={`${video.title} — Pəncərələr`}
+  description={video.description || `${video.title} — ${video.authorName}`}
+  image={video.thumbnail}
+>
+  <FixedTabBar activeTab="window" />
+
+  <div class="max-w-5xl mx-auto px-0 lg:px-6 py-0 lg:pt-4 lg:pb-12">
+    <StreamVideoPage
+      client:load
+      video={video}
+      user={streamUserPayload}
+    />
+  </div>
+</BaseLayout>

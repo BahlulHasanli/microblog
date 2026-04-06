@@ -53,6 +53,7 @@ function mapRow(row: StreamVideoRow, cdnHostname: string, siteViewCountFromTable
       row.bunny_thumbnail_file,
       cacheBust
     ),
+    previewUrl: `https://${host}/${row.bunny_video_guid}/preview.webp`,
     duration: formatDuration(sec),
     category: row.stream_video_category?.name?.trim() || "Pəncərələr",
     viewCount: parseBunnyViews(row.bunny_views),
@@ -382,6 +383,49 @@ export async function fetchHomeStreamVideos(
 
   const bunny = await fetchWindowsVideos(bunnyOpts);
   return [...dbVideos, ...bunny];
+}
+
+/**
+ * Tək video GUID ilə gətirir — `/windows/[guid]` səhifəsi üçün.
+ */
+export async function fetchSingleStreamVideo(
+  guid: string,
+  runtimeEnv?: Record<string, string | undefined>
+): Promise<WindowsVideo | null> {
+  if (!guid?.trim()) return null;
+
+  const cdn =
+    readEnv("BUNNY_STREAM_CDN_HOSTNAME", runtimeEnv) ||
+    "vz-300fcde7-b36.b-cdn.net";
+
+  let selectStr = STREAM_SELECT_FULL;
+
+  let { data, error } = await supabaseAdmin
+    .from("stream_video")
+    .select(selectStr)
+    .eq("bunny_video_guid", guid.trim())
+    .eq("published", true)
+    .maybeSingle();
+
+  if (error && streamMetaColumnsMissingFromDbError(error.message)) {
+    selectStr = STREAM_SELECT_FULL_LEGACY;
+    const legacy = await supabaseAdmin
+      .from("stream_video")
+      .select(selectStr)
+      .eq("bunny_video_guid", guid.trim())
+      .eq("published", true)
+      .maybeSingle();
+    data = legacy.data;
+    error = legacy.error;
+  }
+
+  if (error || !data) return null;
+
+  let rows = [data as StreamVideoRow];
+  rows = await enrichStreamRowsFromBunny(rows, runtimeEnv);
+
+  const siteViewById = await fetchSiteViewCountsByVideoIds(rows.map((r) => r.id));
+  return mapRow(rows[0], cdn, siteViewById.get(rows[0].id) ?? 0);
 }
 
 export async function fetchAllStreamVideosForWindows(

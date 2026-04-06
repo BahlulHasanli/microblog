@@ -474,13 +474,13 @@
     </div>
   {/if}
 
-  <!-- Title Overlay -->
-  {#if !isPlaying}
+  <!-- Title Overlay (yalnız mətn varsa — boş overlay üst qara gradient verməsin) -->
+  {#if !isPlaying && (title.trim() || authorName.trim())}
     <div class="title-overlay">
-      {#if title}
+      {#if title.trim()}
         <span class="video-title">{title}</span>
       {/if}
-      {#if authorName}
+      {#if authorName.trim()}
         <div class="author-info">
           {#if authorAvatar}
             <div class="author-avatar-wrapper squircle">
@@ -510,7 +510,7 @@
   {#if hasStarted}
   <div class="controls {showControls || !isPlaying ? 'visible' : ''}" onclick={(e) => e.stopPropagation()} role="group">
     <!-- Progress Bar -->
-    <div class="progress-container" onclick={(e) => { e.stopPropagation(); handleSeek(e); }} onmouseenter={() => isHoveringProgress = true} onmouseleave={() => isHoveringProgress = false} role="slider" tabindex="0" aria-label="Progress">
+    <div class="progress-container" onclick={(e) => { e.stopPropagation(); handleSeek(e); }} onmousemove={(e) => { isHoveringProgress = true; handleProgressHover(e); }} onmouseleave={() => isHoveringProgress = false} role="slider" tabindex="0" aria-label="Progress">
       <div class="progress-bar">
         <div class="progress-buffered" style="width: {bufferedProgress}%"></div>
         <div class="progress-fill" style="width: {progress}%"></div>
@@ -722,11 +722,13 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.55);
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none;
     border-radius: 50%;
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -737,39 +739,20 @@
   }
 
   .play-overlay:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.55);
     transform: translate(-50%, -50%) scale(1.08);
-    border-color: rgba(255, 255, 255, 0.4);
   }
 
   .play-overlay:active {
     transform: translate(-50%, -50%) scale(0.95);
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.45);
   }
 
   .play-icon {
-    width: 32px;
-    height: 32px;
+    width: 38px;
+    height: 38px;
     color: white;
-    margin-left: 3px;
-  }
-
-  .play-overlay:hover {
-    background: rgba(0, 0, 0, 0.7);
-    transform: translate(-50%, -50%) scale(1.08);
-    border-color: rgba(255, 255, 255, 0.4);
-  }
-
-  .play-overlay:active {
-    transform: translate(-50%, -50%) scale(0.95);
-    background: rgba(0, 0, 0, 0.5);
-  }
-
-  .play-icon {
-    width: 32px;
-    height: 32px;
-    color: white;
-    margin-left: 3px;
+    margin-left: 4px;
   }
 
   .controls {
@@ -832,10 +815,6 @@
     box-shadow: 0 0 12px rgba(141, 133, 255, 0.4);
   }
 
-  .progress-container:hover .progress-fill {
-    box-shadow: 0 0 12px rgba(141, 133, 255, 0.4);
-  }
-
   .progress-thumb {
     position: absolute;
     top: 50%;
@@ -891,11 +870,6 @@
     justify-content: center;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 8px;
-  }
-
-  .control-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-1px);
   }
 
   .control-btn:hover {
@@ -1110,13 +1084,13 @@
     }
 
     .play-overlay {
-      width: 56px;
-      height: 56px;
+      width: 68px;
+      height: 68px;
     }
 
     .play-icon {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
     }
 
     .controls {
