@@ -1,7 +1,7 @@
 <script lang="ts">
   import { formatDistanceToNow } from "date-fns";
   import { az } from "date-fns/locale";
-  import { Heart, MessageCircle } from "lucide-svelte";
+  import { Heart, MessageCircle, Ban } from "lucide-svelte";
   import ImageGallery from "./ImageGallery.svelte";
 
   interface User {
@@ -38,6 +38,7 @@
   let isLiked = $state(false);
   let likesCount = $state(0);
   let isLoading = $state(false);
+  let isBlocking = $state(false);
   let currentUserId: string | null = $state(null);
 
   // Initialize
@@ -146,6 +147,39 @@
       isLoading = false;
     }
   };
+
+  const handleBlock = async () => {
+    if (isBlocking || !currentUserId || currentUserId === share.user_id) return;
+
+    if (!confirm(`${user?.fullname} adlı istifadəçini bloklamaq istədiyinizə əminsiniz?`)) return;
+
+    isBlocking = true;
+    try {
+      const response = await fetch("/api/user/block", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          targetUserId: share.user_id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh page or trigger timeline refresh to hide blocked user's posts
+        window.location.reload();
+      } else {
+        alert(data.message || "Xəta baş verdi");
+      }
+    } catch (error) {
+      console.error("Block xətası:", error);
+      alert("Şəbəkə xətası baş verdi");
+    } finally {
+      isBlocking = false;
+    }
+  };
 </script>
 
 <div class={`p-4 sm:p-6 border-b border-slate-100 dark:border-base-800`}>
@@ -174,6 +208,17 @@
         </span>
         <span class="text-slate-500 dark:text-base-400 text-[13px]">·</span>
         <span class="text-slate-500 dark:text-base-400 text-[13px]">{timeAgo}</span>
+
+        {#if isAuthenticated && currentUserId !== share.user_id}
+          <button
+            onclick={handleBlock}
+            disabled={isBlocking}
+            class="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+            title="İstifadəçini blokla"
+          >
+            <Ban size={14} />
+          </button>
+        {/if}
       </div>
 
       <!-- Share Content -->
