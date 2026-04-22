@@ -64,6 +64,29 @@ export function generateBunnyCDNUrl(
 }
 
 /**
+ * Open Graph / Twitter Card üçün mütləq URL.
+ * Bunny-də saxlanılan cover-lər çox vaxt WebP və application/octet-stream ilə verilir;
+ * Facebook və b. önizlik botları bunu götürməyə bilər. Saytın image-optimize
+ * endpoint-i JPEG + düzgün Content-Type qaytarır.
+ */
+export function generateSocialShareImageUrl(
+  src: string,
+  siteOrigin: string,
+): string {
+  const trimmed = src.trim();
+  if (!trimmed || !trimmed.includes("b-cdn.net")) {
+    return trimmed;
+  }
+  const params = new URLSearchParams();
+  params.set("url", trimmed);
+  params.set("w", "1200");
+  params.set("q", "85");
+  params.set("f", "jpeg");
+  const base = siteOrigin.replace(/\/$/, "");
+  return `${base}/api/image-optimize?${params.toString()}`;
+}
+
+/**
  * Responsive srcset yaradır
  */
 export function generateResponsiveImages(

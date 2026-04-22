@@ -3,6 +3,7 @@ import "../styles/global.css";
 import { SEO } from "astro-seo";
 import { ClientRouter } from "astro:transitions";
 import { supabase } from "@/db/supabase";
+import { generateSocialShareImageUrl } from "@/utils/image-optimizer";
 
 export interface Props {
   title?: string;
@@ -54,10 +55,12 @@ const canonical =
 
 const defaultOgImage =
   settings.og_image || `${new URL("/", siteBase).origin}/og-image.jpg`;
-const image =
+const rawOgImage =
   typeof imageProp === "string" && imageProp.trim()
     ? imageProp.trim()
     : defaultOgImage;
+const siteOrigin = new URL("/", siteBase).origin;
+const image = generateSocialShareImageUrl(rawOgImage, siteOrigin);
 ---
 
 <meta charset="UTF-8" />
