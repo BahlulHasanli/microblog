@@ -75,14 +75,6 @@
   const heroSizes = '(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 800px';
   const avatarSizes = '(max-width: 640px) 40px, 56px';
 
-  function formatSimpleDate(date: string | Date): string {
-    const d = new Date(date);
-    const months = [
-      'Yan', 'Fev', 'Mar', 'Apr', 'May', 'İyn',
-      'İyl', 'Avq', 'Sen', 'Okt', 'Noy', 'Dek'
-    ];
-    return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-  }
 
   function getCategoryName(slug: string): string {
     const cat = categories.find((c: any) => c.slug === slug);
@@ -428,7 +420,7 @@
                   {#each post.data.categories as categorySlug, i}
                     <a href={`/category/${categorySlug}`} class="text-yellow-700 dark:text-yellow-500 py-2 px-1 inline-block">
                       {getCategoryName(categorySlug)}{i < post.data.categories.length - 1 ? ',' : ''}
-                    </a>
+                    </a> 
                   {/each}
                 </span>
               {/if}
@@ -442,7 +434,7 @@
 
             <p class="mt-1 text-sm text-base-600 dark:text-base-400 line-clamp-2">{post.data.description}</p>
 
-            {#if post.data.pubDate}
+            <!-- {#if post.data.pubDate}
               <div class="flex items-center gap-2 mt-3 text-xs text-base-600 dark:text-base-400">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-3.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -457,7 +449,7 @@
                   <span class="view-count" data-post-id={post.id}>0</span>
                 {/if}
               </div>
-            {/if}
+            {/if} -->
           </div>
         </article>
       </div>
