@@ -3,7 +3,6 @@ import "../styles/global.css";
 import { SEO } from "astro-seo";
 import { ClientRouter } from "astro:transitions";
 import { supabase } from "@/db/supabase";
-import { generateSocialShareImageUrl } from "@/utils/image-optimizer";
 
 export interface Props {
   title?: string;
@@ -53,14 +52,30 @@ const canonical =
     ? canonicalProp.trim()
     : new URL(Astro.url.pathname, siteBase).href;
 
-const defaultOgImage =
-  settings.og_image || `${new URL("/", siteBase).origin}/og-image.jpg`;
-const rawOgImage =
+// Sosial şəbəkə scraper-ləri (Facebook, Twitter, WhatsApp) 302 redirect-i
+// og:image kimi qəbul etmir. `/api/image-optimize?url=...` endpoint-i redirect
+// qaytardığı üçün, həmin URL-dən `url` parametrini çıxarıb birbaşa CDN URL-inə
+// çeviririk.
+function resolveOgImage(raw: string): string {
+  try {
+    const parsed = new URL(raw, siteBase);
+    if (parsed.pathname === "/api/image-optimize") {
+      const inner = parsed.searchParams.get("url");
+      if (inner) return inner;
+    }
+    return parsed.href;
+  } catch {
+    return raw;
+  }
+}
+
+const defaultOgImage = resolveOgImage(
+  settings.og_image || `${new URL("/", siteBase).origin}/og-image.jpg`,
+);
+const image =
   typeof imageProp === "string" && imageProp.trim()
-    ? imageProp.trim()
+    ? resolveOgImage(imageProp.trim())
     : defaultOgImage;
-const siteOrigin = new URL("/", siteBase).origin;
-const image = generateSocialShareImageUrl(rawOgImage, siteOrigin);
 ---
 
 <meta charset="UTF-8" />
@@ -81,22 +96,21 @@ const image = generateSocialShareImageUrl(rawOgImage, siteOrigin);
       description: description,
       siteName: siteName,
       locale: "az_AZ",
-    }
+    },
+    image: {
+      alt: title,
+    },
   }}
   twitter={{
     card: "summary_large_image",
-    site: `@${xHandle}`,
-    creator: `@${xHandle}`,
+    site: xHandle ? `@${xHandle}` : undefined,
+    creator: xHandle ? `@${xHandle}` : undefined,
+    title: title,
+    description: description,
+    image: image,
+    imageAlt: title,
   }}
 />
-
-{facebookHandle && (
-  <meta property="og:url" content={canonical} />
-)}
-
-{xHandle && (
-  <meta name="twitter:creator" content={`@${xHandle}`} />
-)}
 
 <meta name="keywords" content={keywords} />
 <meta name="author" content={siteName} />
@@ -106,11 +120,7 @@ const image = generateSocialShareImageUrl(rawOgImage, siteOrigin);
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 
-<!-- Canonical URL -->
-<link rel="canonical" href={canonical} />
-
 <!-- Additional SEO -->
-<meta name="robots" content="index, follow" />
 <meta name="googlebot" content="index, follow" />
 
 <!-- Theme Color for Mobile Browsers -->
@@ -127,17 +137,6 @@ const image = generateSocialShareImageUrl(rawOgImage, siteOrigin);
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content={siteName} />
-
-<!-- Open Graph Additional Tags -->
-<meta property="og:type" content={openGraphType} />
-<meta property="og:site_name" content={siteName} />
-<meta property="og:locale" content="az_AZ" />
-
-<!-- X (Twitter) Card Tags -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content={title} />
-<meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={image} />
 
 <!-- Mobile Optimization -->
 <meta name="mobile-web-app-capable" content="yes" />

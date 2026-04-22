@@ -7,7 +7,7 @@ import MediaPlayer from "@/components/media/MediaPlayer.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
-import { generateBunnyCDNUrl, generateResponsiveImages, generateSocialShareImageUrl, getHeroImageSizes, getAvatarSizes } from "@/utils/image-optimizer";
+import { generateBunnyCDNUrl, generateResponsiveImages, getHeroImageSizes, getAvatarSizes } from "@/utils/image-optimizer";
 import { blurhashToDataURL } from "@/utils/blurhash-utils";
  
 const { frontmatter } = Astro.props;
@@ -82,10 +82,6 @@ const postCanonical = new URL(
   `/posts/${postSlug}`,
   Astro.site ?? "https://the99.az",
 ).href;
-const siteOrigin = new URL("/", Astro.site ?? "https://the99.az").origin;
-const schemaArticleImage = frontmatter.image?.url?.trim()
-  ? generateSocialShareImageUrl(frontmatter.image.url.trim(), siteOrigin)
-  : "https://the99.az/og-image.jpg";
 
 // Audio/Musiqi məlumatları - Supabase-dən və ya frontmatter-dən
 const hasAudio = dbAudioUrl || frontmatter.audio?.url;
@@ -127,7 +123,10 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       "@type": "NewsArticle",
       "headline": frontmatter.title,
       "description": frontmatter.description,
-      "image": [schemaArticleImage],
+      "image": [
+        frontmatter.image?.url?.trim() ||
+          "https://the99.az/og-image.jpg",
+      ],
       "datePublished": new Date(frontmatter.pubDate).toISOString(),
       "dateModified": frontmatter.modifiedDate 
         ? new Date(frontmatter.modifiedDate).toISOString() 
