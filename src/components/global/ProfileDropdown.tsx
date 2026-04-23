@@ -12,6 +12,8 @@ interface ProfileDropdownProps {
   userUsername?: string;
   isStudioRoutePath: boolean;
   canWrite?: boolean;
+  /** Bunny stream — yalnız admin (role_id 1) */
+  canUploadStreamVideo?: boolean;
 }
 
 export default function ProfileDropdown({
@@ -20,6 +22,7 @@ export default function ProfileDropdown({
   userUsername,
   isStudioRoutePath,
   canWrite = false,
+  canUploadStreamVideo = false,
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -170,26 +173,28 @@ export default function ProfileDropdown({
       )}
 
       {!isStudioRoutePath && canWrite && (
-        <a
-          href="/studio"
-          className="group flex gap-1 items-center text-[15px] text-base-700 dark:text-base-400 hover:text-base-900 dark:hover:text-base-50 transition-all cursor-pointer"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            className="size-[23px] group-hover:stroke-base-900 dark:group-hover:stroke-base-50 transition-all"
+        <div className="flex items-center gap-2 sm:gap-3">
+          <a
+            href="/studio"
+            className="group flex gap-1 items-center text-[15px] text-base-700 dark:text-base-400 hover:text-base-900 dark:hover:text-base-50 transition-all cursor-pointer"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-            />
-          </svg>
-          Yaz
-        </a>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+              className="size-[23px] group-hover:stroke-base-900 dark:group-hover:stroke-base-50 transition-all"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+              />
+            </svg>
+            Yaz
+          </a>
+        </div>
       )}
 
       <div className="relative z-50" ref={dropdownRef}>
@@ -214,6 +219,54 @@ export default function ProfileDropdown({
             onClick={handleMenuClick}
             className="absolute bg-white/90 dark:bg-base-900/90 border border-slate-200 dark:border-base-800 overflow-hidden backdrop-blur-xl right-0 mt-2 w-48 rounded-lg py-1 animate-fadeIn"
           >
+            {canWrite && (
+              <a
+                href="/analytics"
+                className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 dark:text-base-300 hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
+              >
+                <div className="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="size-4 mr-2 stroke-zinc-500 dark:stroke-base-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  Analitika
+                </div>
+              </a>
+            )}
+            {canUploadStreamVideo && (
+              <a
+                href="/stream/upload"
+                className="cursor-pointer w-full text-left block px-4 py-2 text-[13px] text-zinc-700 dark:text-base-300 hover:bg-slate-100 dark:hover:bg-base-800 transition-colors"
+              >
+                <div className="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="size-4 mr-2 stroke-zinc-500 dark:stroke-base-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
+                    />
+                  </svg>
+                  Video yüklə
+                </div>
+              </a>
+            )}
             <button
               type="button"
               onClick={(e) => {

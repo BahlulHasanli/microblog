@@ -1,0 +1,337 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import { isEditor } from "@/utils/roles";
+import { supabaseAdmin } from "@/db/supabase";
+import { formatSimpleDate } from "@/utils/date";
+import {
+  estimateWordCountFromHtml,
+  estimateReadMinutes,
+  utcDayKey,
+  rollingUtcDayLabels,
+  previousPeriodLabels,
+  sumForDayKeys,
+  pctChange,
+} from "@/utils/writer-analytics";
+import WriterAnalyticsTabs from "@/components/writer/WriterAnalyticsTabs";
+
+export const prerender = false;
+
+const isLoggedIn = isAuthenticated(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect("/signin");
+}
+
+const user = await getUserFromCookies(Astro.cookies, Astro.redirect);
+
+if (!user) {
+  return Astro.redirect("/signin");
+}
+
+if (!isEditor(user.role_id)) {
+  return Astro.redirect("/");
+}
+
+const { data: postsRaw, error: postsError } = await supabaseAdmin
+  .from("posts")
+  .select("id, slug, title, approved, pub_date, content, categories")
+  .eq("author_id", user.id)
+  .order("pub_date", { ascending: false });
+
+if (postsError) {
+  console.error("Yazıçı analitikası — postlar:", postsError);
+}
+
+const posts = postsRaw ?? [];
+const postIds = posts.map((p) => p.id);
+const slugs = posts.map((p) => p.slug);
+
+/** GitHub tipli heatmap: hər gün üçün dərc (pub_date) sayı, UTC */
+const contributionsByDate: Record<string, number> = {};
+for (const p of posts) {
+  if (!p.pub_date) continue;
+  const k = utcDayKey(new Date(p.pub_date as string));
+  contributionsByDate[k] = (contributionsByDate[k] ?? 0) + 1;
+}
+
+const viewCounts: Record<number, number> = {};
+for (const id of postIds) viewCounts[id] = 0;
+
+if (postIds.length > 0) {
+  const { data: viewRows, error: viewsError } = await supabaseAdmin
+    .from("post_views")
+    .select("post_id")
+    .in("post_id", postIds);
+
+  if (viewsError) {
+    console.error("Yazıçı analitikası — baxışlar:", viewsError);
+  } else if (viewRows) {
+    for (const row of viewRows) {
+      const pid = row.post_id as number;
+      viewCounts[pid] = (viewCounts[pid] ?? 0) + 1;
+    }
+  }
+}
+
+const commentCounts: Record<string, number> = {};
+for (const s of slugs) commentCounts[s] = 0;
+
+if (slugs.length > 0) {
+  const { data: commentRows, error: commentsError } = await supabaseAdmin
+    .from("comments")
+    .select("post_slug")
+    .in("post_slug", slugs);
+
+  if (commentsError) {
+    console.error("Yazıçı analitikası — şərhlər:", commentsError);
+  } else if (commentRows) {
+    for (const row of commentRows) {
+      const slug = row.post_slug as string;
+      commentCounts[slug] = (commentCounts[slug] ?? 0) + 1;
+    }
+  }
+}
+
+/** Son 60 gün — trend və qrafiklər */
+const trendCutoff = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+const viewCountsByDay: Record<string, number> = {};
+const commentCountsByDay: Record<string, number> = {};
+
+if (postIds.length > 0) {
+  const { data: timedViews, error: tvErr } = await supabaseAdmin
+    .from("post_views")
+    .select("created_at")
+    .in("post_id", postIds)
+    .gte("created_at", trendCutoff);
+
+  if (tvErr) console.error("Yazıçı analitikası — baxış trend:", tvErr);
+  else if (timedViews) {
+    for (const row of timedViews) {
+      const key = utcDayKey(new Date(row.created_at as string));
+      viewCountsByDay[key] = (viewCountsByDay[key] ?? 0) + 1;
+    }
+  }
+}
+
+if (slugs.length > 0) {
+  const { data: timedComments, error: tcErr } = await supabaseAdmin
+    .from("comments")
+    .select("created_at")
+    .in("post_slug", slugs)
+    .gte("created_at", trendCutoff);
+
+  if (tcErr) console.error("Yazıçı analitikası — şərh trend:", tcErr);
+  else if (timedComments) {
+    for (const row of timedComments) {
+      const key = utcDayKey(new Date(row.created_at as string));
+      commentCountsByDay[key] = (commentCountsByDay[key] ?? 0) + 1;
+    }
+  }
+}
+
+const labels7 = rollingUtcDayLabels(7);
+const prev7 = previousPeriodLabels(labels7);
+const labels30 = rollingUtcDayLabels(30);
+const prev30 = previousPeriodLabels(labels30);
+
+const v7 = sumForDayKeys(viewCountsByDay, labels7);
+const v7prev = sumForDayKeys(viewCountsByDay, prev7);
+const c7 = sumForDayKeys(commentCountsByDay, labels7);
+const c7prev = sumForDayKeys(commentCountsByDay, prev7);
+
+const v30 = sumForDayKeys(viewCountsByDay, labels30);
+const v30prev = sumForDayKeys(viewCountsByDay, prev30);
+const c30 = sumForDayKeys(commentCountsByDay, labels30);
+const c30prev = sumForDayKeys(commentCountsByDay, prev30);
+
+const dV7 = pctChange(v7, v7prev);
+const dC7 = pctChange(c7, c7prev);
+const dV30 = pctChange(v30, v30prev);
+const dC30 = pctChange(c30, c30prev);
+
+type ArticleRow = {
+  id: number;
+  slug: string;
+  title: string;
+  approved: boolean;
+  pub_date: string | null;
+  viewCount: number;
+  commentCount: number;
+};
+
+const articles: ArticleRow[] = posts.map((p) => ({
+  id: p.id,
+  slug: p.slug,
+  title: p.title,
+  approved: p.approved,
+  pub_date: p.pub_date,
+  viewCount: viewCounts[p.id] ?? 0,
+  commentCount: commentCounts[p.slug] ?? 0,
+}));
+
+articles.sort((a, b) => b.viewCount - a.viewCount);
+
+const totalPosts = articles.length;
+const totalViews = articles.reduce((s, a) => s + a.viewCount, 0);
+const totalComments = articles.reduce((s, a) => s + a.commentCount, 0);
+
+const topByViews =
+  articles.length > 0
+    ? articles.reduce(
+        (best, a) => (a.viewCount > best.viewCount ? a : best),
+        articles[0],
+      )
+    : null;
+
+/** Məzmun statistikası */
+let totalWords = 0;
+let totalReadMinutes = 0;
+for (const p of posts) {
+  const html = (p as { content?: string }).content ?? "";
+  const w = estimateWordCountFromHtml(html);
+  totalWords += w;
+  totalReadMinutes += estimateReadMinutes(w);
+}
+const avgWords =
+  posts.length > 0 ? Math.round(totalWords / posts.length) : 0;
+const avgReadMin =
+  posts.length > 0
+    ? Math.round((totalReadMinutes / posts.length) * 10) / 10
+    : 0;
+const viewsPer1kWords =
+  totalWords > 0
+    ? Math.round((totalViews / (totalWords / 1000)) * 10) / 10
+    : 0;
+
+/** Kateqoriya üzrə (çox bölməli məqalədə baxış/şərh bərabər bölünür) */
+const catWeightedViews: Record<string, number> = {};
+const catWeightedComments: Record<string, number> = {};
+
+for (const p of posts) {
+  const rawCats = (p as { categories?: string[] }).categories;
+  const cats = Array.isArray(rawCats)
+    ? rawCats.map((c) => String(c).trim()).filter(Boolean)
+    : [];
+  const n = Math.max(cats.length, 1);
+  const v = viewCounts[p.id] ?? 0;
+  const c = commentCounts[p.slug] ?? 0;
+  if (cats.length === 0) {
+    catWeightedViews["_"] = (catWeightedViews["_"] ?? 0) + v;
+    catWeightedComments["_"] = (catWeightedComments["_"] ?? 0) + c;
+  } else {
+    for (const cat of cats) {
+      catWeightedViews[cat] = (catWeightedViews[cat] ?? 0) + v / n;
+      catWeightedComments[cat] = (catWeightedComments[cat] ?? 0) + c / n;
+    }
+  }
+}
+
+const catSlugs = Object.keys(catWeightedViews);
+let categoryNames: Record<string, string> = {};
+const categorySlugsToResolve = catSlugs.filter((s) => s !== "_");
+if (categorySlugsToResolve.length > 0) {
+  const { data: catRows } = await supabaseAdmin
+    .from("categories")
+    .select("slug, name")
+    .in("slug", categorySlugsToResolve);
+
+  if (catRows) {
+    for (const row of catRows) {
+      categoryNames[row.slug as string] = row.name as string;
+    }
+  }
+}
+
+type CatRow = { slug: string; name: string; views: number; comments: number };
+const categoryRows: CatRow[] = catSlugs
+  .map((slug) => ({
+    slug,
+    name:
+      slug === "_"
+        ? "Bölməsiz"
+        : categoryNames[slug] || slug,
+    views: catWeightedViews[slug] ?? 0,
+    comments: catWeightedComments[slug] ?? 0,
+  }))
+  .sort((a, b) => b.views - a.views);
+
+const maxCatViews =
+  categoryRows.length > 0
+    ? Math.max(...categoryRows.map((r) => r.views), 0.0001)
+    : 1;
+
+const analyticsData = {
+  totalPosts,
+  totalViews,
+  totalComments,
+  contributionsByDate,
+  avgWords,
+  avgReadMin,
+  viewsPer1kWords,
+  trend: {
+    v7,
+    v7prev,
+    c7,
+    c7prev,
+    v30,
+    v30prev,
+    c30,
+    c30prev,
+    dV7,
+    dC7,
+    dV30,
+    dC30,
+  },
+  categoryRows: categoryRows.map((r) => ({
+    slug: r.slug,
+    name: r.name,
+    views: r.views,
+    comments: r.comments,
+  })),
+  maxCatViews,
+  topByViews: topByViews
+    ? {
+        slug: topByViews.slug,
+        title: topByViews.title,
+        viewCount: topByViews.viewCount,
+        commentCount: topByViews.commentCount,
+      }
+    : null,
+  articles: articles.map((a) => ({
+    slug: a.slug,
+    title: a.title,
+    pubDateLabel: a.pub_date ? formatSimpleDate(a.pub_date) : "—",
+    viewCount: a.viewCount,
+    commentCount: a.commentCount,
+    approved: a.approved,
+  })),
+};
+---
+
+<BaseLayout
+  title="Yazıçı analitikası"
+  description="Məqalələrinizin oxunma və şərh statistikası."
+>
+  <div class="max-w-3xl mx-auto mt-6">
+    <header class="mb-8 sm:mb-10">
+      <p class="text-sm font-medium text-rose-600 dark:text-rose-400 mb-1">
+        Müəllif üçün analitika paneli
+      </p>
+      <h1 class="text-2xl sm:text-3xl font-nouvelr font-bold text-base-900 dark:text-base-50 tracking-tight">
+        Analitika
+      </h1>
+      <p class="mt-2 text-base text-base-600 dark:text-base-400 max-w-xl">
+        Ümumi göstəricilər, məzmun, trend,
+        bölmələr və məqalə siyahısı.
+      </p>
+    </header>
+
+    <div class="mb-10">
+      <WriterAnalyticsTabs
+        data={analyticsData}
+        client:only="react"
+      />
+    </div>
+  </div>
+</BaseLayout>

@@ -15,6 +15,8 @@
   let submitting = $state(false);
   let message = $state("");
   let success = $state(false);
+  /** Uğurlu yükləmədən sonra tez keçid üçün Bunny GUID */
+  let successBunnyGuid = $state<string | null>(null);
 
   async function loadCategories() {
     try {
@@ -43,18 +45,21 @@
     file = f ?? null;
     message = "";
     success = false;
+    successBunnyGuid = null;
   }
 
   function setMode(m: Mode) {
     mode = m;
     message = "";
     success = false;
+    successBunnyGuid = null;
   }
 
   async function onSubmit(e: Event) {
     e.preventDefault();
     message = "";
     success = false;
+    successBunnyGuid = null;
 
     if (!title.trim()) {
       message = "Başlıq daxil edin";
@@ -89,6 +94,8 @@
           return;
         }
         success = true;
+        successBunnyGuid =
+          typeof j.bunnyGuid === "string" && j.bunnyGuid.length > 0 ? j.bunnyGuid : null;
         message = "Video yükləndi. Bunny encode bitəndən sonra siyahıda görünəcək.";
         title = "";
         description = "";
@@ -127,6 +134,8 @@
         return;
       }
       success = true;
+      successBunnyGuid =
+        typeof j.bunnyGuid === "string" && j.bunnyGuid.length > 0 ? j.bunnyGuid : null;
       message = "Video linki qeydə alındı — ana səhifə və Pəncərələrdə görünəcək.";
       title = "";
       description = "";
@@ -273,6 +282,33 @@
       >
         {message}
       </p>
+    {/if}
+
+    {#if success && successBunnyGuid}
+      <div
+        class="rounded-lg border border-emerald-200/90 dark:border-emerald-800/70 bg-emerald-50/60 dark:bg-emerald-950/35 px-3 py-3 space-y-2"
+      >
+        <label
+          for="sv-quick-nav"
+          class="block text-sm font-medium text-emerald-900 dark:text-emerald-200 font-nouvelr"
+          >Tez keçid</label
+        >
+        <select
+          id="sv-quick-nav"
+          class="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-base-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-emerald-800 dark:bg-base-950 dark:text-base-50 font-nouvelr"
+          onchange={(e) => {
+            const el = e.currentTarget as HTMLSelectElement;
+            const v = el.value;
+            if (v) window.location.href = v;
+            el.selectedIndex = 0;
+          }}
+        >
+          <option value="">Səhifə seçin…</option>
+          <option value={`/windows/${successBunnyGuid}`}>Bu videonu Pəncərədə aç</option>
+          <option value="/windows">Bütün Pəncərələr</option>
+          <option value="/">Ana səhifə</option>
+        </select>
+      </div>
     {/if}
 
     <button
