@@ -1,8 +1,8 @@
 import * as React from "react";
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import { ChangeEvent, useRef, useCallback } from "react";
 
-// --- Tiptap Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit";
 import { ImageWithDelete } from "@/components/tiptap-node/image-node/image-with-delete";
 import { TaskItem, TaskList } from "@tiptap/extension-list";
@@ -59,8 +59,6 @@ import {
   LinkButton,
 } from "@/components/tiptap-ui/link-popover";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
-import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
 import { GifButton } from "@/components/tiptap-ui/gif-button";
 import { HorizontalRuleButton } from "@/components/tiptap-ui/horizontal-rule-button";
 import { AudioUploadButton } from "@/components/tiptap-ui/audio-upload-button";
@@ -75,11 +73,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility";
 
-// --- Components ---
-import { ThemeToggle } from "@/components/tiptap-templates/simple/theme-toggle";
-
 // --- Lib ---
-import { handleImageUpload, handleAudioUpload, MAX_FILE_SIZE, MAX_AUDIO_SIZE } from "@/lib/tiptap-utils";
+import {
+  handleImageUpload,
+  handleAudioUpload,
+  MAX_FILE_SIZE,
+  MAX_AUDIO_SIZE,
+} from "@/lib/tiptap-utils";
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss";
@@ -87,12 +87,81 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 import { supabase } from "@/db/supabase";
 import { AudioButton } from "@/components/tiptap-ui/audio-button";
 
-// Global tip tanımlaması
 declare global {
   interface Window {
     _currentAudioFile?: File | null;
     _audioRemoved?: boolean;
   }
+}
+
+// Yalnız bir başlıq və paragrafdan sonra serbest blok-lara icazə verən sənəd sxemi.
+// Komponentin xaricində təyin olunur ki, hər render-də yenidən yaradılmasın.
+const FixedDocument = Document.extend({
+  content: "heading paragraph block*",
+});
+
+interface YoutubeButtonProps {
+  editor: Editor | null;
+}
+
+const YoutubeButton = ({ editor }: YoutubeButtonProps) => {
+  const handleClick = React.useCallback(() => {
+    if (!editor) return;
+
+    try {
+      const url = window.prompt("YouTube URL");
+      if (!url) return;
+
+      editor.commands.setYoutubeVideo({
+        src: url,
+        width: 640,
+        height: 360,
+      });
+    } catch (error) {
+      console.error("YouTube video ekleme hatası:", error);
+      window.alert(
+        "YouTube video əlavə edilərkən xəta baş verdi. Lütfən konsolu yoxlayın.",
+      );
+    }
+  }, [editor]);
+
+  if (!editor) return null;
+
+  return (
+    <Button
+      onClick={handleClick}
+      type="button"
+      data-style="ghost"
+      role="button"
+      tabIndex={-1}
+      title="YouTube video əlavə et"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+        className="tiptap-button-icon"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
+        />
+      </svg>
+    </Button>
+  );
+};
+
+interface MainToolbarContentProps {
+  onHighlighterClick: () => void;
+  onLinkClick: () => void;
+  onAudioClick: () => void;
+  hasAudio: boolean;
+  isMobile: boolean;
+  editor: Editor | null;
 }
 
 const MainToolbarContent = ({
@@ -102,92 +171,7 @@ const MainToolbarContent = ({
   hasAudio,
   isMobile,
   editor,
-}: {
-  onHighlighterClick: () => void;
-  onLinkClick: () => void;
-  onAudioClick: () => void;
-  hasAudio: boolean;
-  isMobile: boolean;
-  editor: any;
-}) => {
-  // Resim ekleme pozisyonu kontrolü için ayrı effect
-  React.useEffect(() => {
-    // Editor null ise işlem yapma
-    if (!editor) return;
-
-    const handleBeforeCreate = () => {};
-
-    // Image upload button click handler
-    const imageButton = document.querySelector(
-      '[data-testid="image-upload-button"]',
-    );
-    if (imageButton) {
-      imageButton.addEventListener("click", handleBeforeCreate);
-    }
-
-    return () => {
-      if (imageButton) {
-        imageButton.removeEventListener("click", handleBeforeCreate);
-      }
-    };
-  }, [editor]);
-
-  const MenuBar = ({ editor }: { editor: any }) => {
-    if (!editor) {
-      return null;
-    }
-
-    const addYoutubeVideo = () => {
-      try {
-        const url = prompt("YouTube URL");
-
-        if (url) {
-          console.log("YouTube video ekleme deneniyor:", url);
-
-          // Komutu çağır
-          const result = editor.commands.setYoutubeVideo({
-            src: url,
-            width: "100%",
-            height: "260",
-          });
-
-          console.log("YouTube video ekleme sonucu:", result);
-        }
-      } catch (error) {
-        console.error("YouTube video ekleme hatası:", error);
-        alert(
-          "YouTube video eklenirken bir hata oluştu. Lütfen konsolu kontrol edin.",
-        );
-      }
-    };
-
-    return (
-      <Button
-        onClick={addYoutubeVideo}
-        type="button"
-        data-style="ghost"
-        role="button"
-        tabIndex={-1}
-        title="YouTube video əlavə et"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="1.5"
-          stroke="currentColor"
-          className="tiptap-button-icon"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"
-          />
-        </svg>
-      </Button>
-    );
-  };
-
+}: MainToolbarContentProps) => {
   return (
     <>
       <Spacer />
@@ -232,7 +216,7 @@ const MainToolbarContent = ({
       <ToolbarGroup>
         <ImageUploadButton text="" />
         <GifButton />
-        <MenuBar editor={editor} />
+        <YoutubeButton editor={editor} />
         <AudioButton onClick={onAudioClick} hasAudio={hasAudio} />
         <AudioUploadButton editor={editor} />
         <HorizontalRuleButton />
@@ -275,8 +259,23 @@ const MobileToolbarContent = ({
   </>
 );
 
+type EditorJSON = Record<string, unknown>;
+
+export interface SimpleEditorAuthor {
+  avatar?: string;
+  avatar_url?: string;
+  fullName?: string;
+  full_name?: string;
+  display_name?: string;
+  fullname?: string;
+  name?: string;
+  username?: string;
+  verified?: boolean;
+  is_verified?: boolean;
+}
+
 interface SimpleEditorProps {
-  onUpdate?: (content: any) => void;
+  onUpdate?: (content: EditorJSON) => void;
   title?: string;
   description?: string;
   onTitleChange?: (title: string) => void;
@@ -284,10 +283,9 @@ interface SimpleEditorProps {
   coverImage?: File | null;
   onCoverImageChange?: (file: File | null, clearExisting?: boolean) => void;
   onCategoriesChange?: (categories: string[]) => void;
-  initialContent?: string;
+  initialContent?: EditorJSON | string;
   initialCoverImageUrl?: string;
   selectedCategories?: string[];
-  // Musiqi props
   audioFile?: File | null;
   onAudioFileChange?: (file: File | null) => void;
   audioTitle?: string;
@@ -296,19 +294,7 @@ interface SimpleEditorProps {
   onAudioArtistChange?: (artist: string) => void;
   initialAudioUrl?: string;
   onAudioRemove?: () => void;
-  // Author info
-  author?: {
-    avatar?: string;
-    avatar_url?: string;
-    fullName?: string;
-    full_name?: string;
-    display_name?: string;
-    fullname?: string;
-    name?: string;
-    username?: string;
-    verified?: boolean;
-    is_verified?: boolean;
-  };
+  author?: SimpleEditorAuthor;
 }
 
 export function SimpleEditor({
@@ -368,39 +354,79 @@ export function SimpleEditor({
   const [existingAudioUrl, setExistingAudioUrl] =
     React.useState(initialAudioUrl);
 
-  // Supabase-dən bölmələrı çək
+  // coverImagePreview-nin son dəyərini saxlayan ref - cleanup zamanı stale closure-dən qoruyur
+  const coverImagePreviewRef = React.useRef(coverImagePreview);
   React.useEffect(() => {
+    coverImagePreviewRef.current = coverImagePreview;
+  }, [coverImagePreview]);
+
+  // Xaricdən gələn props dəyişdikdə lokal state-i sinxronlaşdır
+  React.useEffect(() => {
+    setLocalAudioFile(audioFile ?? null);
+  }, [audioFile]);
+
+  React.useEffect(() => {
+    setLocalAudioTitle(audioTitle ?? "");
+  }, [audioTitle]);
+
+  React.useEffect(() => {
+    setLocalAudioArtist(audioArtist ?? "");
+  }, [audioArtist]);
+
+  React.useEffect(() => {
+    setExistingAudioUrl(initialAudioUrl ?? "");
+  }, [initialAudioUrl]);
+
+  React.useEffect(() => {
+    setCategories((prev) => {
+      const next = selectedCategories ?? [];
+      if (
+        prev.length === next.length &&
+        prev.every((value, index) => value === next[index])
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [selectedCategories]);
+
+  React.useEffect(() => {
+    let cancelled = false;
     const fetchCategories = async () => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("categories")
           .select("id, slug, name, parent_id, sort_order")
           .order("sort_order", { ascending: true })
           .order("id", { ascending: true });
+        if (cancelled) return;
+        if (error) {
+          console.warn("Bölmələr çəkilərkən xəta:", error);
+          return;
+        }
         if (data) setSupabaseCategories(data);
       } catch (error) {
-        console.warn("Bölmələr çəkilərkən xəta:", error);
+        if (!cancelled) {
+          console.warn("Bölmələr çəkilərkən gözlənilməz xəta:", error);
+        }
       }
     };
     fetchCategories();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Komponent sökülməsində cleanup
   React.useEffect(() => {
     return () => {
-      // Preview URL-ləri azad et (data URL-lər için lazım deyil, amma blob URL-lər varsa azad edilir)
-      if (coverImagePreview && coverImagePreview.startsWith("blob:")) {
-        URL.revokeObjectURL(coverImagePreview);
+      const lastPreview = coverImagePreviewRef.current;
+      if (lastPreview && lastPreview.startsWith("blob:")) {
+        URL.revokeObjectURL(lastPreview);
       }
-      // Window global dəyişənlərini təmizlə
       delete window._currentAudioFile;
       delete window._audioRemoved;
     };
   }, []);
-
-  const FixedDocument = Document.extend({
-    content: "heading paragraph block*",
-  });
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -437,7 +463,7 @@ export function SimpleEditor({
       }),
       Placeholder.configure({
         showOnlyCurrent: false,
-        placeholder: ({ node, pos, editor }) => {
+        placeholder: ({ node, editor }) => {
           const nodes = editor?.state.doc.content.content || [];
 
           if (node.type.name === "heading") {
@@ -494,30 +520,26 @@ export function SimpleEditor({
       Rating,
     ],
     autofocus: true,
-    content: initialContent || {
-      type: "doc",
-      content: [
-        {
-          type: "heading",
-          attrs: {
-            level: 1,
+    content:
+      (initialContent as Parameters<typeof useEditor>[0]["content"]) || {
+        type: "doc",
+        content: [
+          {
+            type: "heading",
+            attrs: { level: 1 },
+            content: title ? [{ type: "text", text: title }] : undefined,
           },
-          content: title ? [{ type: "text", text: title }] : undefined,
-        },
-        {
-          type: "paragraph",
-          content: description
-            ? [{ type: "text", text: description }]
-            : undefined,
-        },
-      ],
+          {
+            type: "paragraph",
+            content: description
+              ? [{ type: "text", text: description }]
+              : undefined,
+          },
+        ],
+      },
+    onUpdate: ({ editor: updatedEditor }) => {
+      onUpdate?.(updatedEditor.getJSON() as EditorJSON);
     },
-    onUpdate: ({ editor }) => {
-      if (onUpdate) {
-        onUpdate(editor.getJSON());
-      }
-    },
-    // onTransaction artıq lazım deyil - şəkillər save zamanı yüklənir
   });
 
   const rect = useCursorVisibility({
@@ -525,71 +547,104 @@ export function SimpleEditor({
     overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
   });
 
-  // Başlık ve açıklama değerlerini izlemek için bir useEffect kullanıyoruz
+  // Callback və mövcud title/description-ı ref-də saxla ki, effect-i hər dəyişiklikdə yenidən qurmayaq
+  const titleRef = React.useRef(title);
+  const descriptionRef = React.useRef(description);
+  const onTitleChangeRef = React.useRef(onTitleChange);
+  const onDescriptionChangeRef = React.useRef(onDescriptionChange);
+
+  React.useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+  React.useEffect(() => {
+    descriptionRef.current = description;
+  }, [description]);
+  React.useEffect(() => {
+    onTitleChangeRef.current = onTitleChange;
+  }, [onTitleChange]);
+  React.useEffect(() => {
+    onDescriptionChangeRef.current = onDescriptionChange;
+  }, [onDescriptionChange]);
+
   React.useEffect(() => {
     if (!editor) return;
 
-    // Başlık ve açıklama değerlerini izlemek için bir işlev
+    let rafId: number | null = null;
+
     const updateTitleAndDescription = () => {
-      try {
-        const content = editor.getJSON().content;
+      if (rafId !== null) return; // Eyni frame-də artıq planlanıb
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        try {
+          const docContent = editor.state.doc.content;
+          if (!docContent.childCount) return;
 
-        if (!content || content.length === 0) return;
+          // İlk başlıq və ilk paraqraf üçün ProseMirror sənədindən birbaşa oxu
+          let headingText: string | null = null;
+          let paragraphText: string | null = null;
 
-        // Başlık değerini al
-        const headingNode = content.find((node) => node.type === "heading");
-        if (headingNode?.content && onTitleChange) {
-          const headingText = headingNode.content
-            .filter((item) => item.type === "text")
-            .map((item) => ("text" in item ? item.text : ""))
-            .join("");
-
-          if (headingText && headingText !== title) {
-            onTitleChange(headingText);
+          for (let i = 0; i < docContent.childCount; i++) {
+            const child = docContent.child(i);
+            if (headingText === null && child.type.name === "heading") {
+              headingText = child.textContent;
+            } else if (
+              paragraphText === null &&
+              child.type.name === "paragraph"
+            ) {
+              paragraphText = child.textContent;
+            }
+            if (headingText !== null && paragraphText !== null) break;
           }
-        }
 
-        // Açıklama değerini al
-        const paragraphNode = content.find((node) => node.type === "paragraph");
-        if (paragraphNode?.content && onDescriptionChange) {
-          const paragraphText = paragraphNode.content
-            .filter((item) => item.type === "text")
-            .map((item) => ("text" in item ? item.text : ""))
-            .join("");
-
-          if (paragraphText && paragraphText !== description) {
-            onDescriptionChange(paragraphText);
+          const handleTitle = onTitleChangeRef.current;
+          if (
+            handleTitle &&
+            headingText !== null &&
+            headingText !== titleRef.current
+          ) {
+            handleTitle(headingText);
           }
+
+          const handleDescription = onDescriptionChangeRef.current;
+          if (
+            handleDescription &&
+            paragraphText !== null &&
+            paragraphText !== descriptionRef.current
+          ) {
+            handleDescription(paragraphText);
+          }
+        } catch (error) {
+          console.error("Editör içeriği güncellenirken hata oluştu:", error);
         }
-      } catch (error) {
-        console.error("Editör içeriği güncellenirken hata oluştu:", error);
-      }
+      });
     };
 
-    // Editör içeriği değiştiğinde başlık ve açıklama değerlerini güncelle
     editor.on("update", updateTitleAndDescription);
 
-    // Temizleme işlevi
     return () => {
       editor.off("update", updateTitleAndDescription);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
     };
-  }, [editor, onTitleChange, onDescriptionChange, title, description]);
+  }, [editor]);
 
-  // initialContent yalnız ilk dəfə set olunmalıdır
-  const [isInitialContentSet, setIsInitialContentSet] = React.useState(false);
+  // initialContent yalnız bir dəfə tətbiq olunmalıdır
+  const initialContentAppliedRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (!editor || !initialContent || isInitialContentSet) return;
+    if (!editor || initialContentAppliedRef.current) return;
+    if (initialContent === undefined || initialContent === null) return;
 
-    // Editör içeriğini yalnız bir dəfə güncelle
     try {
-      editor.commands.setContent(initialContent);
-      setIsInitialContentSet(true);
-      console.log("Editör içeriği ilk dəfə set olundu", initialContent);
+      editor.commands.setContent(
+        initialContent as Parameters<typeof editor.commands.setContent>[0],
+      );
+      initialContentAppliedRef.current = true;
     } catch (error) {
       console.error("Editör içeriği güncellenirken hata oluştu:", error);
     }
-  }, [editor, initialContent, isInitialContentSet]);
+  }, [editor, initialContent]);
 
   React.useEffect(() => {
     if (!isMobile && mobileView !== "main") {
@@ -597,23 +652,39 @@ export function SimpleEditor({
     }
   }, [isMobile, mobileView]);
 
-  // Kapak resmi işlemleri
   React.useEffect(() => {
-    // Eğer dışarıdan bir coverImage gelirse, önizlemeyi güncelle
     if (coverImage) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setCoverImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(coverImage);
-      // Yeni cover seçildi, cleared flag-i sıfırla
+      // Blob URL istifadə et - data URL-dən daha sürətli və yaddaş dostu
+      const objectUrl = URL.createObjectURL(coverImage);
+      setCoverImagePreview((prev) => {
+        if (prev && prev.startsWith("blob:") && prev !== objectUrl) {
+          URL.revokeObjectURL(prev);
+        }
+        return objectUrl;
+      });
       setCoverImageCleared(false);
-    } else if (initialCoverImageUrl && !coverImageCleared) {
-      // Eğer mevcut bir kapağımız varsa ve silinmemişse onu kullan
-      setCoverImagePreview(initialCoverImageUrl);
-    } else {
-      setCoverImagePreview("");
+
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
     }
+
+    if (initialCoverImageUrl && !coverImageCleared) {
+      setCoverImagePreview((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return initialCoverImageUrl;
+      });
+      return;
+    }
+
+    setCoverImagePreview((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return "";
+    });
   }, [coverImage, initialCoverImageUrl, coverImageCleared]);
 
   // Kategoriler değiştiğinde dışarıya bildir
@@ -623,119 +694,97 @@ export function SimpleEditor({
     }
   }, [categories, onCategoriesChange]);
 
-  // Kapak resmi yükleme işleyicisi
   const handleCoverImageChange = useCallback(
-    async (e: ChangeEvent<HTMLInputElement>) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
+        // Tip yoxlaması: yalnız şəkillər
+        if (!file.type.startsWith("image/")) {
+          console.warn(
+            "Cover image olaraq yalnız şəkil faylları seçilə bilər:",
+            file.type,
+          );
+          e.target.value = "";
+          return;
+        }
+
         if (onCoverImageChange) {
           onCoverImageChange(file);
         }
-
-        // Resim önizlemesi oluştur
-        const reader = new FileReader();
-        reader.onload = () => {
-          setCoverImagePreview(reader.result as string);
-        };
-        reader.readAsDataURL(file);
+        // Önizləməni effect idarə edir; burada manual setCoverImagePreview lazım deyil
       }
-      // Input-u sıfırla ki, eyni faylı yenidən seçmək mümkün olsun
       e.target.value = "";
     },
     [onCoverImageChange],
   );
 
-  // Kapak resmi seçme dialogunu açma
   const handleSelectCoverImage = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
 
-  // Kapak resmini kaldırma
   const handleRemoveCoverImage = useCallback(() => {
-    // Cover image silmə - clearExisting=true ilə çağır ki, köhnə URL sıfırlansın
     if (onCoverImageChange) {
       onCoverImageChange(null, true);
     }
-    setCoverImagePreview("");
-    setCoverImageCleared(true); // İmage silinib işarəsi
-    // Input-u tamamilə sıfırla
+    setCoverImageCleared(true);
+    // Önizləmə effect tərəfindən sıfırlanacaq, amma aktiv blob URL varsa indi azad et
+    setCoverImagePreview((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return "";
+    });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }, [onCoverImageChange]);
 
-  // Kategori seçme/kaldırma işleyicisi
-  const handleCategoryToggle = useCallback(
-    (categoryId: string) => {
-      setCategories((prev) => {
-        const newCategories = prev.includes(categoryId)
-          ? prev.filter((id) => id !== categoryId)
-          : [...prev, categoryId];
+  const handleCategoryToggle = useCallback((categoryId: string) => {
+    setCategories((prev) =>
+      prev.includes(categoryId)
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
+    );
+    // Bildirimi `categories` state-i izləyən useEffect öhdəsinə götürür
+  }, []);
 
-        // Kategorileri dışarıya bildir
-        if (onCategoriesChange) {
-          onCategoriesChange(newCategories);
-        }
-
-        return newCategories;
-      });
-    },
-    [onCategoriesChange],
-  );
-
-  // Musiqi faylı seçmə
   const handleAudioFileChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      console.log(
-        "SimpleEditor: Audio fayl seçildi:",
-        file?.name,
-        file?.type,
-        file?.size,
-      );
-      console.log(
-        "SimpleEditor: onAudioFileChange mövcuddur:",
-        !!onAudioFileChange,
-      );
-      if (file) {
-        // MP3 faylları üçün tip yoxlaması (audio/mpeg, audio/mp3)
-        const isAudio =
-          file.type.startsWith("audio/") || file.name.endsWith(".mp3");
-        console.log("SimpleEditor: isAudio:", isAudio);
-        if (isAudio) {
-          setLocalAudioFile(file);
-          // Birbaşa window-a yaz
-          window._currentAudioFile = file;
-          console.log(
-            "SimpleEditor: window._currentAudioFile yazıldı:",
-            file.name,
-          );
-          // Callback-i də çağır
-          if (onAudioFileChange) {
-            onAudioFileChange(file);
-          }
-        } else {
-          console.warn("SimpleEditor: Seçilən fayl audio deyil:", file.type);
-        }
+      // İnput-u sıfırla ki, eyni faylı yenidən seçə biləsən
+      e.target.value = "";
+
+      if (!file) return;
+
+      const isAudio =
+        file.type.startsWith("audio/") ||
+        /\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(file.name);
+
+      if (!isAudio) {
+        console.warn("SimpleEditor: Seçilən fayl audio deyil:", file.type);
+        window.alert("Yalnız audio faylları seçilə bilər.");
+        return;
       }
+
+      setLocalAudioFile(file);
+      window._currentAudioFile = file;
+      window._audioRemoved = false;
+      onAudioFileChange?.(file);
     },
     [onAudioFileChange],
   );
 
-  // Musiqi faylını silmə
   const handleRemoveAudio = useCallback(() => {
-    console.log("SimpleEditor: handleRemoveAudio çağırıldı");
     setLocalAudioFile(null);
     setLocalAudioTitle("");
     setLocalAudioArtist("");
-    setExistingAudioUrl(""); // Mövcud URL-i də sıfırla
-    // Window-a da yaz
+    setExistingAudioUrl("");
     window._currentAudioFile = null;
     window._audioRemoved = true;
-    if (onAudioFileChange) onAudioFileChange(null);
-    if (onAudioTitleChange) onAudioTitleChange("");
-    if (onAudioArtistChange) onAudioArtistChange("");
-    if (onAudioRemove) onAudioRemove(); // Silmə callback-ini çağır
+    onAudioFileChange?.(null);
+    onAudioTitleChange?.("");
+    onAudioArtistChange?.("");
+    onAudioRemove?.();
     if (audioInputRef.current) {
       audioInputRef.current.value = "";
     }
@@ -746,20 +795,18 @@ export function SimpleEditor({
     onAudioRemove,
   ]);
 
-  // Musiqi başlığı dəyişikliyi
   const handleAudioTitleChange = useCallback(
     (value: string) => {
       setLocalAudioTitle(value);
-      if (onAudioTitleChange) onAudioTitleChange(value);
+      onAudioTitleChange?.(value);
     },
     [onAudioTitleChange],
   );
 
-  // Musiqi artist dəyişikliyi
   const handleAudioArtistChange = useCallback(
     (value: string) => {
       setLocalAudioArtist(value);
-      if (onAudioArtistChange) onAudioArtistChange(value);
+      onAudioArtistChange?.(value);
     },
     [onAudioArtistChange],
   );
@@ -1009,7 +1056,7 @@ export function SimpleEditor({
         <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-700 p-4 z-50">
           <div className="max-w-3xl mx-auto flex items-center gap-4">
             {/* Audio icon */}
-            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-lg flex items-center justify-center shrink-0">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
