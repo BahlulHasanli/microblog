@@ -151,6 +151,9 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
     })} />
   </Fragment>
   <div class="fixed top-0 left-0 right-0 h-1 bg-linear-to-r from-rose-500 to-pink-500 origin-left z-50" id="progress-bar" style="transform: scaleX(0); transition: transform 0.1s ease-out;"></div>
+  {postId != null && (
+    <span id="post-view-track-source" data-post-id={postId} hidden aria-hidden="true"></span>
+  )}
   <section>
     <div class="py-24">
       <div class="lg:text-center">
@@ -533,19 +536,22 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       <script is:inline>
         // Baxış sayını qeyd et
         async function recordView() {
+          const trackSource = document.getElementById('post-view-track-source');
+          const fromTrack = trackSource?.getAttribute('data-post-id');
           const viewCountEl = document.getElementById('view-count');
-          const container = viewCountEl?.parentElement;
-          const postId = container?.getAttribute('data-post-id');
-          
-          if (!postId) return;
-          
+          const fromLegacy = viewCountEl?.parentElement?.getAttribute('data-post-id');
+          const postIdRaw = fromTrack || fromLegacy;
+          if (!postIdRaw) return;
+          const postId = parseInt(postIdRaw, 10);
+          if (!Number.isFinite(postId)) return;
+
           try {
             const response = await fetch('/api/posts/views', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ postId: parseInt(postId) })
+              body: JSON.stringify({ postId })
             });
             
             if (response.ok) {
