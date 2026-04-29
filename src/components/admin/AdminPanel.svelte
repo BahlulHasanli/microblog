@@ -10,6 +10,7 @@
   import AdvertisementTab from './AdvertisementTab.svelte';
   import KrossWordleTab from './KrossWordleTab.svelte';
   import CategoriesTab from './CategoriesTab.svelte';
+  import AdminAnalyticsTab from './AdminAnalyticsTab.svelte';
   import { hasPermission, Permissions, DefaultRolePermissions } from '@/utils/permissions';
 
   interface Props {
@@ -18,7 +19,7 @@
 
   const { user }: Props = $props();
 
-  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' | 'krosswordle' | 'categories' = $state('posts');
+  let activeTab: 'posts' | 'users' | 'comments' | 'settings' | 'roles' | 'shares' | 'advertisement' | 'krosswordle' | 'categories' | 'analytics' = $state('posts');
   let userPermissions: string[] = $state([]);
   
   // Permission əsaslı yoxlamalar
@@ -553,6 +554,20 @@
           </button>
           {#if isAdmin}
             <button
+              onclick={() => activeTab = 'analytics'}
+              class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'analytics' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
+            >
+              <span class="relative z-10 flex items-center gap-1.5 sm:gap-2">
+                <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Analitika
+              </span>
+              {#if activeTab === 'analytics'}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"></div>
+              {/if}
+            </button>
+            <button
               onclick={() => activeTab = 'krosswordle'}
               class="cursor-pointer relative px-4 sm:px-6 py-3 sm:py-4 font-medium text-xs sm:text-sm transition-all whitespace-nowrap {activeTab === 'krosswordle' ? 'text-slate-900' : 'text-base-600 hover:text-slate-900'}"
             >
@@ -588,6 +603,8 @@
           <SharesTab />
         {:else if activeTab === 'krosswordle'}
           <KrossWordleTab />
+        {:else if activeTab === 'analytics'}
+          <AdminAnalyticsTab />
         {:else if activeTab === 'advertisement'}
           <AdvertisementTab canEdit={canEditSettings} />
         {/if}

@@ -21,6 +21,12 @@ const DAY_ROWS = ["B.", "B.e", "Ç.a", "Ç.", "C.a", "C.", "Ş."];
 const LIGHT = ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"];
 const DARK = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
 
+/** Admin panel: neytral slate tonları */
+const ADMIN_LIGHT = ["#f1f5f9", "#cbd5e1", "#94a3b8", "#64748b", "#475569"];
+const ADMIN_DARK = ["#0f172a", "#1e293b", "#334155", "#475569", "#64748b"];
+
+type HeatmapVariant = "default" | "admin";
+
 function utcDayKey(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
@@ -144,8 +150,10 @@ function maxDayInYear(year: number, contributions: Record<string, number>) {
 
 export default function WritingActivityHeatmap({
   contributions,
+  variant = "default",
 }: {
   contributions: Record<string, number>;
+  variant?: HeatmapVariant;
 }) {
   const years = useMemo(() => collectYears(contributions), [contributions]);
   const [year, setYear] = useState(
@@ -173,7 +181,14 @@ export default function WritingActivityHeatmap({
     return () => obs.disconnect();
   }, []);
 
-  const palette = isDark ? DARK : LIGHT;
+  const adm = variant === "admin";
+  const palette = adm
+    ? isDark
+      ? ADMIN_DARK
+      : ADMIN_LIGHT
+    : isDark
+      ? DARK
+      : LIGHT;
 
   const { columns } = useMemo(
     () => buildWeekColumns(year, contributions),
@@ -226,8 +241,9 @@ export default function WritingActivityHeatmap({
           Yazı fəaliyyəti
         </h2>
         <p className="text-xs text-base-500 dark:text-base-500 mb-3">
-          Hər kvadrat bir günü göstərir; rəng tündlüyü həmin gün dərc etdiyiniz
-          məqalə sayına uyğundur.
+          {adm
+            ? "Hər kvadrat bir günü göstərir; rəng tündlüyü həmin gün dərc olunmuş məqalə sayına uyğundur."
+            : "Hər kvadrat bir günü göstərir; rəng tündlüyü həmin gün dərc etdiyiniz məqalə sayına uyğundur."}
         </p>
 
         <div className="w-full min-w-0 overflow-hidden">
@@ -274,7 +290,7 @@ export default function WritingActivityHeatmap({
                             ? `${cell.key}: ${cell.count} məqalə`
                             : cell.key
                         }
-                        className="w-full aspect-square rounded-[2px] border border-black/4 dark:border-white/6 cursor-default outline-none focus-visible:ring-2 focus-visible:ring-rose-500/60"
+                        className={`w-full aspect-square rounded-[2px] border border-black/4 dark:border-white/6 cursor-default outline-none focus-visible:ring-2 ${adm ? "focus-visible:ring-slate-500/50" : "focus-visible:ring-rose-500/60"}`}
                         style={{ backgroundColor: bg }}
                         tabIndex={0}
                         onMouseEnter={(e) =>
@@ -337,8 +353,12 @@ export default function WritingActivityHeatmap({
             onClick={() => setYear(y)}
             className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors min-w-[4.5rem] sm:min-w-[5rem] ${
               y === year
-                ? "bg-base-900 text-white border-base-900 dark:bg-base-100 dark:text-base-900 dark:border-base-100"
-                : "bg-white/80 dark:bg-base-900/40 text-base-700 dark:text-base-300 border-slate-200 dark:border-base-700 hover:border-rose-400/50"
+                ? adm
+                  ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+                  : "bg-base-900 text-white border-base-900 dark:bg-base-100 dark:text-base-900 dark:border-base-100"
+                : adm
+                  ? "bg-white dark:bg-base-950 text-base-700 dark:text-base-300 border-base-200 dark:border-base-700 hover:border-slate-400/60"
+                  : "bg-white/80 dark:bg-base-900/40 text-base-700 dark:text-base-300 border-slate-200 dark:border-base-700 hover:border-rose-400/50"
             }`}
           >
             {y}
