@@ -24,7 +24,7 @@ if (isLoggedIn) {
 const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
   .from('posts')
-  .select('id, image_blurhash, audio_url, audio_title, audio_artist')
+  .select('id, image_blurhash, image_url, audio_url, audio_title, audio_artist, updated_at')
   .eq('slug', postSlug)
   .single();
 
@@ -83,24 +83,26 @@ const postCanonical = new URL(
   Astro.site ?? "https://the99.az",
 ).href;
 
+// Hero şəkil optimizasiyası - Supabase-dən gələn ən təzə URL-i istifadə et
+const freshImageUrl = postData?.image_url || frontmatter.image?.url;
+const cacheBuster = postData?.updated_at ? `&v=${new Date(postData.updated_at).getTime()}` : '';
+const heroImageData = freshImageUrl ? generateResponsiveImages({
+  src: freshImageUrl,
+  width: 1280,
+  quality: 95,
+  sizes: getHeroImageSizes()
+}) : null;
+
 // Audio/Musiqi məlumatları - Supabase-dən və ya frontmatter-dən
 const hasAudio = dbAudioUrl || frontmatter.audio?.url;
 const audioData = hasAudio ? {
   url: dbAudioUrl || frontmatter.audio?.url,
   title: dbAudioTitle || frontmatter.audio?.title || frontmatter.title,
   artist: dbAudioArtist || frontmatter.audio?.artist || frontmatter.author?.fullname || '',
-  cover: frontmatter.image?.url || ''
+  cover: freshImageUrl || frontmatter.image?.url || ''
 } : null;
 
 const finalAudioData = audioData;
-
-// Hero şəkil optimizasiyası
-const heroImageData = frontmatter.image?.url ? generateResponsiveImages({
-  src: frontmatter.image.url,
-  width: 1280,
-  quality: 95,
-  sizes: getHeroImageSizes()
-}) : null;
 
 // Avatar optimizasiyası
 const avatarUrl = frontmatter.author?.avatar ? generateBunnyCDNUrl(frontmatter.author.avatar, 96, undefined, 80) : null;
@@ -113,7 +115,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
 <BaseLayout
   title={frontmatter.title}
   description={frontmatter.description}
-  image={frontmatter.image?.url?.trim() || undefined}
+  image={freshImageUrl?.trim() || undefined}
   canonical={postCanonical}
   openGraphType="article"
 >
@@ -124,7 +126,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       "headline": frontmatter.title,
       "description": frontmatter.description,
       "image": [
-        frontmatter.image?.url?.trim() ||
+        freshImageUrl?.trim() ||
           "https://the99.az/og-image.jpg",
       ],
       "datePublished": new Date(frontmatter.pubDate).toISOString(),
@@ -259,7 +261,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
             )}
           </div>
 
-          {frontmatter.image && frontmatter.image.url && heroImageData && (
+          {freshImageUrl && heroImageData && (
             <div class="relative blurhash-container mt-4 overflow-hidden rounded-xl" data-blurhash={imageBlurhash}
                  style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
               {imageBlurhash && (
@@ -271,10 +273,10 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
               <img
                 width={1280}
                 height={720}
-                src={heroImageData.src}
-                srcset={heroImageData.srcset}
+                src={`${heroImageData.src}${cacheBuster}`}
+                srcset={heroImageData.srcset.split(', ').map((s: string) => { const parts = s.trim().split(' '); return `${parts[0]}${cacheBuster} ${parts[1]}`; }).join(', ')}
                 sizes={heroImageData.sizes}
-                alt={frontmatter.image.alt || frontmatter.title}
+                alt={frontmatter.image?.alt || frontmatter.title}
                 loading="eager"
                 fetchpriority="high"
                 decoding="async"
