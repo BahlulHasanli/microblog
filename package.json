@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "d": "NODE_TLS_REJECT_UNAUTHORIZED=0 bun dev"
+    "d": "NODE_TLS_REJECT_UNAUTHORIZED=0 bun dev",
+    "postinstall": "node scripts/patch-cloudflare-adapter.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
