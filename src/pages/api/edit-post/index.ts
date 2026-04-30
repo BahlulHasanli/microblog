@@ -113,7 +113,7 @@ export const POST: APIRoute = async (context) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Düzenlenecek gönderi bulunamadı",
+          message: "Post tapılmadı",
         }),
         {
           status: 404,
@@ -153,7 +153,9 @@ export const POST: APIRoute = async (context) => {
 
         if (checkOldImagesFolderResponse.ok) {
           oldFolderImages = await checkOldImagesFolderResponse.json();
-          console.log(`Köhnə images folder-də ${oldFolderImages.length} fayl tapıldı`);
+          console.log(
+            `Köhnə images folder-də ${oldFolderImages.length} fayl tapıldı`,
+          );
         } else {
           console.log(`Köhnə images folder tapılmadı: ${oldImagesFolder}`);
         }
@@ -173,7 +175,9 @@ export const POST: APIRoute = async (context) => {
 
         if (checkOldAudioFolderResponse.ok) {
           oldFolderAudio = await checkOldAudioFolderResponse.json();
-          console.log(`Köhnə audio folder-də ${oldFolderAudio.length} fayl tapıldı`);
+          console.log(
+            `Köhnə audio folder-də ${oldFolderAudio.length} fayl tapıldı`,
+          );
         } else {
           console.log(`Köhnə audio folder tapılmadı: ${oldAudioFolder}`);
         }
@@ -293,7 +297,9 @@ export const POST: APIRoute = async (context) => {
 
       // 3. Yeni audio folder yarat və köhnə audio fayllarını köçür
       if (oldFolderAudio.length > 0) {
-        console.log(`\n3️⃣ Audio fayllar köçürülür: ${oldFolderAudio.length} fayl`);
+        console.log(
+          `\n3️⃣ Audio fayllar köçürülür: ${oldFolderAudio.length} fayl`,
+        );
 
         try {
           const createAudioFolderResponse = await fetch(
@@ -306,7 +312,10 @@ export const POST: APIRoute = async (context) => {
             },
           );
 
-          if (createAudioFolderResponse.ok || createAudioFolderResponse.status === 201) {
+          if (
+            createAudioFolderResponse.ok ||
+            createAudioFolderResponse.status === 201
+          ) {
             console.log(`✅ Yeni audio folder yaradıldı`);
           }
         } catch (error) {
@@ -353,7 +362,9 @@ export const POST: APIRoute = async (context) => {
               );
 
               if (uploadResponse.ok || uploadResponse.status === 201) {
-                console.log(`✅ Audio köçürüldü: ${file.ObjectName} -> ${newFileName}`);
+                console.log(
+                  `✅ Audio köçürüldü: ${file.ObjectName} -> ${newFileName}`,
+                );
               } else {
                 console.error(
                   `❌ Audio yüklənə bilmədi: ${newFileName} (status: ${uploadResponse.status})`,
@@ -391,10 +402,7 @@ export const POST: APIRoute = async (context) => {
         `/${escapedOldSlug}-([a-zA-Z0-9_-]+)\\.(jpg|jpeg|png|gif|webp)`,
         "i",
       );
-      coverImageUrl = coverImageUrl.replace(
-        coverPattern,
-        `/${newSlug}-$1.$2`,
-      );
+      coverImageUrl = coverImageUrl.replace(coverPattern, `/${newSlug}-$1.$2`);
 
       console.log(`Cover image URL və adı yeniləndi: ${coverImageUrl}`);
     }

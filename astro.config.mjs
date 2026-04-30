@@ -10,11 +10,6 @@ export default defineConfig({
   output: "server",
   vite: {
     plugins: [tailwindcss()],
-    resolve: {
-      alias: {
-        "wasm-image-optimization": "wasm-image-optimization/esm",
-      },
-    },
     build: {
       chunkSizeWarningLimit: 500,
     },
