@@ -138,13 +138,13 @@ export function getBlogEntrySizes(): string {
 
 /**
  * Hero/Featured image üçün optimal sizes
- * Hero ölçüləri: mobil 100vw, tablet 100vw, desktop max 1280px
+ * Hero ölçüləri: mobil 100vw, tablet 100vw, desktop max 1536px (2x DPR dəstəyi)
  */
 export function getHeroImageSizes(): string {
   return `
     (max-width: 640px) 100vw,
     (max-width: 1024px) 100vw,
-    1280px
+    1536px
   `
     .trim()
     .replace(/\s+/g, " ");

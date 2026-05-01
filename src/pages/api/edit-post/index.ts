@@ -40,7 +40,17 @@ export const POST: APIRoute = async (context) => {
     ].filter(Boolean);
     const existingImageUrl = formData.get("existingImageUrl") as string;
     const imageAlt = (formData.get("imageAlt") as string) || title;
-    const uploadedImage = formData.get("uploadedImage") as File;
+    const uploadedImageRaw = formData.get("uploadedImage");
+    const uploadedImage =
+      uploadedImageRaw instanceof File && uploadedImageRaw.size > 0
+        ? uploadedImageRaw
+        : null;
+
+    const imageBlurhashParam = formData.get("imageBlurhash");
+    const imageBlurhash =
+      typeof imageBlurhashParam === "string" && imageBlurhashParam.trim() !== ""
+        ? imageBlurhashParam.trim()
+        : null;
 
     // Musiqi məlumatları
     const audioFileRaw = formData.get("audioFile");
@@ -1100,26 +1110,33 @@ export const POST: APIRoute = async (context) => {
     const featuredStatus = existingPost.featured || false;
 
     // Supabase-də postu yenilə
+    const updateData: Record<string, any> = {
+      slug: newSlug,
+      title,
+      description,
+      content: processedContent,
+      pub_date: pubDate,
+      author_id: user.id,
+      image_url: coverImageUrl || existingPost.image_url,
+      image_alt: imageAlt || title,
+      categories: categoriesData,
+      approved: approvedStatus,
+      featured: featuredStatus,
+      updated_at: new Date().toISOString(),
+      // Musiqi məlumatları - silindisə null, yoxsa mövcud dəyər
+      audio_url: removeAudio ? null : audioUrl || null,
+      audio_title: removeAudio ? null : audioTitleFinal || null,
+      audio_artist: removeAudio ? null : audioArtistFinal || null,
+    };
+
+    // Yeni cover yüklənibsə blurhash sütunu həmişə yenilənir (boş göndərilərisə köhnəsi silinmir — null yazılır)
+    if (uploadedImage) {
+      updateData.image_blurhash = imageBlurhash;
+    }
+
     const { data: updatedPost, error: updateError } = await supabase
       .from("posts")
-      .update({
-        slug: newSlug,
-        title,
-        description,
-        content: processedContent,
-        pub_date: pubDate,
-        author_id: user.id,
-        image_url: coverImageUrl || existingPost.image_url,
-        image_alt: imageAlt || title,
-        categories: categoriesData,
-        approved: approvedStatus,
-        featured: featuredStatus,
-        updated_at: new Date().toISOString(),
-        // Musiqi məlumatları - silindisə null, yoxsa mövcud dəyər
-        audio_url: removeAudio ? null : audioUrl || null,
-        audio_title: removeAudio ? null : audioTitleFinal || null,
-        audio_artist: removeAudio ? null : audioArtistFinal || null,
-      })
+      .update(updateData)
       .eq("slug", oldSlug)
       .select()
       .single();

@@ -3,6 +3,7 @@ import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor
 import { isSaveBtn } from "@/store/buttonStore";
 import { uploadTemporaryImages, uploadTemporaryAudio } from "@/lib/tiptap-utils";
 import { markdownToTiptap } from "@/utils/markdown-to-tiptap";
+import { generateBlurhashFromFile } from "@/utils/blurhash";
 import EditorActionButtons from "@/components/EditorActionButtons";
 
 // Global tip tanımlaması
@@ -23,6 +24,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
   const [title, setTitle] = useState(post.title || "");
   const [description, setDescription] = useState(post.description || "");
   const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImageBlurhash, setCoverImageBlurhash] = useState<string | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>(
     post.image?.url || ""
   );
@@ -147,10 +149,11 @@ export default function PostEditor({ post, content, slug, author }: any) {
   }, [content, title, description, isContentProcessed]);
 
   const handleCoverImageChange = useCallback(
-    (file: File | null, clearExisting?: boolean) => {
+    async (file: File | null, clearExisting?: boolean) => {
       console.log("handleCoverImageChange çağırıldı:", { file: file?.name, clearExisting });
       setCoverImage(file);
       if (!file) {
+        setCoverImageBlurhash(null);
         if (clearExisting) {
           // İstifadəçi şəkli sildi - existingImageUrl-i də sıfırla
           setExistingImageUrl("");
@@ -179,9 +182,18 @@ export default function PostEditor({ post, content, slug, author }: any) {
           return URL.createObjectURL(file);
         });
         console.log("Yeni cover image seçildi, existingImageUrl sıfırlandı");
+
+        // Yeni şəkil üçün blurhash generasiya et
+        try {
+          const blurhash = await generateBlurhashFromFile(file);
+          setCoverImageBlurhash(blurhash);
+        } catch (error) {
+          console.warn("Blurhash generasiya edilə bilmədi:", error);
+          setCoverImageBlurhash(null);
+        }
       }
     },
-    [] // Boş asılılıq array-i - ref istifadə etdiyimiz üçün asılılıq lazım deyil
+    []
   );
 
   const handleSave = useCallback(async () => {
@@ -339,6 +351,12 @@ export default function PostEditor({ post, content, slug, author }: any) {
           formData.append("uploadedImage", newFile);
           formData.append("image", `posts/${slug}/images/${imageFileName}`);
           formData.append("imageAlt", title);
+          const blurhashToSend =
+            await generateBlurhashFromFile(coverImage).catch(() => null);
+          if (blurhashToSend) {
+            formData.append("imageBlurhash", blurhashToSend);
+            setCoverImageBlurhash(blurhashToSend);
+          }
           console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
 
           // Revoke any object URLs to prevent memory leaks
