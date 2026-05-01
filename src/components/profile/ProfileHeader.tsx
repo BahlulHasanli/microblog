@@ -24,6 +24,7 @@ export default function ProfileHeader({
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User>(user);
   const [loading, setLoading] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Supabase'den kullanıcı bilgilerini al
@@ -59,6 +60,38 @@ export default function ProfileHeader({
 
   const handleUserUpdate = (updatedUser: User) => {
     setCurrentUser(updatedUser);
+  };
+
+  const handleBlockUser = async () => {
+    if (isBlocking || isOwner) return;
+
+    if (!confirm(`${currentUser.fullname} adlı istifadəçini bloklamaq istədiyinizə əminsiniz?`)) return;
+
+    setIsBlocking(true);
+    try {
+      const response = await fetch("/api/user/block", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          targetUserId: currentUser.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        window.location.href = '/';
+      } else {
+        alert(data.message || "Xəta baş verdi");
+      }
+    } catch (error) {
+      console.error("Block xətası:", error);
+      alert("Şəbəkə xətası baş verdi");
+    } finally {
+      setIsBlocking(false);
+    }
   };
 
   return (
@@ -153,6 +186,23 @@ export default function ProfileHeader({
                     />
                   </svg>
                   Redaktə et
+                </button>
+              )}
+
+              {!isOwner && (
+                <button
+                  onClick={handleBlockUser}
+                  disabled={isBlocking}
+                  className="px-4 py-2 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 cursor-pointer text-sm font-medium
+                        transition-colors duration-200 text-red-600 dark:text-red-400
+                        inline-flex items-center justify-center gap-2 self-center sm:self-start
+                        border border-red-200/80 hover:border-red-300 dark:border-red-800/50 dark:hover:border-red-700/50 disabled:opacity-50"
+                  title="İstifadəçini blokla"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  Blokla
                 </button>
               )}
             </div>

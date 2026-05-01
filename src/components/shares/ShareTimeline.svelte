@@ -54,12 +54,33 @@
     error = "";
 
     try {
+      // Get current user blocks
+      const { data: userData } = await supabase.auth.getUser();
+      const currentUserId = userData?.user?.id;
+      let blockedUserIds: string[] = [];
+
+      if (currentUserId) {
+        const { data: blocks } = await supabase
+          .from("user_blocks")
+          .select("blocker_id, blocked_id")
+          .or(`blocker_id.eq.${currentUserId},blocked_id.eq.${currentUserId}`);
+
+        if (blocks) {
+          blockedUserIds = blocks.map(b => b.blocker_id === currentUserId ? b.blocked_id : b.blocker_id);
+        }
+      }
+
       const currentOffset = isLoadMore ? offset : 0;
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from("shares")
         .select("*, share_likes(id, user_id)")
-        .order("created_at", { ascending: false })
-        .range(currentOffset, currentOffset + LIMIT - 1);
+        .order("created_at", { ascending: false });
+
+      if (blockedUserIds.length > 0) {
+        query = query.not("user_id", "in", `(${blockedUserIds.join(",")})`);
+      }
+
+      const { data, error: fetchError } = await query.range(currentOffset, currentOffset + LIMIT - 1);
 
       if (fetchError) {
         error = "Paylaşımlar yüklənərkən xəta: " + fetchError.message;
