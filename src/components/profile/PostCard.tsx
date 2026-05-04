@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { formatSimpleDate } from "@/utils/date";
+import { confirmDialog, alertDialog } from "@/dialogs";
 
 interface Post {
   id: string;
@@ -9,25 +11,83 @@ interface Post {
   created_at: string;
   categories?: string[];
   approved?: boolean;
+  isDraft?: boolean;
 }
 
 interface PostCardProps {
   post: Post;
   isOwner?: boolean;
   allCategories?: { slug: string; name: string }[];
+  onDeleted?: (slug: string) => void;
 }
 
 export default function PostCard({
   post,
   isOwner = false,
   allCategories = [],
+  onDeleted,
 }: PostCardProps) {
   const CATEGORIES = allCategories;
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const ok = await confirmDialog({
+      title: "Məqaləni sil?",
+      message:
+        "Bu əməliyyat geri alına bilməz. Yazı və əsas media faylları silinəcək.",
+      variant: "danger",
+      confirmLabel: "Sil",
+      cancelLabel: "Ləğv et",
+    });
+    if (!ok) return;
+    setDeleteLoading(true);
+    try {
+      const response = await fetch("/api/posts/delete-own", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: post.slug }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok)
+        throw new Error(data.message || "Silmə uğursuz oldu");
+      onDeleted?.(post.slug);
+    } catch (err) {
+      await alertDialog({
+        title: "Silmə alınmadı",
+        message: err instanceof Error ? err.message : "Silmə xətası",
+        variant: "danger",
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   return (
     <article className="group relative bg-white dark:bg-base-900 rounded-xl border border-base-100 dark:border-base-800 overflow-hidden hover:border-base-200 dark:hover:border-base-700 transition-colors duration-200">
-      {/* Gözləmə rejimi göstəricisi */}
-      {!post.approved && isOwner && (
-        <div className="absolute top-3 right-3 z-10 bg-amber-50 dark:bg-amber-900/20 text-rose-700 dark:text-rose-400 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-amber-200 dark:border-amber-900/50">
+      {post.isDraft && isOwner && (
+        <div className="absolute top-3 left-3 z-10 bg-violet-50 dark:bg-violet-950/35 text-violet-800 dark:text-violet-200 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-violet-200 dark:border-violet-800/50">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            className="size-3.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12h5.625a1.125 1.125 0 001.125-1.125V11.25a9 9 0 00-9-9m0 0V5.25A2.25 2.25 0 015.25 3h5.25m-5.25 0v12.75c0 .621.504 1.125 1.125 1.125h5.25a1.125 1.125 0 001.125-1.125V9.75a1.125 1.125 0 00-1.125-1.125H8.25z"
+            />
+          </svg>
+          Qaralama
+        </div>
+      )}
+
+      {!post.isDraft && !post.approved && isOwner && (
+        <div className="absolute top-3 left-3 z-10 bg-amber-50 dark:bg-amber-900/20 text-rose-700 dark:text-rose-400 px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-amber-200 dark:border-amber-900/50">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -46,18 +106,51 @@ export default function PostCard({
         </div>
       )}
 
+      {isOwner && (
+        <div className="absolute top-3 right-3 z-10 flex gap-2">
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleteLoading}
+            className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-medium px-2.5 py-1 rounded-lg shadow-sm"
+          >
+            {deleteLoading ? "…" : "Sil"}
+          </button>
+        </div>
+      )}
+
       <a
-        href={`/posts/${post.slug}`}
+        href={post.isDraft ? `/edit-post/${post.slug}` : `/posts/${post.slug}`}
         title={post.title}
         className="flex flex-row gap-4 p-3 sm:p-4"
       >
         {/* Thumbnail */}
         <div className="relative shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-base-100 dark:bg-base-800">
-          <img
-            src={post.image}
-            alt={post.title}
-            className="object-cover w-full h-full"
-          />
+          {post.image ? (
+            <img
+              src={post.image}
+              alt={post.title}
+              className="object-cover w-full h-full"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-base-400 dark:text-base-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="size-10 opacity-50"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3A1.5 1.5 0 001.5 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008H12V8.25z"
+                />
+              </svg>
+            </div>
+          )}
         </div>
 
         {/* Content */}

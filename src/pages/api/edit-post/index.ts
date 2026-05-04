@@ -15,14 +15,12 @@ export const POST: APIRoute = async (context) => {
 
     // Form verilerini al
     const formData = await context.request.formData();
+    const isDraft = formData.get("isDraft") === "true";
     const oldSlug = formData.get("slug")?.toString() || "";
     const title = formData.get("title")?.toString() || "";
 
-    // Yeni slug yaradırıq (başlıq dəyişibsə)
-    const newSlug = slugify(title);
-
     const description = formData.get("description") as string;
-    const content = formData.get("content") as string;
+    let content = formData.get("content") as string;
     // Kategorileri al ve virgülle ayrılmış stringleri ayır
     const categoriesRaw = formData
       .getAll("categories")
@@ -86,11 +84,11 @@ export const POST: APIRoute = async (context) => {
     }
 
     // Gerekli alanları kontrol et
-    if (!title || !content || !oldSlug) {
+    if (!oldSlug) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Başlık, içerik ve slug alanları zorunludur",
+          message: "Slug alanı zorunludur",
         }),
         {
           status: 400,
@@ -99,18 +97,38 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    if (categoriesData.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Ən azı bir bölmə seçilməlidir",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (!isDraft) {
+      if (!title.trim() || !content?.trim()) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Başlık, içerik alanları zorunludur",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (categoriesData.length === 0) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Ən azı bir bölmə seçilməlidir",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+    } else if (!String(content || "").trim()) {
+      content = " ";
     }
+
+    const titleForSlug = title.trim() || "Qaralama";
+    const newSlug = slugify(isDraft ? titleForSlug : title);
 
     // Supabase-dən mövcud postu yoxla
     const { data: existingPost, error: fetchError } = await supabase
@@ -1112,15 +1130,16 @@ export const POST: APIRoute = async (context) => {
     // Supabase-də postu yenilə
     const updateData: Record<string, any> = {
       slug: newSlug,
-      title,
+      title: title.trim() || titleForSlug,
       description,
       content: processedContent,
       pub_date: pubDate,
       image_url: coverImageUrl || existingPost.image_url,
-      image_alt: imageAlt || title,
-      categories: categoriesData,
+      image_alt: imageAlt || title || titleForSlug,
+      categories: categoriesData.length > 0 ? categoriesData : existingPost.categories || [],
       approved: approvedStatus,
       featured: featuredStatus,
+      is_draft: isDraft,
       updated_at: new Date().toISOString(),
       // Musiqi məlumatları - silindisə null, yoxsa mövcud dəyər
       audio_url: removeAudio ? null : audioUrl || null,

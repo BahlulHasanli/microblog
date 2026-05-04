@@ -12,6 +12,7 @@ export async function GET(context) {
     `,
     )
     .eq("approved", true)
+    .eq("is_draft", false)
     .order("pub_date", { ascending: false })
     .limit(50);
 

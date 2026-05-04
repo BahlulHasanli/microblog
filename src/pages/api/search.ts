@@ -55,6 +55,7 @@ export const GET: APIRoute = async (context) => {
         `
         )
         .eq("approved", true)
+        .eq("is_draft", false)
         .or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`)
         .order("pub_date", { ascending: false })
         .limit(limit);

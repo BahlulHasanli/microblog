@@ -196,39 +196,49 @@ export default function PostEditor({ post, content, slug, author }: any) {
     []
   );
 
-  const handleSave = useCallback(async () => {
+  const performSave = useCallback(
+    async (asDraft: boolean) => {
     setErrorMessage(null);
-    
-    if (!title.trim()) {
-      const errMsg = "Başlık alanı zorunludur";
-      console.error(errMsg);
-      setErrorMessage(errMsg);
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-      return;
-    }
 
-    if (!editorContent) {
-      const errMsg = "İçerik alanı zorunludur";
-      console.error(errMsg);
-      setErrorMessage(errMsg);
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-      return;
-    }
+    if (!asDraft) {
+      if (!title.trim()) {
+        const errMsg = "Başlık alanı zorunludur";
+        console.error(errMsg);
+        setErrorMessage(errMsg);
+        setSaveStatus("error");
+        setTimeout(() => setSaveStatus("idle"), 3000);
+        return;
+      }
 
-    if (selectedCategories.length === 0) {
-      const errMsg = "Ən azı bir bölmə seçilməlidir";
-      console.error(errMsg);
-      setErrorMessage(errMsg);
-      setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
-      return;
-    }
+      if (!editorContent) {
+        const errMsg = "İçerik alanı zorunludur";
+        console.error(errMsg);
+        setErrorMessage(errMsg);
+        setSaveStatus("error");
+        setTimeout(() => setSaveStatus("idle"), 3000);
+        return;
+      }
 
-    if (!coverImage && !existingImageUrl) {
-      const errMsg = "Kapak şəkli zorunludur";
-      console.error(errMsg);
+      if (selectedCategories.length === 0) {
+        const errMsg = "Ən azı bir bölmə seçilməlidir";
+        console.error(errMsg);
+        setErrorMessage(errMsg);
+        setSaveStatus("error");
+        setTimeout(() => setSaveStatus("idle"), 3000);
+        return;
+      }
+
+      if (!coverImage && !existingImageUrl) {
+        const errMsg = "Kapak şəkli zorunludur";
+        console.error(errMsg);
+        setErrorMessage(errMsg);
+        setSaveStatus("error");
+        setTimeout(() => setSaveStatus("idle"), 3000);
+        return;
+      }
+    } else if (!title.trim() && !editorContent) {
+      const errMsg =
+        "Qaralama üçün ən azı başlıq və ya məzmun əlavə edin";
       setErrorMessage(errMsg);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
@@ -253,8 +263,13 @@ export default function PostEditor({ post, content, slug, author }: any) {
         imageIdMapData = Object.fromEntries(window._imageIdMap.entries());
       }
 
+      const docForUpload = editorContent ?? {
+        type: "doc",
+        content: [{ type: "paragraph" }],
+      };
+
       const updatedContent = await uploadTemporaryImages(
-        editorContent,
+        docForUpload,
         (current, total) => {
           console.log(`Resim yükleniyor: ${current}/${total}`);
         }
@@ -309,6 +324,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
       formData.append("title", title);
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
+      formData.append("isDraft", asDraft ? "true" : "false");
 
       // Resim ID'lerini JSON olarak ekle
       if (Object.keys(imageIdMapData).length > 0) {
@@ -422,17 +438,22 @@ export default function PostEditor({ post, content, slug, author }: any) {
         throw new Error(data.message || "Güncelleme işlemi başarısız oldu");
       }
 
-      // Başarılı kaydetme
+      // Başarılı güncelleme
       console.log("Post başarıyla güncellendi", data);
 
       setSaveStatus("success");
 
-      // Başarılı güncelleme sonrası post sayfasına yönlendir
-      // Əgər slug dəyişibsə, yeni slug-a yönləndir
       const finalSlug = data.slug || slug;
 
-      // Dərhal redirect et
-      window.location.href = `/posts/${finalSlug}`;
+      if (asDraft) {
+        if (finalSlug !== slug) {
+          window.location.replace(`/edit-post/${finalSlug}`);
+        } else {
+          setTimeout(() => setSaveStatus("idle"), 2000);
+        }
+      } else {
+        window.location.href = `/posts/${finalSlug}`;
+      }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : "Güncelleme hatası";
       console.error("Güncelleme hatası:", error);
@@ -442,7 +463,8 @@ export default function PostEditor({ post, content, slug, author }: any) {
     } finally {
       setIsSaving(false);
     }
-  }, [
+  },
+    [
     title,
     editorContent,
     selectedCategories,
@@ -453,7 +475,11 @@ export default function PostEditor({ post, content, slug, author }: any) {
     audioTitle,
     audioArtist,
     coverImagePreview,
-  ]);
+  ]
+  );
+
+  const handleSave = useCallback(() => performSave(false), [performSave]);
+  const handleSaveDraft = useCallback(() => performSave(true), [performSave]);
 
   /**
    * Tiptap JSON içeriğini Markdown formatına dönüştürür
@@ -769,6 +795,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
     isSaveBtn.set({
       isView: true,
       handleSave,
+      handleSaveDraft,
       isSaving,
       editorContent,
       title,
@@ -781,6 +808,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
     });
   }, [
     handleSave,
+    handleSaveDraft,
     editorContent,
     title,
     isSaving,

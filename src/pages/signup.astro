@@ -165,6 +165,18 @@ if (!enableRegistration) {
             import.meta.env.PUBLIC_SUPABASE_KEY
         );
 
+        /** @param {string} message */
+        async function showSignupAlert(message) {
+            const dlg = window.microblogDialogs?.alert;
+            if (dlg) {
+                await dlg({
+                    title: 'Qeydiyyat',
+                    message,
+                    variant: 'danger',
+                });
+            } else alert(message);
+        }
+
         document.getElementById('googleSignupBtn')?.addEventListener('click', async () => {
             const btn = document.getElementById('googleSignupBtn') as HTMLButtonElement;
             
@@ -182,12 +194,12 @@ if (!enableRegistration) {
                 });
 
                 if (error) {
-                    alert(error.message || 'Google ilə qeydiyyat xətası');
+                    await showSignupAlert(error.message || 'Google ilə qeydiyyat xətası');
                     btn.disabled = false;
                 }
             } catch (error) {
                 console.error('Google signup error:', error);
-                alert('Şəbəkə xətası baş verdi');
+                await showSignupAlert('Şəbəkə xətası baş verdi');
                 btn.disabled = false;
             }
         });
@@ -209,12 +221,12 @@ if (!enableRegistration) {
                 });
 
                 if (error) {
-                    alert(error.message || 'Apple ilə qeydiyyat xətası');
+                    await showSignupAlert(error.message || 'Apple ilə qeydiyyat xətası');
                     btn.disabled = false;
                 }
             } catch (error) {
                 console.error('Apple signup error:', error);
-                alert('Şəbəkə xətası baş verdi');
+                await showSignupAlert('Şəbəkə xətası baş verdi');
                 btn.disabled = false;
             }
         });

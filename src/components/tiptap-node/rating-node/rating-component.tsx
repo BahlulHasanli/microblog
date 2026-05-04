@@ -1,5 +1,6 @@
 import { NodeViewWrapper } from "@tiptap/react";
 import { useState } from "react";
+import { alertDialog } from "@/dialogs";
 
 export default function RatingComponent({
   node,
@@ -9,13 +10,17 @@ export default function RatingComponent({
   const [isEditing, setIsEditing] = useState(!node.attrs.score);
   const [score, setScore] = useState(node.attrs.score || "");
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const numericScore = parseFloat(score);
     if (numericScore >= 0 && numericScore <= 10) {
       updateAttributes({ score: numericScore });
       setIsEditing(false);
     } else {
-      alert("Xal 0 ilə 10 arasında olmalıdır");
+      await alertDialog({
+        title: "Etibarsız bal",
+        message: "Xal 0 ilə 10 arasında olmalıdır.",
+        variant: "info",
+      });
     }
   };
 

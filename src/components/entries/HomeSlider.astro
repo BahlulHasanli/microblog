@@ -13,6 +13,7 @@ const { data: featuredPostsData, error } = await supabase
   `)
   .eq("featured", true)
   .eq("approved", true)
+  .eq("is_draft", false)
   .order("pub_date", { ascending: false })
   .limit(1);
 

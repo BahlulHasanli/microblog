@@ -47,6 +47,7 @@ for (const filterSlug of slugsToFilter) {
       users:author_id (avatar, fullname, username)
     `)
     .eq("approved", true)
+    .eq("is_draft", false)
     .filter("categories", "cs", `["${filterSlug}"]`)
     .order("pub_date", { ascending: false });
 

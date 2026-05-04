@@ -23,6 +23,7 @@ export const GET: APIRoute = async () => {
     .from("posts")
     .select("slug, pub_date, updated_at")
     .eq("approved", true)
+    .eq("is_draft", false)
     .order("pub_date", { ascending: false });
 
   // Bölmələrı al

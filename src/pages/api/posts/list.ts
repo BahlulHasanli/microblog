@@ -29,7 +29,8 @@ export const GET: APIRoute = async ({ request }) => {
     const { count, error: countError } = await supabase
       .from("posts")
       .select("*", { count: "exact", head: true })
-      .eq("approved", true);
+      .eq("approved", true)
+      .eq("is_draft", false);
 
     if (countError) {
       return new Response(
@@ -48,6 +49,7 @@ export const GET: APIRoute = async ({ request }) => {
       `
       )
       .eq("approved", true)
+      .eq("is_draft", false)
       .order("pub_date", { ascending: false })
       .range(offset, offset + limit - 1);
 

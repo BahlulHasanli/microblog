@@ -54,26 +54,35 @@ if (postsError) {
   console.error('Postlar yüklənərkən xəta:', postsError);
 }
 
-// Postları filtrləmə: sahibi olarsa bütün postları göstər, əks halda yalnız təsdiqlənmiş postları
-const filteredPostsData = (postsData || []).filter(post => {
-  if (isOwner) {
-    // Sahibi olarsa bütün postları göstər
-    return true;
-  }
-  // Başqaları olarsa yalnız təsdiqlənmiş postları göstər
+// Məqalələr: qaralama deyil; qonaq üçün yalnız təsdiqlənmiş, sahib üçün həm gözləmədə olanlar
+const publishedPostsData = (postsData || []).filter((post) => {
+  if (post.is_draft === true) return false;
+  if (isOwner) return true;
   return post.approved === true;
 });
 
-const posts = filteredPostsData.map(post => ({
+// Qaralama: yalnız profil sahibinə (client və server tərəfdə tək mənbə)
+const draftPostsData = isOwner
+  ? (postsData || []).filter((post) => post.is_draft === true)
+  : [];
+
+const mapPostRow = (
+  post: (typeof postsData)[number],
+  opts: { isDraft: boolean },
+) => ({
   id: post.id,
   title: post.title,
   description: post.description,
   slug: post.slug,
-  image: post.image_url || '',
+  image: post.image_url || "",
   created_at: formatISO(post.pub_date),
   categories: post.categories || [],
-  approved: post.approved || false
-}));
+  approved: post.approved || false,
+  isDraft: opts.isDraft,
+});
+
+const posts = publishedPostsData.map((post) => mapPostRow(post, { isDraft: false }));
+const draftPosts = draftPostsData.map((post) => mapPostRow(post, { isDraft: true }));
 ---
 
 <BaseLayout>
@@ -86,7 +95,8 @@ const posts = filteredPostsData.map(post => ({
     
     <ProfileTabs 
       client:load 
-      posts={posts || []} 
+      posts={posts || []}
+      draftPosts={draftPosts}
       userId={user.id}
       isOwner={isOwner}
       currentUserId={currentUser?.id}

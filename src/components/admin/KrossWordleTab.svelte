@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { confirmDialog } from '@/dialogs';
 
   const GRID_SIZE = 7;
   const WEEKDAYS = ['B.e.', 'Ç.a.', 'Ç.', 'C.a.', 'C.', 'Ş.', 'B.'];
@@ -333,7 +334,14 @@
 
   async function deleteLevel(level: LevelData) {
     if (!level.id) return;
-    if (!confirm(`${level.play_date} tarixindəki level silinsin?`)) return;
+    const ok = await confirmDialog({
+      title: 'Level silinsin?',
+      message: `${level.play_date} tarixindəki level silinsin?`,
+      confirmLabel: 'Sil',
+      cancelLabel: 'Ləğv et',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       const response = await fetch('/api/krosswordle/levels', {
         method: 'DELETE',
@@ -397,8 +405,14 @@
       showMessage('Gələcək günlər üçün boş gün yoxdur!', 'success');
       return;
     }
-    if (!confirm(`${emptyDates.length} boş gün üçün (bu gündən etibarən) AI ilə level yaradılsın?`)) return;
-
+    const okBulk = await confirmDialog({
+      title: 'AI ilə toplu yaradılma',
+      message: `${emptyDates.length} boş gün üçün (bu gündən etibarən) AI ilə level yaradılsın?`,
+      confirmLabel: 'Yarat',
+      cancelLabel: 'Ləğv et',
+      variant: 'neutral',
+    });
+    if (!okBulk) return;
     isBulkGenerating = true;
     bulkTotal = emptyDates.length;
     bulkProgress = 0;

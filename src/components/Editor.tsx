@@ -403,26 +403,32 @@ export default function Editor({ author }: EditorProps) {
     }
   }, []);
 
-  const handleSave = useCallback(async () => {
+  const performSave = useCallback(
+    async (asDraft: boolean) => {
     setErrorMessage(null);
 
-    if (!title.trim()) {
-      setError("Başlıq sahəsi mütləqdir");
-      return;
-    }
+    if (!asDraft) {
+      if (!title.trim()) {
+        setError("Başlıq sahəsi mütləqdir");
+        return;
+      }
 
-    if (!editorContent) {
-      setError("Məzmun sahəsi mütləqdir");
-      return;
-    }
+      if (!editorContent) {
+        setError("Məzmun sahəsi mütləqdir");
+        return;
+      }
 
-    if (selectedCategories.length === 0) {
-      setError("Ən azı bir bölmə seçilməlidir");
-      return;
-    }
+      if (selectedCategories.length === 0) {
+        setError("Ən azı bir bölmə seçilməlidir");
+        return;
+      }
 
-    if (!coverImage) {
-      setError("Örtük şəkli mütləqdir");
+      if (!coverImage) {
+        setError("Örtük şəkli mütləqdir");
+        return;
+      }
+    } else if (!title.trim() && !editorContent) {
+      setError("Qaralama üçün ən azı başlıq və ya məzmun əlavə edin");
       return;
     }
 
@@ -430,8 +436,13 @@ export default function Editor({ author }: EditorProps) {
     setSaveStatus("saving");
 
     try {
+      const docForUpload = (editorContent ?? {
+        type: "doc",
+        content: [{ type: "paragraph" }],
+      }) as EditorJSON;
+
       const updatedContent = (await uploadTemporaryImages(
-        editorContent,
+        docForUpload,
         (current, total) => {
           console.log(`Resim yükleniyor: ${current}/${total}`);
         },
@@ -466,22 +477,26 @@ export default function Editor({ author }: EditorProps) {
       formData.append("author.username", author?.username ?? "");
       formData.append("description", descriptionValue);
       formData.append("content", markdownContent);
+      formData.append("isDraft", asDraft ? "true" : "false");
       selectedCategories.forEach((category) => {
         formData.append("categories", category);
       });
 
-      const slug = slugify(title);
-      const fileExtension = coverImage.name.split(".").pop() || "jpg";
-      const imageFileName = `${slug}-cover.${fileExtension}`;
+      const slug = slugify(title.trim() || "qaralama");
 
-      const newFile = new File([coverImage], imageFileName, {
-        type: coverImage.type,
-      });
-      formData.append("uploadedImage", newFile);
-      formData.append("image", `posts/${slug}/images/${imageFileName}`);
-      formData.append("imageAlt", title);
-      if (coverImageBlurhash) {
-        formData.append("imageBlurhash", coverImageBlurhash);
+      if (coverImage) {
+        const fileExtension = coverImage.name.split(".").pop() || "jpg";
+        const imageFileName = `${slug}-cover.${fileExtension}`;
+
+        const newFile = new File([coverImage], imageFileName, {
+          type: coverImage.type,
+        });
+        formData.append("uploadedImage", newFile);
+        formData.append("image", `posts/${slug}/images/${imageFileName}`);
+        formData.append("imageAlt", title);
+        if (coverImageBlurhash) {
+          formData.append("imageBlurhash", coverImageBlurhash);
+        }
       }
 
       if (audioFile) {
@@ -506,14 +521,20 @@ export default function Editor({ author }: EditorProps) {
       }
 
       setSaveStatus("success");
-      showSuccessNotification("Post gözləmə rejimində yadda saxlanıldı");
+      showSuccessNotification(
+        asDraft
+          ? "Qaralama yadda saxlanıldı"
+          : "Post gözləmə rejimində yadda saxlanıldı",
+      );
 
       setTimeout(() => {
         setSaveStatus("idle");
         if (data.slug) {
-          window.location.href = `/posts/${data.slug}`;
+          window.location.href = asDraft
+            ? `/edit-post/${data.slug}`
+            : `/posts/${data.slug}`;
         }
-      }, 2000);
+      }, asDraft ? 800 : 2000);
     } catch (error) {
       const errMsg =
         error instanceof Error ? error.message : "Yaddaşa yazma xətası";
@@ -522,24 +543,30 @@ export default function Editor({ author }: EditorProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    title,
-    editorContent,
-    selectedCategories,
-    coverImage,
-    coverImageBlurhash,
-    description,
-    audioFile,
-    audioTitle,
-    audioArtist,
-    author,
-    setError,
-  ]);
+  },
+    [
+      title,
+      editorContent,
+      selectedCategories,
+      coverImage,
+      coverImageBlurhash,
+      description,
+      audioFile,
+      audioTitle,
+      audioArtist,
+      author,
+      setError,
+    ],
+  );
+
+  const handleSave = useCallback(() => performSave(false), [performSave]);
+  const handleSaveDraft = useCallback(() => performSave(true), [performSave]);
 
   useEffect(() => {
     isSaveBtn.set({
       isView: true,
       handleSave,
+      handleSaveDraft,
       isSaving,
       editorContent,
       title,
@@ -552,6 +579,7 @@ export default function Editor({ author }: EditorProps) {
     });
   }, [
     handleSave,
+    handleSaveDraft,
     editorContent,
     title,
     isSaving,
@@ -566,6 +594,7 @@ export default function Editor({ author }: EditorProps) {
       isSaveBtn.set({
         isView: false,
         handleSave: null,
+        handleSaveDraft: null,
         isSaving: false,
         editorContent: null,
         title: "",

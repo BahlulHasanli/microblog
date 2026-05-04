@@ -36,7 +36,7 @@ export const GET: APIRoute = async (context) => {
 
     // Filtrələ
     if (filter === "pending") {
-      query = query.eq("approved", false);
+      query = query.eq("approved", false).eq("is_draft", false);
     } else if (filter === "approved") {
       query = query.eq("approved", true);
     }

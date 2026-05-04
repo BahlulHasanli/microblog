@@ -4,6 +4,7 @@ import { userAvatar } from "@/store/userStore";
 import { useStore } from "@nanostores/react";
 import { supabase } from "@/db/supabase";
 import { navigate } from "astro:transitions/client";
+import { alertDialog } from "@/dialogs";
 import { slugifyCategory } from "@/utils/slugify-category";
 
 interface ProfileDropdownProps {
@@ -123,10 +124,17 @@ export default function ProfileDropdown({
       if (response.ok) {
         navigate("/");
       } else {
-        alert("Çıxış zamanı xəta baş verdi");
+        void alertDialog({
+          title: "Çıxış xətası",
+          message: "Çıxış zamanı xəta baş verdi.",
+          variant: "danger",
+        });
       }
     } catch (error) {
-      alert("Şəbəkə xətası baş verdi");
+      void alertDialog({
+        title: "Şəbəkə xətası",
+        variant: "danger",
+      });
     }
   };
 

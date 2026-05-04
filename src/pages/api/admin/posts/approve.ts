@@ -31,6 +31,10 @@ export const POST: APIRoute = async (context) => {
       updated_at: new Date().toISOString(),
     };
 
+    if (approve !== false) {
+      updateData.is_draft = false;
+    }
+
     // Yayımdan çıxardıqda featured də false olsun
     if (approve === false) {
       updateData.featured = false;

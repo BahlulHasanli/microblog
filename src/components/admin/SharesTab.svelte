@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { alertDialog } from '@/dialogs';
 
   interface Share {
     id: number;
@@ -86,11 +87,19 @@
         
         closeDeleteConfirm();
       } else {
-        alert('Silmə xətası: ' + (data.message || 'Bilinməyən xəta'));
+        await alertDialog({
+          title: 'Silmə xətası',
+          message: data.message || 'Bilinməyən xəta',
+          variant: 'danger',
+        });
       }
     } catch (err) {
       console.error('Paylaşım silərkən xəta:', err);
-      alert('Silmə xətası baş verdi');
+      await alertDialog({
+        title: 'Silmə xətası',
+        message: 'Xəta baş verdi.',
+        variant: 'danger',
+      });
     } finally {
       deleteLoading = false;
     }

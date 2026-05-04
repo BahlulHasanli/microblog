@@ -54,6 +54,7 @@ export async function buildWriterAnalyticsData(
     .select(
       "id, slug, title, approved, pub_date, content, categories, author_id",
     )
+    .eq("is_draft", false)
     .order("pub_date", { ascending: false });
 
   if (!isSite) {
@@ -376,6 +377,7 @@ export async function buildAdminAnalyticsOverview(): Promise<AdminAnalyticsOverv
   const { data: postsRaw, error: postsError } = await supabaseAdmin
     .from("posts")
     .select("id, slug, author_id")
+    .eq("is_draft", false)
     .order("pub_date", { ascending: false });
 
   if (postsError) {

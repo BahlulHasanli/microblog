@@ -14,6 +14,7 @@ interface Post {
   created_at: string;
   categories?: string[];
   approved?: boolean;
+  isDraft?: boolean;
 }
 
 interface Share {
@@ -30,6 +31,7 @@ interface Share {
 
 interface ProfileTabsProps {
   posts: Post[];
+  draftPosts?: Post[];
   userId: string;
   isOwner?: boolean;
   currentUserId?: string;
@@ -37,11 +39,29 @@ interface ProfileTabsProps {
 
 export default function ProfileTabs({
   posts,
+  draftPosts = [],
   userId,
   isOwner = false,
   currentUserId,
 }: ProfileTabsProps) {
-  const [activeTab, setActiveTab] = useState("shares");
+  type TabId = "shares" | "posts" | "drafts";
+  const [activeTab, setActiveTab] = useState<TabId>("shares");
+  const [ownedPosts, setOwnedPosts] = useState(posts);
+  const [ownedDraftPosts, setOwnedDraftPosts] = useState(draftPosts);
+
+  useEffect(() => {
+    setOwnedPosts(posts);
+  }, [posts]);
+
+  useEffect(() => {
+    setOwnedDraftPosts(draftPosts);
+  }, [draftPosts]);
+
+  useEffect(() => {
+    if (!isOwner && activeTab === "drafts") {
+      setActiveTab("shares");
+    }
+  }, [isOwner, activeTab]);
   const [shares, setShares] = useState<Share[]>([]);
   const [sharesLoading, setSharesLoading] = useState(true);
   const [sharesLoadingMore, setSharesLoadingMore] = useState(false);
@@ -57,19 +77,26 @@ export default function ProfileTabs({
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const sharesTabRef = useRef<HTMLButtonElement>(null);
   const postsTabRef = useRef<HTMLButtonElement>(null);
+  const draftsTabRef = useRef<HTMLButtonElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   useEffect(() => {
-    const activeRef = activeTab === "shares" ? sharesTabRef : postsTabRef;
-    if (activeRef.current && tabsContainerRef.current) {
+    const activeEl =
+      activeTab === "shares"
+        ? sharesTabRef.current
+        : activeTab === "posts"
+          ? postsTabRef.current
+          : draftsTabRef.current;
+
+    if (activeEl && tabsContainerRef.current) {
       const containerRect = tabsContainerRef.current.getBoundingClientRect();
-      const tabRect = activeRef.current.getBoundingClientRect();
+      const tabRect = activeEl.getBoundingClientRect();
       setIndicatorStyle({
         left: tabRect.left - containerRect.left,
         width: tabRect.width,
       });
     }
-  }, [activeTab]);
+  }, [activeTab, isOwner]);
 
   // Fetch categories
   useEffect(() => {
@@ -205,7 +232,7 @@ export default function ProfileTabs({
       {/* Tabs */}
       <div
         ref={tabsContainerRef}
-        className="relative bg-white dark:bg-base-900 rounded-2xl border border-slate-100 dark:border-base-800 p-1.5 mb-6 sm:mb-8 inline-flex gap-1"
+        className="relative bg-white dark:bg-base-900 rounded-2xl border border-slate-100 dark:border-base-800 p-1.5 mb-6 sm:mb-8 inline-flex flex-wrap gap-1 max-w-full"
       >
         {/* Sliding indicator */}
         <div
@@ -283,10 +310,52 @@ export default function ProfileTabs({
                 activeTab === "posts" ? "bg-white/20" : "bg-base-100 dark:bg-base-800 dark:text-base-300"
               }`}
             >
-              {posts.length}
+              {ownedPosts.length}
             </span>
           </span>
         </button>
+
+        {/* Qaralama — yalnız profil sahibinə görünür */}
+        {isOwner && (
+          <button
+            ref={draftsTabRef}
+            type="button"
+            onClick={() => setActiveTab("drafts")}
+            className={`relative z-10 cursor-pointer py-2.5 px-4 sm:px-5 rounded-xl font-medium text-sm transition-colors duration-200 ${
+              activeTab === "drafts"
+                ? "text-white"
+                : "text-base-500 dark:text-base-400 hover:text-base-700 dark:hover:text-base-200 hover:bg-base-50 dark:hover:bg-base-800"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-5"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9z"
+                />
+              </svg>
+              Qaralama
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded-md font-semibold transition-colors duration-200 ${
+                  activeTab === "drafts"
+                    ? "bg-white/20"
+                    : "bg-base-100 dark:bg-base-800 dark:text-base-300"
+                }`}
+              >
+                {ownedDraftPosts.length}
+              </span>
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -366,14 +435,19 @@ export default function ProfileTabs({
         {/* Posts Tab Content */}
         {activeTab === "posts" && (
           <div>
-            {posts.length > 0 ? (
+            {ownedPosts.length > 0 ? (
               <div className="flex flex-col gap-3">
-                {posts.map((post) => (
+                {ownedPosts.map((post) => (
                   <PostCard
                     key={post.id}
                     post={post}
                     isOwner={isOwner}
                     allCategories={categories}
+                    onDeleted={(slugRemoved) =>
+                      setOwnedPosts((prev) =>
+                        prev.filter((p) => p.slug !== slugRemoved),
+                      )
+                    }
                   />
                 ))}
               </div>
@@ -450,6 +524,64 @@ export default function ProfileTabs({
                   <p className="text-base-600 dark:text-base-400">
                     Bu istifadəçi hələ heç bir məqalə yazmamışdır
                   </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Qaralama tab — yalnız sahib */}
+        {activeTab === "drafts" && isOwner && (
+          <div>
+            {ownedDraftPosts.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {ownedDraftPosts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    isOwner={isOwner}
+                    allCategories={categories}
+                    onDeleted={(slugRemoved) =>
+                      setOwnedDraftPosts((prev) =>
+                        prev.filter((p) => p.slug !== slugRemoved),
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-base-900 rounded-2xl border border-slate-100 dark:border-base-800 p-12 text-center">
+                <div className="max-w-sm mx-auto">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-50 dark:bg-violet-950/30 mb-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-7 text-violet-500 dark:text-violet-400"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-base-50 mb-2">
+                    Hələ qaralama yoxdur
+                  </h3>
+                  <p className="text-slate-600 dark:text-base-400 text-[14px] mb-6">
+                    Yeni qaralama yaratmaq üçün Studiyaya keçin — məqaləni qaralama
+                    kimi saxlaya bilərsiniz.
+                  </p>
+                  <a
+                    href="/studio"
+                    className="inline-flex items-center justify-center gap-2 py-3 px-6 text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 rounded-xl border border-transparent focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors duration-200"
+                  >
+                    Studiyaya keç
+                  </a>
                 </div>
               </div>
             )}

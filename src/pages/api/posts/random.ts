@@ -7,6 +7,7 @@ export const GET: APIRoute = async () => {
       .from("posts")
       .select("slug")
       .eq("approved", true)
+      .eq("is_draft", false)
       .order("pub_date", { ascending: false });
 
     if (error || !posts || posts.length === 0) {

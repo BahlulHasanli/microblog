@@ -46,3 +46,10 @@ declare namespace App {
     };
   }
 }
+
+interface Window {
+  microblogDialogs?: {
+    confirm: (opts: import("@/dialogs").ConfirmDialogOptions) => Promise<boolean>;
+    alert: (opts: import("@/dialogs").AlertDialogOptions) => Promise<void>;
+  };
+}

@@ -102,6 +102,7 @@ const { data: postsData, error: postsError } = await supabase
     users:author_id (avatar, fullname, username)
   `)
   .eq("approved", true)
+  .eq("is_draft", false)
   .order("pub_date", { ascending: false })
   .range(0, postsPerPage - 1);
 

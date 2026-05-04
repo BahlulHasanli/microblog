@@ -86,6 +86,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 
 import { supabase } from "@/db/supabase";
 import { AudioButton } from "@/components/tiptap-ui/audio-button";
+import { alertDialog } from "@/dialogs";
 
 declare global {
   interface Window {
@@ -119,9 +120,12 @@ const YoutubeButton = ({ editor }: YoutubeButtonProps) => {
       });
     } catch (error) {
       console.error("YouTube video ekleme hatası:", error);
-      window.alert(
-        "YouTube video əlavə edilərkən xəta baş verdi. Lütfən konsolu yoxlayın.",
-      );
+      void alertDialog({
+        title: "YouTube xətası",
+        message:
+          "YouTube video əlavə edilərkən xəta baş verdi. Konsolu yoxlayın.",
+        variant: "danger",
+      });
     }
   }, [editor]);
 
@@ -762,7 +766,11 @@ export function SimpleEditor({
 
       if (!isAudio) {
         console.warn("SimpleEditor: Seçilən fayl audio deyil:", file.type);
-        window.alert("Yalnız audio faylları seçilə bilər.");
+        void alertDialog({
+          title: "Fayl növü",
+          message: "Yalnız audio faylları seçilə bilər.",
+          variant: "info",
+        });
         return;
       }
 

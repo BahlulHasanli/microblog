@@ -16,9 +16,10 @@ export const POST: APIRoute = async (context) => {
 
     // Form verilerini al
     const formData = await context.request.formData();
+    const isDraft = formData.get("isDraft") === "true";
     const title = formData.get("title")?.toString() || "";
     const description = formData.get("description")?.toString() || "";
-    const content = formData.get("content")?.toString() || "";
+    let content = formData.get("content")?.toString() || "";
 
     const categoriesRaw = formData
       .getAll("categories")
@@ -33,6 +34,47 @@ export const POST: APIRoute = async (context) => {
         ),
       ),
     ].filter(Boolean);
+
+    const titleTrim = title.trim();
+    const effectiveTitle = titleTrim || "Qaralama";
+
+    if (!isDraft) {
+      if (!titleTrim || !content.trim()) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Başlıq və mətn boş olmalı deyil",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      if (categoriesData.length === 0) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            message: "Ən azı bir bölmə seçilməlidir",
+          }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+    } else {
+      if (!content.trim()) {
+        content = " ";
+      }
+    }
+
+    const insertTitle = isDraft ? effectiveTitle : titleTrim;
+    const slugBase = slugify(insertTitle);
+    const slug = isDraft
+      ? `${slugBase}-${Date.now().toString(36)}`
+      : slugBase;
 
     const imageAltFromForm = formData.get("imageAlt")?.toString();
 
@@ -49,35 +91,7 @@ export const POST: APIRoute = async (context) => {
         ? imageAltFromForm
         : "";
 
-    if (!title || !content) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Başlıq və mətn boş olmalı deyil",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
-    if (categoriesData.length === 0) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "Ən azı bir bölmə seçilməlidir",
-        }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-    }
-
     const pubDate = new Date().toISOString();
-
-    const slug = slugify(title);
 
     let coverImageUrl = "";
 
@@ -189,6 +203,19 @@ export const POST: APIRoute = async (context) => {
       }
     }
 
+    if (!isDraft && !coverImageUrl) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Örtük şəkli mütləqdir",
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     // Musiqi faylını BunnyCDN-ə yüklə
     let audioUrl = "";
     if (audioFile) {
@@ -284,17 +311,18 @@ export const POST: APIRoute = async (context) => {
       .from("posts")
       .insert({
         slug,
-        title,
+        title: insertTitle,
         description,
         content: processedContent,
         pub_date: pubDate,
         author_id: user.id,
         image_url: coverImageUrl || null,
-        image_alt: imageAlt || title,
+        image_alt: imageAlt || insertTitle,
         image_blurhash: imageBlurhash,
         categories: categoriesData,
         approved: false,
         featured: false,
+        is_draft: isDraft,
         // Musiqi məlumatları
         audio_url: audioUrl || null,
         audio_title: audioTitle || null,
@@ -321,7 +349,9 @@ export const POST: APIRoute = async (context) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Gönderi başarıyla oluşturuldu və admin təsdiqi gözləyir",
+        message: isDraft
+          ? "Qaralama yadda saxlanıldı"
+          : "Gönderi başarıyla oluşturuldu və admin təsdiqi gözləyir",
         slug,
         post: newPost,
       }),
