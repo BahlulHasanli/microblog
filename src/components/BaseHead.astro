@@ -3,6 +3,7 @@ import "../styles/global.css";
 import { SEO } from "astro-seo";
 import { ClientRouter } from "astro:transitions";
 import { supabase } from "@/db/supabase";
+import { toOpenGraphImageUrl } from "@/utils/image-optimizer";
 
 export interface Props {
   title?: string;
@@ -52,10 +53,10 @@ const canonical =
     ? canonicalProp.trim()
     : new URL(Astro.url.pathname, siteBase).href;
 
-// Sosial şəbəkə scraper-ləri (Facebook, Twitter, WhatsApp) 302 redirect-i
-// og:image kimi qəbul etmir. `/api/image-optimize?url=...` endpoint-i redirect
-// qaytardığı üçün, həmin URL-dən `url` parametrini çıxarıb birbaşa CDN URL-inə
-// çeviririk.
+// Sosial şəbəkə scraper-ləri üçün: əvvəl `/api/image-optimize` qabığı varsa, daxildəki
+// birbaşa şəkil URL-ini çıxarırıq (müxtəlif hallarda tutarlılıq üçün).
+// WebP CDN faylları isə OG/Twitter üçün ayrıca JPEG endpoint-ə yönləndirilir
+// (`toOpenGraphImageUrl`).
 function resolveOgImage(raw: string): string {
   try {
     const parsed = new URL(raw, siteBase);
@@ -69,13 +70,16 @@ function resolveOgImage(raw: string): string {
   }
 }
 
-const defaultOgImage = resolveOgImage(
-  settings.og_image || `${new URL("/", siteBase).origin}/og-image.jpg`,
+const siteOrigin = new URL(siteBase).origin;
+
+const defaultResolved = resolveOgImage(
+  settings.og_image || `${siteOrigin}/og-image.jpg`,
 );
-const image =
+const resolvedOgSource =
   typeof imageProp === "string" && imageProp.trim()
     ? resolveOgImage(imageProp.trim())
-    : defaultOgImage;
+    : defaultResolved;
+const image = toOpenGraphImageUrl(resolvedOgSource, siteOrigin);
 ---
 
 <meta charset="UTF-8" />

@@ -42,6 +42,44 @@ export function generateOptimizedUrl(
 }
 
 /**
+ * OG/Twitter meta üçün: Bunny CDN-dəki WebP URL-lərini `/api/image-optimize` ilə
+ * JPEG-ə çevirən mütləq URL qaytarır (Facebook/WhatsApp kimi scraperlər WebP qəbul etməyə bilər).
+ */
+export function toOpenGraphImageUrl(
+  resolvedImageUrl: string,
+  siteOrigin: string,
+): string {
+  const trimmed = resolvedImageUrl?.trim();
+  if (!trimmed) return trimmed;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return trimmed;
+  }
+
+  const pathOnly = parsed.pathname;
+  const isWebpPath = /\.webp$/i.test(pathOnly);
+  const isBunnyHost = parsed.hostname.endsWith("b-cdn.net");
+  if (!isWebpPath || !isBunnyHost) {
+    return parsed.href;
+  }
+
+  const params = new URLSearchParams();
+  params.set("url", parsed.href);
+  params.set("w", "1200");
+  params.set("q", "85");
+  params.set("f", "jpeg");
+
+  try {
+    return new URL(`/api/image-optimize?${params}`, siteOrigin).href;
+  } catch {
+    return parsed.href;
+  }
+}
+
+/**
  * Köhnə funksiya adı ilə geriyə uyğunluq (backward compatibility)
  * generateBunnyCDNUrl -> generateOptimizedUrl
  */
