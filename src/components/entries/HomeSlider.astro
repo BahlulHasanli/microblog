@@ -144,10 +144,25 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
       </div>
     ) : (
       <!-- Standard Overlay Post Design -->
-      <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[250px] sm:h-[350px] md:h-[500px] bg-zinc-600 dark:bg-base-800 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl"
+      <div class="max-w-6xl mx-auto w-full overflow-hidden relative h-[300px] sm:h-[350px] md:h-[500px] bg-zinc-600 dark:bg-base-800 mt-4 sm:mt-6 md:mt-8 rounded-lg sm:rounded-xl"
            style={blurhashDataUrl ? `background-image:url(${blurhashDataUrl});background-size:cover;` : ''}>
+      <!-- Mobil: tam en keskin kapak + oxunaqlı gradient (əvvəl yalnız blur görünürdü) -->
+      <div class="sm:hidden absolute inset-0 z-1 overflow-hidden rounded-lg" aria-hidden="true">
+        <img
+          src={heroImageData?.src || backgroundImage}
+          srcset={heroImageData?.srcset}
+          sizes="100vw"
+          alt=""
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          class="absolute inset-0 size-full object-cover object-center"
+        />
+        <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/45 to-black/25"></div>
+      </div>
+
       <!-- Right Side - Hidden on mobile -->
-      <div class="hidden sm:block absolute right-0 top-0 w-1/2 h-full">
+      <div class="hidden sm:block absolute right-0 top-0 w-1/2 h-full z-2">
           <img
             src={heroImageData?.src || backgroundImage}
             srcset={heroImageData?.srcset}
@@ -162,14 +177,6 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
     
         <!-- Left Side -->
       <div class="absolute left-0 top-0 w-full sm:w-[855px] h-full z-10">
-          <!-- Blur arxa plan - blurhash data URL istifadə edir (network sorğusu yoxdur) -->
-          <img
-            src={blurhashBlurUrl || bgBlurUrl || backgroundImage}
-            alt=""
-            loading="eager"
-            decoding="async"
-            class="sm:hidden absolute inset-0 w-full h-full object-cover blur-2xl opacity-80"
-          />
           <img
             src={blurhashBlurUrl || bgBlurUrl || backgroundImage}
             alt=""
@@ -177,8 +184,9 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
             decoding="async"
             class="hidden sm:block size-[750px] object-cover blur-3xl -mt-28 object-center"
           />
-          <div class="absolute inset-0 px-4 sm:ml-15 flex flex-col justify-between pt-4 sm:pt-24 pb-4 sm:mb-10">
-              <div class="text-white flex flex-col gap-1 w-full sm:w-[470px]">
+          <div class="absolute inset-0 px-5 sm:px-4 sm:ml-15 flex flex-col justify-between pt-3 sm:pt-24 pb-4 sm:mb-10">
+              <div class="flex flex-1 flex-col justify-center items-center min-h-0 sm:flex-none sm:justify-start sm:items-start">
+              <div class="text-white flex flex-col gap-1 w-full max-w-lg mx-auto text-left sm:mx-0 sm:w-[470px]">
                   <h2 class="text-lg sm:text-2xl md:text-3xl font-semibold  m-0 wrap-break-word tracking-wide line-clamp-3">
                     {featuredPost && featuredPost.data.title}
                   </h2>
@@ -186,8 +194,9 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
                     {featuredPost && featuredPost.data.description}
                   </p>
               </div>
+              </div>
     
-              <div class="flex w-full sm:w-[320px] flex-row items-center justify-between mt-3 sm:mt-10 gap-2">
+              <div class="flex w-full max-w-lg mx-auto sm:max-w-none flex-row items-center justify-between sm:w-[320px] sm:mx-0 mt-2 sm:mt-10 gap-2 shrink-0">
                  <button type="button" id="user-profile" class="cursor-pointer flex flex-row gap-1 sm:gap-2 items-center hover:opacity-90 transition-opacity min-w-0">
                       <div class="w-10! sm:w-[80px]! h-10! sm:h-[78px]!">
                         <img
