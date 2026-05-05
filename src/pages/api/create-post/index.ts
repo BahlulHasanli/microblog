@@ -72,9 +72,8 @@ export const POST: APIRoute = async (context) => {
 
     const insertTitle = isDraft ? effectiveTitle : titleTrim;
     const slugBase = slugify(insertTitle);
-    const slug = isDraft
-      ? `${slugBase}-${Date.now().toString(36)}`
-      : slugBase;
+    // URL slug həmişə başlıqdan; random yalnız cover fayl adında (upload bloku).
+    const slug = slugBase;
 
     const imageAltFromForm = formData.get("imageAlt")?.toString();
 
@@ -152,7 +151,8 @@ export const POST: APIRoute = async (context) => {
             }
           }
 
-          const imageFileName = `${slug}-cover.${finalExtension}`;
+          const randomId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+          const imageFileName = `${slug}-cover-${randomId}.${finalExtension}`;
           const folder = `posts/${slug}/images`;
 
           const runtime = (context.locals as any).runtime;
@@ -333,14 +333,18 @@ export const POST: APIRoute = async (context) => {
 
     if (insertError) {
       console.error("Supabase insert xətası:", insertError);
+      const dupSlug =
+        insertError.code === "23505" ||
+        /duplicate key.*slug/i.test(insertError.message || "");
       return new Response(
         JSON.stringify({
           success: false,
-          message:
-            "Post əlavə edilərkən xəta baş verdi: " + insertError.message,
+          message: dupSlug
+            ? `Bu başlıq üçün slug (“${slug}”) artıq mövcuddur; başlığı dəyişin və ya mövcud yazını redaktə edin.`
+            : "Post əlavə edilərkən xəta baş verdi: " + insertError.message,
         }),
         {
-          status: 500,
+          status: dupSlug ? 409 : 500,
           headers: { "Content-Type": "application/json" },
         },
       );

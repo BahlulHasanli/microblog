@@ -59,7 +59,11 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
-    if (String(post.author_id) !== String(user.id)) {
+    const isAuthor = String(post.author_id) === String(user.id);
+    const isStaffModerator =
+      user.role_id === 1 || user.role_id === 2;
+
+    if (!isAuthor && !isStaffModerator) {
       return new Response(
         JSON.stringify({
           success: false,

@@ -351,21 +351,9 @@ export default function PostEditor({ post, content, slug, author }: any) {
           coverImage.size
         );
 
-        // Dosya uzantısını al
-        const fileExtension = coverImage.name.split(".").pop() || "jpg";
-
-        // Resim adını oluştur: slug-cover.extension formatında
-        const imageFileName = `${slug}-cover.${fileExtension}`;
-        console.log("Oluşturulan resim dosya adı:", imageFileName);
-
         try {
-          // Resim dosyasını FormData'ya ekle
-          // Dosya adını belirterek yükleme
-          const newFile = new File([coverImage], imageFileName, {
-            type: coverImage.type,
-          });
-          formData.append("uploadedImage", newFile);
-          formData.append("image", `posts/${slug}/images/${imageFileName}`);
+          // Fayl adı server tərəfində `{slug}-cover-{randomId}` kimi təyin olunur (uploadedImage.blobName).
+          formData.append("uploadedImage", coverImage);
           formData.append("imageAlt", title);
           const blurhashToSend =
             await generateBlurhashFromFile(coverImage).catch(() => null);
@@ -373,7 +361,7 @@ export default function PostEditor({ post, content, slug, author }: any) {
             formData.append("imageBlurhash", blurhashToSend);
             setCoverImageBlurhash(blurhashToSend);
           }
-          console.log("Resim FormData'ya eklendi, dosya adı:", imageFileName);
+          console.log("Kapak şəkli FormData-ya əlavə edildi.");
 
           // Revoke any object URLs to prevent memory leaks
           if (coverImagePreview && coverImagePreview !== existingImageUrl) {

@@ -41,9 +41,11 @@ if (post.is_draft && !isOwner && !isStaff) {
   return new Response(null, { status: 404 });
 }
 
-// Əgər post təsdiqlənməmişsə və cari istifadəçi sahibi deyilsə, 404 qaytarın
-if (!post.approved && !isOwner) {
-  console.error('Post təsdiqlənməmişdir və cari istifadəçi sahibi deyildir');
+// Əgər post təsdiqlənməmişsə və nə sahib, nə də admin/moderatordursa, 404
+if (!post.approved && !isOwner && !isStaff) {
+  console.error(
+    "Post təsdiqlənməmişdir və cari istifadəçi sahibi və ya staff deyildir",
+  );
   return new Response(null, { status: 404 });
 }
 

@@ -17,10 +17,12 @@ export const POST: APIRoute = async (context) => {
     const formData = await context.request.formData();
     const isDraft = formData.get("isDraft") === "true";
     const oldSlug = formData.get("slug")?.toString() || "";
-    const title = formData.get("title")?.toString() || "";
+    let title = formData.get("title")?.toString() || "";
 
     const description = formData.get("description") as string;
-    let content = formData.get("content") as string;
+    const contentField = formData.get("content");
+    let content =
+      typeof contentField === "string" ? contentField : "";
     // Kategorileri al ve virgülle ayrılmış stringleri ayır
     const categoriesRaw = formData
       .getAll("categories")
@@ -97,12 +99,38 @@ export const POST: APIRoute = async (context) => {
       );
     }
 
+    const { data: existingPost, error: fetchError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("slug", oldSlug)
+      .single();
+
+    if (fetchError || !existingPost) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "Post tapılmadı",
+        }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    if (!title.trim() && String(existingPost.title || "").trim()) {
+      title = String(existingPost.title);
+    }
+    if (!content.trim() && String(existingPost.content || "").trim()) {
+      content = String(existingPost.content);
+    }
+
     if (!isDraft) {
-      if (!title.trim() || !content?.trim()) {
+      if (!title.trim() || !content.trim()) {
         return new Response(
           JSON.stringify({
             success: false,
-            message: "Başlık, içerik alanları zorunludur",
+            message: "Başlıq və mətn boş ola bilməz",
           }),
           {
             status: 400,
@@ -130,21 +158,18 @@ export const POST: APIRoute = async (context) => {
     const titleForSlug = title.trim() || "Qaralama";
     const newSlug = slugify(isDraft ? titleForSlug : title);
 
-    // Supabase-dən mövcud postu yoxla
-    const { data: existingPost, error: fetchError } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("slug", oldSlug)
-      .single();
-
-    if (fetchError || !existingPost) {
+    const isPostAuthor =
+      String(existingPost.author_id) === String(user.id);
+    const isStaffModerator =
+      user.role_id === 1 || user.role_id === 2;
+    if (!isPostAuthor && !isStaffModerator) {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "Post tapılmadı",
+          message: "Bu yazını redaktə etmək üçün hüququnuz yoxdur",
         }),
         {
-          status: 404,
+          status: 403,
           headers: { "Content-Type": "application/json" },
         },
       );
@@ -153,9 +178,13 @@ export const POST: APIRoute = async (context) => {
     // Orijinal yayın tarihini koru
     const pubDate = existingPost.pub_date;
 
-    // BunnyCDN məlumatları
-    const bunnyApiKey = import.meta.env.BUNNY_API_KEY;
-    const storageZoneName = import.meta.env.BUNNY_STORAGE_ZONE;
+    // BunnyCDN — Cloudflare-də açarlar runtime.env-də olur; lokalda import.meta.env
+    const runtime = (context.locals as any).runtime;
+    const bunnyApiKey =
+      runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+    const storageZoneName =
+      runtime?.env?.BUNNY_STORAGE_ZONE ||
+      import.meta.env.BUNNY_STORAGE_ZONE;
 
     // Slug dəyişibsə folder əməliyyatları
     let shouldMoveFolder = oldSlug !== newSlug;
@@ -507,12 +536,18 @@ export const POST: APIRoute = async (context) => {
 
           // Köhnə cover şəkli BunnyCDN-dən sil
           const oldCoverUrl = existingPost.image_url;
-          if (oldCoverUrl && oldCoverUrl.includes("the99.b-cdn.net")) {
+          if (
+            oldCoverUrl &&
+            (oldCoverUrl.includes("the99.b-cdn.net") ||
+              /\.b-cdn\.net/i.test(oldCoverUrl))
+          ) {
             try {
-              const oldCoverPath = oldCoverUrl.replace(
-                "https://the99.b-cdn.net/",
-                "",
-              );
+              let oldCoverPath = "";
+              try {
+                oldCoverPath = new URL(oldCoverUrl).pathname.replace(/^\//, "");
+              } catch {
+                oldCoverPath = oldCoverUrl.replace(/^https:\/\/[^/]+\//, "");
+              }
               console.log(`Köhnə cover silinir: ${oldCoverPath}`);
 
               const deleteOldCoverResponse = await fetch(
@@ -658,6 +693,56 @@ export const POST: APIRoute = async (context) => {
             }
           } catch (purgeError) {
             console.error(`Cache purge xətası:`, purgeError);
+          }
+
+          // Qovluqda qalan köhnə cover nüsxələrini sil (köhnə `slug-cover.ext` və ya əvvəlki random cover)
+          try {
+            const listCoverRes = await fetch(
+              `https://storage.bunnycdn.com/${storageZoneName}/${folder}/`,
+              {
+                method: "GET",
+                headers: {
+                  AccessKey: bunnyApiKey,
+                  Accept: "application/json",
+                },
+              },
+            );
+            if (listCoverRes.ok) {
+              const entries = await listCoverRes.json();
+              const covBase = `${newSlug}-cover`.toLowerCase();
+              for (const item of Array.isArray(entries) ? entries : []) {
+                if (!item || item.IsDirectory) continue;
+                const name = item.ObjectName as string;
+                if (!name || name === imageFileName) continue;
+                const nl = name.toLowerCase();
+                const isCoverSlot =
+                  nl.startsWith(`${covBase}.`) ||
+                  nl.startsWith(`${covBase}-`);
+                if (!isCoverSlot || !/\.(webp|jpe?g|png|gif)$/i.test(name))
+                  continue;
+                const strayPath = `${folder}/${name}`;
+                const delStray = await fetch(
+                  `https://storage.bunnycdn.com/${storageZoneName}/${strayPath}`,
+                  {
+                    method: "DELETE",
+                    headers: { AccessKey: bunnyApiKey },
+                  },
+                );
+                if (delStray.ok) {
+                  console.log(`🗑️ Köhnə/təkrar cover silindi: ${strayPath}`);
+                  const strayCdnUrl = `https://the99.b-cdn.net/${strayPath}`;
+                  await fetch(
+                    `https://api.bunny.net/purge?url=${encodeURIComponent(strayCdnUrl)}`,
+                    {
+                      method: "POST",
+                      headers: { AccessKey: bunnyApiKey },
+                    },
+                  );
+                }
+              }
+            }
+          } catch (strayCovErr) {
+            console.error("Cover stray təmizləmə:", strayCovErr);
           }
         } catch (uploadError) {
           throw new Error(`Bunny CDN yükleme hatası: ${uploadError.message}`);

@@ -485,14 +485,8 @@ export default function Editor({ author }: EditorProps) {
       const slug = slugify(title.trim() || "qaralama");
 
       if (coverImage) {
-        const fileExtension = coverImage.name.split(".").pop() || "jpg";
-        const imageFileName = `${slug}-cover.${fileExtension}`;
-
-        const newFile = new File([coverImage], imageFileName, {
-          type: coverImage.type,
-        });
-        formData.append("uploadedImage", newFile);
-        formData.append("image", `posts/${slug}/images/${imageFileName}`);
+        // Cover fayl adı server tərəfdə `{slug}-cover-{randomId}` kimi verilir (create-post → edit ilə eyni).
+        formData.append("uploadedImage", coverImage);
         formData.append("imageAlt", title);
         if (coverImageBlurhash) {
           formData.append("imageBlurhash", coverImageBlurhash);

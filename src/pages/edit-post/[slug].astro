@@ -33,6 +33,12 @@ if (error || !post) {
   return new Response(null, { status: 404 });
 }
 
+const isPostOwner = String(user.id) === String(post.author_id);
+const isStaffModerator = user.role_id === 1 || user.role_id === 2;
+if (!isPostOwner && !isStaffModerator) {
+  return Astro.redirect("/");
+}
+
 // Post məlumatlarını formatla
 const postData = {
   title: post.title,

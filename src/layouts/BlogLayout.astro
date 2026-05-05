@@ -20,6 +20,12 @@ if (isLoggedIn) {
   currentUser = await getUserFromCookies(Astro.cookies, Astro.redirect);
 }
 
+/** Admin (1) və moderator (2) istənilən yazıda redaktə/sil görür */
+const canModeratePost = Boolean(
+  currentUser &&
+    (currentUser.role_id === 1 || currentUser.role_id === 2),
+);
+
 // Get post ID from slugs
 const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
@@ -172,7 +178,8 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
           </h1>
           
           {/* Gözləmə rejimi göstəricisi */}
-          {!frontmatter.approved && frontmatter.isOwner && (
+          {!frontmatter.approved &&
+            (frontmatter.isOwner || canModeratePost) && (
             <div class="mt-3 inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 px-3 py-1.5 rounded-lg text-sm font-semibold">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -246,7 +253,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
                 })
               }
             </div>
-            {frontmatter.isOwner && (
+            {(frontmatter.isOwner || canModeratePost) && (
               <div class="mt-2 md:mt-0 flex flex-wrap gap-2 justify-end">
                 <a
                   href={`/edit-post/${postSlug}`}
