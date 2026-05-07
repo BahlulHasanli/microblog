@@ -7,7 +7,7 @@ import MediaPlayer from "@/components/media/MediaPlayer.svelte";
 import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
 import { formatSimpleDate } from "@/utils/date";
 import { supabase } from "@/db/supabase";
-import { generateBunnyCDNUrl, generateResponsiveImages, getHeroImageSizes, getAvatarSizes } from "@/utils/image-optimizer";
+import { generateBunnyCDNUrl, generateResponsiveImages, getHeroImageSizes } from "@/utils/image-optimizer";
 import { blurhashToDataURL } from "@/utils/blurhash-utils";
  
 const { frontmatter } = Astro.props;
@@ -30,11 +30,83 @@ const canModeratePost = Boolean(
 const postSlug = Astro.params.slug || frontmatter.slug || frontmatter.title.toLowerCase().replace(/\s+/g, '-');
 const { data: postData } = await supabase
   .from('posts')
-  .select('id, image_blurhash, image_url, audio_url, audio_title, audio_artist, updated_at')
+  .select('id, author_id, categories, image_blurhash, image_url, audio_url, audio_title, audio_artist, updated_at')
   .eq('slug', postSlug)
   .single();
 
 const postId = postData?.id;
+
+/** Eyni bölmələrdən və ya eyni müəllifdən tövsiyə olunacaq yazılar */
+type RelatedPostRow = {
+  slug: string;
+  title: string;
+  description: string | null;
+  image_url: string | null;
+  image_alt: string | null;
+  image_blurhash: string | null;
+  pub_date: string | null;
+};
+
+let relatedPosts: RelatedPostRow[] = [];
+
+if (postId != null && postData) {
+  const catSlugs =
+    Array.isArray(postData.categories) && postData.categories.length > 0
+      ? postData.categories
+      : frontmatter.categories || [];
+
+  const mergeUnique = (
+    bucket: RelatedPostRow[],
+    rows: RelatedPostRow[] | null,
+  ) => {
+    if (!rows?.length) return;
+    for (const r of rows) {
+      if (r.slug === postSlug) continue;
+      if (!bucket.some((x) => x.slug === r.slug)) bucket.push(r);
+    }
+  };
+
+  const collected: RelatedPostRow[] = [];
+
+  if (catSlugs.length > 0) {
+    for (const filterSlug of catSlugs) {
+      const { data: rows } = await supabase
+        .from("posts")
+        .select("slug, title, description, image_url, image_alt, image_blurhash, pub_date")
+        .eq("approved", true)
+        .eq("is_draft", false)
+        .neq("id", postId)
+        .filter("categories", "cs", `["${filterSlug}"]`)
+        .order("pub_date", { ascending: false })
+        .limit(8);
+      mergeUnique(collected, rows as RelatedPostRow[] | null);
+    }
+    collected.sort(
+      (a, b) =>
+        new Date(b.pub_date || 0).getTime() -
+        new Date(a.pub_date || 0).getTime(),
+    );
+    relatedPosts = collected.slice(0, 4);
+  }
+
+  if (
+    relatedPosts.length === 0 &&
+    postData.author_id != null
+  ) {
+    const { data: authorRows } = await supabase
+      .from("posts")
+      .select("slug, title, description, image_url, image_alt, image_blurhash, pub_date")
+      .eq("approved", true)
+      .eq("is_draft", false)
+      .neq("id", postId)
+      .eq("author_id", postData.author_id)
+      .order("pub_date", { ascending: false })
+      .limit(4);
+    relatedPosts = ((authorRows || []) as RelatedPostRow[]).filter(
+      (r) => r.slug !== postSlug,
+    );
+  }
+}
 const imageBlurhash = postData?.image_blurhash || null;
 
 // Audio məlumatları Supabase-dən
@@ -47,16 +119,6 @@ const { data: categoriesData } = await supabase
   .from('categories')
   .select('slug, name');
 const CATEGORIES = categoriesData || [];
-
-// Baxış sayını al
-let viewCount = 0;
-if (postId) {
-  const { count } = await supabase
-    .from("post_views")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", postId);
-  viewCount = count || 0;
-}
 
 // Check if comments are enabled
 let enableComments = true;
@@ -215,7 +277,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.573-3.007-9.963-7.178Z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
               </svg>
-              <span id="view-count">{viewCount}</span>
+              <span id="view-count">0</span>
             </div> -->
 
             <!-- <style>
@@ -311,6 +373,106 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
         <slot />
       </div>
 
+      {relatedPosts.length > 0 && (
+        <div class="relative max-w-2xl mx-auto mt-18 w-full px-4 sm:px-0">
+          <div
+            class="rounded-4xl p-px bg-linear-to-br from-rose-200/70 via-zinc-200/50 to-transparent dark:from-rose-900/50 dark:via-zinc-800 dark:to-transparent"
+          >
+            <div class="rounded-[1.95rem] bg-white/95 dark:bg-zinc-950/98 px-5 py-8 sm:px-8 sm:py-10">
+              <div class="mb-5 sm:mb-6 max-w-xl">
+                <p class="font-mono text-[9px] sm:text-[12px] tracking-[0.35em] uppercase text-zinc-400 dark:text-zinc-500 mb-1.5">                  
+                  Tövsiyə
+                </p>
+                <h2 class="text-lg sm:text-xl font-nouvelr-semibold tracking-tight text-base-900 dark:text-base-50 leading-tight">
+                  Oxşar məqalələr
+                </h2>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                {relatedPosts.map((p, idx) => {
+                  const rawImg = p.image_url?.trim();
+                  const thumb = rawImg
+                    ? generateResponsiveImages({
+                        src: rawImg,
+                        width: 560,
+                        quality: 76,
+                        sizes: "(min-width: 640px) 50vw, 100vw",
+                      })
+                    : null;
+                  const relatedBlurDataUrl = blurhashToDataURL(p.image_blurhash);
+                  const hasBlurhash = Boolean(p.image_blurhash?.trim());
+                  const n = String(idx + 1).padStart(2, "0");
+                  return (
+                    <a
+                      href={`/posts/${p.slug}`}
+                      class="group relative flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950 rounded-xl"
+                    >
+                      <span
+                        class="absolute top-3 left-3 z-20 flex size-8 items-center justify-center rounded-lg bg-black/55 text-[10px] font-mono font-medium text-white backdrop-blur-sm tabular-nums dark:bg-black/65"
+                        aria-hidden="true"
+                      >
+                        {n}
+                      </span>
+                      {thumb ? (
+                        <div class="relative aspect-4/3 w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-900 ring-1 ring-zinc-200/80 dark:ring-zinc-800">
+                          <div
+                            class:list={[
+                              "relative h-full w-full overflow-hidden rounded-xl",
+                              hasBlurhash && "blurhash-container",
+                            ]}
+                            data-blurhash={hasBlurhash ? p.image_blurhash : undefined}
+                            style={
+                              relatedBlurDataUrl
+                                ? `background-image:url(${relatedBlurDataUrl});background-size:cover;`
+                                : undefined
+                            }
+                          >
+                            {hasBlurhash && (
+                              <canvas
+                                class="blurhash-canvas absolute inset-0 z-10 h-full w-full object-cover rounded-xl"
+                                aria-hidden="true"
+                              />
+                            )}
+                            <img
+                              width={560}
+                              height={420}
+                              src={thumb.src}
+                              srcset={thumb.srcset}
+                              sizes={thumb.sizes}
+                              alt={p.image_alt || p.title}
+                              loading="lazy"
+                              decoding="async"
+                              class:list={[
+                                "h-full w-full object-cover rounded-xl",
+                                hasBlurhash && "blurhash-img",
+                              ]}
+                            />
+                          </div>
+                          <div
+                            class="pointer-events-none absolute inset-0 z-1 bg-linear-to-t from-black/25 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"
+                            aria-hidden="true"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          class="aspect-4/3 w-full rounded-xl bg-linear-to-br from-zinc-200 to-zinc-300 dark:from-zinc-800 dark:to-zinc-900 ring-1 ring-zinc-200/80 dark:ring-zinc-800"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div class="mt-2.5">
+                        <span class="block min-w-0 text-[13px] sm:text-[14px] font-medium leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors line-clamp-3">
+                          {p.title}
+                        </span>
+                      </div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {postId && (
         <PostReactions
           client:only="svelte"
@@ -351,7 +513,7 @@ const blurhashDataUrl = blurhashToDataURL(imageBlurhash);
               iframe.src = `https://www.youtube.com/embed/${videoId}`;
               iframe.width = '100%';
               iframe.height = '100%';
-              iframe.frameBorder = '0';
+              iframe.setAttribute('frameborder', '0');
               iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
               iframe.allowFullscreen = true;
               iframe.classList.add('aspect-video');
