@@ -3,6 +3,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import InfinitePostList from "@/components/entries/InfinitePostList.svelte";
 import Slider from "@/components/entries/HomeSlider.astro";
 import HomeStreamVideoSection from "@/components/entries/HomeStreamVideoSection.svelte";
+import HomeShareSection from "@/components/shares/HomeShareSection.svelte";
 import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
@@ -110,6 +111,40 @@ if (postsError) {
   console.error('Postlar yüklənərkən xəta:', postsError);
 }
 
+// Ana səhifə üçün son Dedi-qodu paylaşımları
+let homeShares: any[] = [];
+const { data: sharesData, error: sharesError } = await supabase
+  .from("shares")
+  .select("*, share_likes(id, user_id)")
+  .order("created_at", { ascending: false })
+  .limit(3);
+
+if (sharesError) {
+  console.error("Paylaşımlar yüklənərkən xəta:", sharesError);
+} else if (sharesData && sharesData.length > 0) {
+  homeShares = await Promise.all(
+    sharesData.map(async (share) => {
+      const [{ data: userData }, { data: comments }] = await Promise.all([
+        supabase
+          .from("users")
+          .select("fullname, username, avatar")
+          .eq("id", share.user_id)
+          .single(),
+        supabase
+          .from("share_comments")
+          .select("id")
+          .eq("share_id", share.id),
+      ]);
+
+      return {
+        ...share,
+        user: userData,
+        comments_count: comments?.length || 0,
+      };
+    })
+  );
+}
+
 // Postları formatla
 const posts = (postsData || []).map(post => {
   return {
@@ -138,6 +173,7 @@ const posts = (postsData || []).map(post => {
   <section> 
     <Slider />
     <HomeStreamVideoSection client:load videos={homeStreamVideos} />
+    <HomeShareSection client:load shares={homeShares} />
     <FixedTabBar activeTab="weekly" />
     
     <div class="py-6 sm:py-8 md:py-12 max-w-3xl mx-auto px-4 sm:px-0">
