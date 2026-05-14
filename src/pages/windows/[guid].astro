@@ -3,7 +3,8 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import StreamVideoPage from "@/components/stream/StreamVideoPage.svelte";
 import { fetchSingleStreamVideo } from "@/lib/stream-videos-db";
-import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import { redactStreamVideoViewMetrics } from "@/lib/bunny-stream-videos";
+import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
 
 const { guid } = Astro.params;
 
@@ -16,6 +17,9 @@ const video = await fetchSingleStreamVideo(guid, Astro.locals.runtime?.env);
 if (!video) {
   return Astro.redirect("/windows");
 }
+
+const streamVideoShowViewCount = await isAdmin(Astro.cookies);
+const videoForClient = redactStreamVideoViewMetrics(video, streamVideoShowViewCount);
 
 let streamUserPayload: {
   id: string;
@@ -46,8 +50,9 @@ if (isAuthenticated(Astro.cookies)) {
   <div class="max-w-5xl mx-auto px-0 lg:px-6 py-0 lg:pt-4 lg:pb-12">
     <StreamVideoPage
       client:load
-      video={video}
+      video={videoForClient}
       user={streamUserPayload}
+      showViewCount={streamVideoShowViewCount}
     />
   </div>
 </BaseLayout>

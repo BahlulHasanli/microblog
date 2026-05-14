@@ -36,6 +36,16 @@ export type WindowsVideo = {
   siteViewCount?: number | null;
 };
 
+/** İctimai səhifələrdə baxış metrikalarını ötürməmək (yalnız admin üçün saxlanılır) */
+export function redactStreamVideoViewMetrics(video: WindowsVideo, isAdmin: boolean): WindowsVideo {
+  if (isAdmin) return { ...video };
+  return {
+    ...video,
+    siteViewCount: undefined,
+    viewCount: null,
+  };
+}
+
 type BunnyMetaTag = {
   property?: string | null;
   value?: string | null;

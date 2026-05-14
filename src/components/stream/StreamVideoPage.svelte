@@ -13,9 +13,12 @@
   let {
     video,
     user = null,
+    showViewCount = false,
   }: {
     video: WindowsVideo;
     user: StreamUser;
+    /** Baxış sayı — yalnız admin */
+    showViewCount?: boolean;
   } = $props();
 
   type CommentRow = {
@@ -139,7 +142,7 @@
           videoUrl={video.videoUrl}
           fitContain={true}
           streamVideoId={video.streamVideoId ?? null}
-          {onSiteViewRecorded}
+          onSiteViewRecorded={showViewCount ? onSiteViewRecorded : undefined}
         />
       </div>
     </div>
@@ -180,7 +183,7 @@
           </span>
         {/if}
 
-          {#if video.streamVideoId && formatViewCount(siteViewCount)}
+          {#if showViewCount && video.streamVideoId && formatViewCount(siteViewCount)}
             <span
               class="inline-flex items-center gap-1 rounded-full bg-base-100/50 px-3 py-1.5 text-xs tabular-nums text-base-600 dark:bg-base-800 dark:text-base-300 font-nouvelr"
             >

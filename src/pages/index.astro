@@ -5,10 +5,11 @@ import Slider from "@/components/entries/HomeSlider.astro";
 import HomeStreamVideoSection from "@/components/entries/HomeStreamVideoSection.svelte";
 import HomeShareSection from "@/components/shares/HomeShareSection.svelte";
 import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
+import { redactStreamVideoViewMetrics } from "@/lib/bunny-stream-videos";
 import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
 import { supabase } from "@/db/supabase";
-import { isAuthenticated, getUserFromCookies } from "@/utils/auth";
+import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
 import { buildCategoryTree, type Category } from "@/utils/category-helpers";
 
 const currentPath = Astro.url.pathname;
@@ -18,6 +19,11 @@ const homeStreamVideos = await fetchHomeStreamVideos({
   dbOnly: true,
   runtimeEnv: Astro.locals.runtime?.env,
 });
+
+const streamVideoShowViewCount = await isAdmin(Astro.cookies);
+const homeStreamVideosForClient = homeStreamVideos.map((v) =>
+  redactStreamVideoViewMetrics(v, streamVideoShowViewCount),
+);
 
 let streamUserPayload: {
   id: string;
@@ -172,7 +178,11 @@ const posts = (postsData || []).map(post => {
 <BaseLayout>
   <section> 
     <Slider />
-    <HomeStreamVideoSection client:load videos={homeStreamVideos} />
+    <HomeStreamVideoSection
+      client:load
+      videos={homeStreamVideosForClient}
+      showViewCount={streamVideoShowViewCount}
+    />
     <HomeShareSection client:load shares={homeShares} />
     <FixedTabBar activeTab="weekly" />
     

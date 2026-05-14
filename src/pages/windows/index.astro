@@ -4,8 +4,12 @@ import FixedTabBar from "@/components/tabs/FixedTabBar.astro";
 import MainTabs from "@/components/tabs/MainTabs.astro";
 import StreamVideoGridModal from "@/components/stream/StreamVideoGridModal.svelte";
 import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
+import { redactStreamVideoViewMetrics } from "@/lib/bunny-stream-videos";
+import { isAdmin } from "@/utils/auth";
 
 const videos = await fetchHomeStreamVideos({ runtimeEnv: Astro.locals.runtime?.env });
+const streamVideoShowViewCount = await isAdmin(Astro.cookies);
+const videosForClient = videos.map((v) => redactStreamVideoViewMetrics(v, streamVideoShowViewCount));
 ---
 
 <BaseLayout
@@ -25,8 +29,9 @@ const videos = await fetchHomeStreamVideos({ runtimeEnv: Astro.locals.runtime?.e
           <div class="mt-4">
             <StreamVideoGridModal
               client:load
-              videos={videos}
+              videos={videosForClient}
               anchorScroll={true}
+              showViewCount={streamVideoShowViewCount}
             />
           </div>
         ) : (
