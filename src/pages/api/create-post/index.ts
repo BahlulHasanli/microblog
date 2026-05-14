@@ -4,6 +4,7 @@ import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
 import { slugifyCategory } from "@/utils/slugify-category";
 import { optimizeImage } from "wasm-image-optimization";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -155,12 +156,10 @@ export const POST: APIRoute = async (context) => {
           const imageFileName = `${slug}-cover-${randomId}.${finalExtension}`;
           const folder = `posts/${slug}/images`;
 
-          const runtime = (context.locals as any).runtime;
-          const bunnyApiKey =
-            runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+          const workerEnv = getCloudflareWorkerEnv();
+          const bunnyApiKey = workerEnv.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
           const storageZoneName =
-            runtime?.env?.BUNNY_STORAGE_ZONE ||
-            import.meta.env.BUNNY_STORAGE_ZONE;
+            workerEnv.BUNNY_STORAGE_ZONE || import.meta.env.BUNNY_STORAGE_ZONE;
 
           if (!bunnyApiKey) {
             throw new Error("BUNNY_API_KEY environment variable tapılmadı");
@@ -225,12 +224,10 @@ export const POST: APIRoute = async (context) => {
 
         const audioArrayBuffer = await audioFile.arrayBuffer();
 
-        const runtime = (context.locals as any).runtime;
-        const bunnyApiKey =
-          runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+        const workerEnv = getCloudflareWorkerEnv();
+        const bunnyApiKey = workerEnv.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
         const storageZoneName =
-          runtime?.env?.BUNNY_STORAGE_ZONE ||
-          import.meta.env.BUNNY_STORAGE_ZONE;
+          workerEnv.BUNNY_STORAGE_ZONE || import.meta.env.BUNNY_STORAGE_ZONE;
 
         if (!bunnyApiKey) {
           throw new Error("BUNNY_API_KEY environment variable tapılmadı");

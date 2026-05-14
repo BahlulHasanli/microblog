@@ -39,3 +39,4 @@ Thumbs.db
 /public/images
 /src/content
 /.astro
+/.wrangler

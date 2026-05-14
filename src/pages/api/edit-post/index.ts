@@ -3,6 +3,7 @@ import { requireAuth } from "@/utils/auth";
 import { slugify } from "@/utils/slugify";
 import { supabase } from "@/db/supabase";
 import { optimizeImage } from "wasm-image-optimization";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 export const POST: APIRoute = async (context) => {
   try {
@@ -178,13 +179,11 @@ export const POST: APIRoute = async (context) => {
     // Orijinal yayın tarihini koru
     const pubDate = existingPost.pub_date;
 
-    // BunnyCDN — Cloudflare-də açarlar runtime.env-də olur; lokalda import.meta.env
-    const runtime = (context.locals as any).runtime;
-    const bunnyApiKey =
-      runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+    // BunnyCDN — Cloudflare-də açarlar worker env-də olur; lokalda import.meta.env
+    const workerEnv = getCloudflareWorkerEnv();
+    const bunnyApiKey = workerEnv.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
     const storageZoneName =
-      runtime?.env?.BUNNY_STORAGE_ZONE ||
-      import.meta.env.BUNNY_STORAGE_ZONE;
+      workerEnv.BUNNY_STORAGE_ZONE || import.meta.env.BUNNY_STORAGE_ZONE;
 
     // Slug dəyişibsə folder əməliyyatları
     let shouldMoveFolder = oldSlug !== newSlug;

@@ -11,13 +11,14 @@ import MainTabs from "@/components/tabs/MainTabs.astro";
 import { supabase } from "@/db/supabase";
 import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
 import { buildCategoryTree, type Category } from "@/utils/category-helpers";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 const currentPath = Astro.url.pathname;
 
 const homeStreamVideos = await fetchHomeStreamVideos({
   limit: 4,
   dbOnly: true,
-  runtimeEnv: Astro.locals.runtime?.env,
+  runtimeEnv: getCloudflareWorkerEnv(),
 });
 
 const streamVideoShowViewCount = await isAdmin(Astro.cookies);

@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
     const folder = url.searchParams.get("folder") || "og-media";
@@ -11,10 +12,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const HOSTNAME = REGION ? `${REGION}.${BASE_HOSTNAME}` : BASE_HOSTNAME;
     const STORAGE_ZONE_NAME = "the99-storage";
 
-    // API anahtarı
-    const runtime = (locals as any).runtime;
-    const ACCESS_KEY =
-      runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+    const workerEnv = getCloudflareWorkerEnv();
+    const ACCESS_KEY = workerEnv.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
 
     if (!ACCESS_KEY) {
       return new Response(

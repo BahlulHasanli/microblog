@@ -1,14 +1,14 @@
 import type { APIRoute } from "astro";
 import { getUserFromCookies } from "@/utils/auth";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 export const POST: APIRoute = async (context) => {
   console.log("[share-image] === API ÇAĞIRILDI ===");
   try {
-    // Cloudflare Workers üçün runtime.env, lokal üçün import.meta.env
-    const runtime = (context.locals as any).runtime;
-    console.log("[share-image] Runtime:", !!runtime);
-    const BUNNY_API_KEY = runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
-    const BUNNY_STORAGE_ZONE = runtime?.env?.BUNNY_STORAGE_ZONE || import.meta.env.BUNNY_STORAGE_ZONE || "the99-storage";
+    const workerEnv = getCloudflareWorkerEnv();
+    const BUNNY_API_KEY = workerEnv.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+    const BUNNY_STORAGE_ZONE =
+      workerEnv.BUNNY_STORAGE_ZONE || import.meta.env.BUNNY_STORAGE_ZONE || "the99-storage";
     
     if (!BUNNY_API_KEY) {
       console.error("BUNNY_API_KEY environment variable tapılmadı");

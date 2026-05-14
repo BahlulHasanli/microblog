@@ -6,8 +6,9 @@ import StreamVideoGridModal from "@/components/stream/StreamVideoGridModal.svelt
 import { fetchHomeStreamVideos } from "@/lib/stream-videos-db";
 import { redactStreamVideoViewMetrics } from "@/lib/bunny-stream-videos";
 import { isAdmin } from "@/utils/auth";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
-const videos = await fetchHomeStreamVideos({ runtimeEnv: Astro.locals.runtime?.env });
+const videos = await fetchHomeStreamVideos({ runtimeEnv: getCloudflareWorkerEnv() });
 const streamVideoShowViewCount = await isAdmin(Astro.cookies);
 const videosForClient = videos.map((v) => redactStreamVideoViewMetrics(v, streamVideoShowViewCount));
 ---

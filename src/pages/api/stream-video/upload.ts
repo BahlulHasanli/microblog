@@ -9,6 +9,7 @@ import { requireAuth } from "@/utils/auth";
 import { supabaseAdmin } from "@/db/supabase";
 import { bunnyCreateVideo, bunnyUploadVideoFile, readStreamEnv } from "@/lib/bunny-stream-upload";
 import { resolveOrCreateBunnyCollectionForCategory } from "@/lib/bunny-stream-collections";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 function isStreamVideoUploader(u: { role_id?: number }): boolean {
   return u?.role_id === 1;
@@ -30,7 +31,7 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    const runtimeEnv = context.locals?.runtime?.env as Record<string, string | undefined> | undefined;
+    const runtimeEnv = getCloudflareWorkerEnv();
     const apiKey = readStreamEnv("BUNNY_STREAM_API_KEY", runtimeEnv);
     const libraryId = Number(readStreamEnv("BUNNY_STREAM_LIBRARY_ID", runtimeEnv) || DEFAULT_LIBRARY);
 

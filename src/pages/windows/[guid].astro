@@ -5,6 +5,7 @@ import StreamVideoPage from "@/components/stream/StreamVideoPage.svelte";
 import { fetchSingleStreamVideo } from "@/lib/stream-videos-db";
 import { redactStreamVideoViewMetrics } from "@/lib/bunny-stream-videos";
 import { isAuthenticated, getUserFromCookies, isAdmin } from "@/utils/auth";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 const { guid } = Astro.params;
 
@@ -12,7 +13,7 @@ if (!guid) {
   return Astro.redirect("/windows");
 }
 
-const video = await fetchSingleStreamVideo(guid, Astro.locals.runtime?.env);
+const video = await fetchSingleStreamVideo(guid, getCloudflareWorkerEnv());
 
 if (!video) {
   return Astro.redirect("/windows");

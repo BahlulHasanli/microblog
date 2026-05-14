@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { getUserFromCookies } from "@/utils/auth";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,12 +15,12 @@ function supabaseProjectUrl(): string {
 /**
  * Post şərhləri (`CommentForm`) brauzerdə birbaşa Supabase-ə yazır; serverdə isə
  * `stream_video_comments` üçün RLS-də INSERT siyasəti yoxdur — yalnız service role
- * RLS-i keçir. Cloudflare-da açar tez-tez `runtime.env`-də olur, `import.meta.env`-də yox.
+ * RLS-i keçir. Cloudflare-da açar `cloudflare:workers` env-də və ya lokalda import.meta / process-də olur.
  */
-function resolveServiceRoleKey(context: { locals: App.Locals }): string | undefined {
-  const runtime = (context.locals as { runtime?: { env?: Record<string, string | undefined> } }).runtime;
+function resolveServiceRoleKey(): string | undefined {
+  const workerEnv = getCloudflareWorkerEnv();
   return (
-    runtime?.env?.SUPABASE_SERVICE_ROLE_KEY ||
+    workerEnv.SUPABASE_SERVICE_ROLE_KEY ||
     import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
     (typeof process !== "undefined" ? process.env.SUPABASE_SERVICE_ROLE_KEY : undefined)
   );
@@ -41,9 +42,9 @@ function sanitizeGuestInput(raw: string): string {
 
 export const POST: APIRoute = async (context) => {
   try {
-    const serviceKey = resolveServiceRoleKey(context);
+    const serviceKey = resolveServiceRoleKey();
     if (!serviceKey?.trim()) {
-      console.error("[stream-videos/add-comment] SUPABASE_SERVICE_ROLE_KEY tapılmadı (runtime.env / .env)");
+      console.error("[stream-videos/add-comment] SUPABASE_SERVICE_ROLE_KEY tapılmadı (worker env / .env)");
       return new Response(
         JSON.stringify({
           success: false,

@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
+import { getCloudflareWorkerEnv } from "@/lib/cf-worker-env";
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -90,10 +91,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // API anahtarı - BunnyCDN Storage API anahtarı
     // Önemli: Bu anahtarı BunnyCDN kontrol panelinden almalısınız
     // Storage > [Storage Zone Adı] > FTP & API Access > Storage API Password
-    // Cloudflare üçün runtime.env, lokal üçün import.meta.env
-    const runtime = (locals as any).runtime;
-    const ACCESS_KEY =
-      runtime?.env?.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
+    const workerEnv = getCloudflareWorkerEnv();
+    const ACCESS_KEY = workerEnv.BUNNY_API_KEY || import.meta.env.BUNNY_API_KEY;
 
     console.log("BUNNY_API_KEY mövcuddur:", !!ACCESS_KEY);
 

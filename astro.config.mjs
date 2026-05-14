@@ -14,7 +14,18 @@ export default defineConfig({
       chunkSizeWarningLimit: 500,
     },
     optimizeDeps: {
+      /**
+       * İlk yükləmədə ardıcıl "optimized dependencies changed. reloading" azalsın deyə
+       * tez-tez aşkarlanan modullar əvvəlcədən birləşdirilir. Əks halda Vite köhnə
+       * `node_modules/.vite/deps/*.js` yollarına istək atıb xəbərdarlıq verə bilər.
+       */
       include: [
+        "astro-seo",
+        "astro/virtual-modules/transitions.js",
+        "astro/virtual-modules/transitions-router.js",
+        "astro/virtual-modules/transitions-types.js",
+        "astro/virtual-modules/transitions-events.js",
+        "astro/virtual-modules/transitions-swap-functions.js",
         "react",
         "react-dom",
         "@tiptap/react",
