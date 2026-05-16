@@ -1,6 +1,7 @@
 import { jwtVerify, errors } from "jose";
 import type { APIContext } from "astro";
 import type { AstroCookies } from "astro";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createEphemeralSupabaseClient, supabaseAdmin } from "@/db/supabase";
 
 // JWT secrets
@@ -59,6 +60,28 @@ function resolveSupabaseTokensFromRequest(
     refresh = refresh || (p["sb-refresh-token"] ?? "").trim();
   }
   return { access, refresh };
+}
+
+/**
+ * Admin API-lərdə service role yoxdursa RLS üçün istifadəçi JWT ilə Supabase klienti.
+ */
+export async function createSupabaseWithCookieSession(
+  cookies: AstroCookies,
+  headers?: Headers | null,
+): Promise<SupabaseClient | null> {
+  const { access, refresh } = resolveSupabaseTokensFromRequest(
+    cookies,
+    headers,
+  );
+  if (!access || !refresh) return null;
+
+  const client = createEphemeralSupabaseClient();
+  const { error } = await client.auth.setSession({
+    refresh_token: refresh,
+    access_token: access,
+  });
+  if (error) return null;
+  return client;
 }
 
 /**
